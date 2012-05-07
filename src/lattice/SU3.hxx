@@ -1,6 +1,24 @@
-/*
- * A lot TODO here: overload all operators (like *...)
- * At some point we have to introduce reconstruction patterns...
+/**
+ * SU3 serves as a wrapper class for different storage techniques and implements some important operations for SU3-matrices,
+ * like summation, multiplication, det(), trace(), ...
+ *
+ * At present, you can choose among two storage techniques:
+ *  1) Link: Only information to the position of the matrix in a large array is stored. No memory is allocated!
+ *  2) Matrix: Memory is allocated for storage of the SU3-matrix.
+ * All operations that have two SU3-objects as input (like *, +, =, ...) have to be implement such that, they allow objects
+ * with different storage technique, i.e. SU3<Link> + SU3<Matrix> should be implemented.
+ * See for example the implementation of operator=().
+ * All storage techniques have to implement a basic set of functions.
+ *
+ * TODO:
+ *  - Implement all mathematical operations: like operator*
+ *  - We have to introduce a compatible and clear way to switch between full 18 parameter matrices
+ *    and 12 parameter (third-line-reconstruction) techniques.
+ *  - At present we use the typedef'ed "complex" type. This is no good style... Introduce a template parameter or something...
+ *  - Define the basic set of functions mentioned above.
+ *
+ * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
+ * @date 2012-04-16
  */
 
 #ifndef SU3_HXX_
@@ -11,13 +29,7 @@
 #include "Link.hxx"
 #include "Quaternion.hxx"
 
-/**
- * "Type" can be Link (which acts on a global arrary of SU3 matrices) or Matrix (which is a local one).
- * Both Link and Matrix offer the same get and set functions.
- * Thus, the class "SU3" is a wrapper of different representation of SU3-matrices.
- */
 
-// TODO using the typedefed "complex" type is not good style
 template<class Type> class SU3
 {
 public:
@@ -40,8 +52,8 @@ public:
 
 	CUDA_HOST_DEVICE inline void reconstructThirdLine();
 
-	CUDA_HOST_DEVICE inline void leftSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] );
-	CUDA_HOST_DEVICE inline void rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] );
+//	CUDA_HOST_DEVICE inline void leftSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] );
+//	CUDA_HOST_DEVICE inline void rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] );
 
 	CUDA_HOST_DEVICE inline void leftSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Quaternion<Real> *q );
 	CUDA_HOST_DEVICE inline void rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Quaternion<Real> *q );
@@ -52,36 +64,81 @@ public:
 	template<class SubgroupOperationClass> __device__ static inline void perSubgroup(SubgroupOperationClass t);
 };
 
+/**
+ * Creates a new SU3 object with from the given background storage object 'mat'.
+ * @parameter Object that holds the information of the SU3-matrix.
+ */
 template<class Type> SU3<Type>::SU3( Type mat ) : mat(mat)
 {
 }
 
+/**
+ * TODO check if we need this.
+ */
 template<class Type> SU3<Type>::SU3()
 {
 }
 
+/**
+ * Get matrix element. Delegates the get to the underlying storage class.
+ * @parameter row index i
+ * @parameter col index j
+ * @return matrix element (i,j)
+ */
 template<class Type> complex SU3<Type>::get( lat_group_dim_t i, lat_group_dim_t j )
 {
 	return mat.get(i,j);
 }
 
-template<class Type> complex SU3<Type>::get( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j )
-{
-	return mat.get( (i==0)?(iSub):(jSub), (j==1)?(iSub):(jSub) );	//Subgroup access TODO write about how this works
-}
-
+/**
+ * Set matrix element. Delegates the set to the underlying storage class.
+ * @parameter row index i
+ * @parameter col index j
+ * @parameter element to set
+ */
 template<class Type> void SU3<Type>::set( lat_group_dim_t i, lat_group_dim_t j, complex c )
 {
 	return mat.set(i,j,c);
 }
 
+/**
+ * Get matrix element within a 2x2-submatrix from which the SU2-subgroup is built. The indexing works as follows:
+ * iSub != jSub define the 2x2-matrix A as: a_00 = M(iSub,iSub), a_01 = M(iSub,jSub), a_10 = M(jSub,iSub), a_11 = M(jSub,jSub).
+ * @parameter first subgroup index
+ * @parameter second subgroup index
+ * @parameter row of 2x2-subgroup, i.e. i = 0 or 1
+ * @parameter col of 2x2-subgroup, i.e. j = 0 or 1
+ * @return matrix element in 2x2-submatrix.
+ */
+template<class Type> complex SU3<Type>::get( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j )
+{
+	return mat.get( (i==0)?(iSub):(jSub), (j==1)?(iSub):(jSub) );	//Subgroup access TODO write about how this works
+}
+
+/**
+ * Set matrix element within a 2x2-submatrix. See corresponding get().
+ * @parameter first subgroup index
+ * @parameter second subgroup index
+ * @parameter row of 2x2-subgroup, i.e. i = 0 or 1
+ * @parameter col of 2x2-subgroup, i.e. j = 0 or 1
+ * @parameter element to set.
+ */
 template<class Type> void SU3<Type>::set( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, complex c )
 {
 	return mat.set((i==0)?(iSub):(jSub), (j==1)?(iSub):(jSub) ,c);
 }
 
 /*
- * TODO SUBGROUP IS NOT PROJECTED TO SU2: this should be implied by its name
+ * Returns a 2x2-complex-subgroup in Quaternion (4 real parameter) representation. THE ELEMENT IS NOT NORMALIZED TO SU(2),
+ * i.e. it is not a SU(2) element but proportional to a SU(2) element.
+ * See the get()-subgroup-function for an explanation of how the subgroup is choosen.
+ *
+ * The function takes the 2x2-matrix and mixes the corresponding elements, see for example Gattringer & Lang (2010), p. 81.
+ *
+ * TODO imply non-normalization by function name.
+ *
+ * @parameter first subgroup index
+ * @parameter second subgroup index
  */
 template<class Type> Quaternion<Real> SU3<Type>::getSubgroupQuaternion( lat_group_dim_t iSub, lat_group_dim_t jSub )
 {
@@ -99,20 +156,24 @@ template<class Type> Quaternion<Real> SU3<Type>::getSubgroupQuaternion( lat_grou
 	temp = mat.get(jSub,iSub);
 	q[2] -= temp.x;
 	q[1] += temp.y;
-
 	return q;
 }
 
-
+/**
+ * Delegate operation to underlying storage class.
+ */
 template<class Type> SU3<Type>& SU3<Type>::operator+=( SU3<Type> c )
 {
 	mat += c.mat;
 	return *this;
 }
 
+/**
+ * Assignment operator allowing different storage class at right and left side of the assignement.
+ */
 template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator=( SU3<Type2> c )
 {
-	for( lat_group_dim_t i = 0; i < 2; i++ ) // TODO
+	for( lat_group_dim_t i = 0; i < 2; i++ ) // TODO this has to be i < 3, but is hacked here for test of the reconstruction-technique speed
 		for( lat_group_dim_t j = 0; j < 3; j++ )
 		{
 			mat.set(i,j,c.mat.get(i,j));
@@ -120,6 +181,9 @@ template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator=( SU3<
 	return *this;
 }
 
+/**
+ * TODO how can i choose this function at function call?
+ */
 template<class Type> template<bool reconstructThirdLine, class Type2> SU3<Type>& SU3<Type>::operator=( SU3<Type2> c )
 {
 	for( lat_group_dim_t i = 0; i < (reconstructThirdLine)?(2):(3); i++ )
@@ -130,6 +194,9 @@ template<class Type> template<bool reconstructThirdLine, class Type2> SU3<Type>&
 	return *this;
 }
 
+/**
+ * Multiplication of SU3 matrices.
+ */
 template<class Type> template<class Type2> SU3<Type> SU3<Type>::operator*( SU3<Type2> b )
 {
 	SU3<Type> c;
@@ -149,13 +216,19 @@ template<class Type> template<class Type2> SU3<Type> SU3<Type>::operator*( SU3<T
 	return c;
 }
 
+/**
+ * Summation of SU3 matrices.
+ */
 template<class Type> template<class Type2> SU3<Type> SU3<Type>::operator+( SU3<Type2> b )
 {
 	SU3<Type> c(*this);
 	return c+=b;
 }
 
-
+/**
+ * Determinant.
+ * TODO Check for faster implementations...
+ */
 template<class Type> complex SU3<Type>::det()
 {
 	complex c( 0, 0 );
@@ -194,11 +267,17 @@ template<class Type> complex SU3<Type>::det()
 	return c;
 }
 
+/**
+ * Delegate trace() to underlying storage class.
+ */
 template<class Type> complex SU3<Type>::trace()
 {
 	return mat.trace();
 }
 
+/**
+ * Set matrix to identity.
+ */
 template<class Type> void SU3<Type>::identity()
 {
 	for( lat_group_dim_t i = 0; i < 3; i++ )
@@ -217,6 +296,9 @@ template<class Type> void SU3<Type>::identity()
 	}
 }
 
+/**
+ * Set matrix to zero.
+ */
 template<class Type> void SU3<Type>::zero()
 {
 	for( lat_group_dim_t i = 0; i < 3; i++ )
@@ -228,6 +310,15 @@ template<class Type> void SU3<Type>::zero()
 	}
 }
 
+/**
+ * Project back to SU3. Needed because of numerical inaccuracy.
+ *
+ * Technique:
+ * - Normalize fist row
+ * - Orthogonalize second row with respect to the first row.
+ * - Normalize second row
+ * - Reconstruct the third row from the first two rows (cross-product).
+ */
 template<class Type> void SU3<Type>::projectSU3()
 {
 	Real abs_u = 0, abs_v = 0;
@@ -268,13 +359,19 @@ template<class Type> void SU3<Type>::projectSU3()
 	}
 
 	// reconstruct third row
-	set( 2, 0, get(0,1).conj() * get(1,2).conj() - get(0,2).conj() * get(1,1).conj() );
+	reconstructThirdLine();
 
-	set( 2, 1, get(0,2).conj() * get(1,0).conj() - get(0,0).conj() * get(1,2).conj() );
-
-	set( 2, 2, get(0,0).conj() * get(1,1).conj() - get(0,1).conj() * get(1,0).conj() );
+//	set( 2, 0, get(0,1).conj() * get(1,2).conj() - get(0,2).conj() * get(1,1).conj() );
+//
+//	set( 2, 1, get(0,2).conj() * get(1,0).conj() - get(0,0).conj() * get(1,2).conj() );
+//
+//	set( 2, 2, get(0,0).conj() * get(1,1).conj() - get(0,1).conj() * get(1,0).conj() );
 }
 
+/**
+ * Reconstructs the third line of the 3x3 matrix from the first two rows. This is needed wenn we load only the first two rows
+ * from memory to save memory bandwidth in CUDA applications.
+ */
 template<class Type> void SU3<Type>::reconstructThirdLine()
 {
 	set( 2, 0, get(0,1).conj() * get(1,2).conj() - get(0,2).conj() * get(1,1).conj() );
@@ -285,7 +382,8 @@ template<class Type> void SU3<Type>::reconstructThirdLine()
 }
 
 /**
- * This actually works correctly.
+ * Muliplication of the SU3 matrix by a SU2-subgroup element in Quaternion representation from the right.
+ * TODO Be a bit more precise in the commentary...
  */
 template<class Type> void SU3<Type>::rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Quaternion<Real> *q )
 {
@@ -303,6 +401,9 @@ template<class Type> void SU3<Type>::rightSubgroupMult( lat_group_dim_t i, lat_g
 	}
 }
 
+/**
+ * Muliplication of the SU3 matrix by a SU2-subgroup element in Quaternion representation from the left.
+ */
 template<class Type> void SU3<Type>::leftSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Quaternion<Real> *q )
 {
 	for( lat_group_dim_t k = 0; k < 3; k++ )
@@ -320,43 +421,44 @@ template<class Type> void SU3<Type>::leftSubgroupMult( lat_group_dim_t i, lat_gr
 }
 
 
-template<class Type> void SU3<Type>::rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] )
-{
-	for( lat_group_dim_t k = 0; k < 3; k++ )
-	{
-//		ki = k*3+iSub;
-		Complex<Real> KI = Complex<Real>(q[0],q[3]) * get(k,i);
-		KI += Complex<Real>(-q[2],q[1]) * get(k,j);
-
-		Complex<Real> KJ = Complex<Real>(q[2],q[1]) * get(k,i);
-		KJ += Complex<Real>(q[0],-q[3]) * get(k,j);
-
-		set( k, i , KI);
-		set( k, j , KJ);
-	}
-}
-
-template<class Type> void SU3<Type>::leftSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] )
-{
-	for( lat_group_dim_t k = 0; k < 3; k++ )
-	{
-		Complex<Real> IK = Complex<Real>(q[0],q[3]) * get(i,k);
-		IK += Complex<Real>(q[2],q[1])* get(j,k);
-
-		Complex<Real> JK = Complex<Real>(-q[2], q[1]) * get(i,k);
-		JK += Complex<Real>(q[0],-q[3]) * get(j,k);
-
-		set( i, k , IK );
-		set( j, k,  JK );
-	}
-}
-
-
+//template<class Type> void SU3<Type>::rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] )
+//{
+//	for( lat_group_dim_t k = 0; k < 3; k++ )
+//	{
+////		ki = k*3+iSub;
+//		Complex<Real> KI = Complex<Real>(q[0],q[3]) * get(k,i);
+//		KI += Complex<Real>(-q[2],q[1]) * get(k,j);
+//
+//		Complex<Real> KJ = Complex<Real>(q[2],q[1]) * get(k,i);
+//		KJ += Complex<Real>(q[0],-q[3]) * get(k,j);
+//
+//		set( k, i , KI);
+//		set( k, j , KJ);
+//	}
+//}
+//
+//template<class Type> void SU3<Type>::leftSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] )
+//{
+//	for( lat_group_dim_t k = 0; k < 3; k++ )
+//	{
+//		Complex<Real> IK = Complex<Real>(q[0],q[3]) * get(i,k);
+//		IK += Complex<Real>(q[2],q[1])* get(j,k);
+//
+//		Complex<Real> JK = Complex<Real>(-q[2], q[1]) * get(i,k);
+//		JK += Complex<Real>(q[0],-q[3]) * get(j,k);
+//
+//		set( i, k , IK );
+//		set( j, k,  JK );
+//	}
+//}
 
 
 
 
-
+/**
+ * Performs an operation defined in the SubgroupOperationClass by calling its subgroup() function for 3 SU3 subgroups.
+ * Check an example application, like the Coulomb-gaugefixing routine.
+ */
 template<class Type> template<class SubgroupOperationClass> void SU3<Type>::perSubgroup( SubgroupOperationClass t )
 {
 	t.subgroup(0,1);

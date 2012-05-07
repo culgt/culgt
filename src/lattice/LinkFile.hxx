@@ -1,15 +1,31 @@
 /**
- * TODO implement promotion to double / demotion to float
+ * Class for loading and storing configurations.
+ * TODO I named this class LinkFile because ConfigurationFile may be missleading but I don't like the naming.
+ *      Suggestions for a more precise name are very welcome.
  *
+ * This class serves as a middleman between different array patterns on file and memory side.
+ * The pattern for saving configurations is usually such that matrices are stored in contiguous regions the memory pattern
+ * for CUDA is completely different. This template class accepts as arguments the FilePattern, i.e. the array pattern on file side,
+ * the MemoryPattern.
+ * To allow a high flexibility you can define Header and Footer classes that are called before/after the read of the configuration.
  *
- * ConfigurationFile.hxx
+ * The intension of this class is to cover all possible File- and MemoryPatterns. This causes some computation overhead which can
+ * be avoided by spezializations of this class.
+ * Check the getUnique()/setUnique() function calls in load() and save(): Each Pattern needs to be able to provide a unique index
+ * wich does not depend on the pattern. Calculating back and forth this index maybe costly.
+ * TODO Check how much it costs actually.
  *
- *  Created on: Apr 16, 2012
- *      Author: vogt
+ * TODO:
+ *  - Is this class really flexible? Do we have to move the loading of the configuration to an extra class?
+ *  - Implement a switch for promotion to double / demotion to float
+ *  - Think about partially loading when we want to use the reconstruction technique for SU3.
+ *
+ * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
+ * @date 2012-04-9
  */
 
-#ifndef CONFIGURATIONFILE_HXX_
-#define CONFIGURATIONFILE_HXX_
+#ifndef LINKFILE_HXX_
+#define LINKFILE_HXX_
 
 #include <string>
 #include <fstream>
@@ -102,4 +118,4 @@ template <class Header, class Footer, class FilePattern, class MemoryPattern, cl
 }
 
 
-#endif /* CONFIGURATIONFILE_HXX_ */
+#endif /* LINKFILE_HXX_ */

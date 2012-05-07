@@ -1,8 +1,10 @@
-/*
- * Link.hxx
+/**
+ * Storage class for a NxN matrix. Allocates a N*N linear array with elements of type "T".
+ * In contrast to the other storage class "Link", this class actually allocates memory.
+ * It has to provide the same functions.
  *
- *  Created on: Apr 17, 2012
- *      Author: vogt
+ * TODO:
+ *  - see "Link"
  */
 
 #ifndef MATRIX_HXX_
@@ -17,13 +19,10 @@ public:
 	CUDA_HOST_DEVICE inline Matrix();
 	CUDA_HOST_DEVICE inline virtual ~Matrix();
 	CUDA_HOST_DEVICE inline T get(int i, int j);
-//	CUDA_HOST_DEVICE inline complex get(int iSub, int jSub, int i, int j);
 	CUDA_HOST_DEVICE inline void set(int i, int j, T c);
-//	CUDA_HOST_DEVICE inline void set(int iSub, int jSub, int i, int j, complex c);
 	CUDA_HOST_DEVICE inline T trace();
-//	CUDA_HOST_DEVICE inline complex det();
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator+=( Matrix<T,N> );
-	T mat[N*N];
+	T mat[N*N]; // array keeping the matrix TODO make this private?
 private:
 };
 
@@ -35,23 +34,31 @@ template<class T, int N> Matrix<T,N>::~Matrix()
 {
 }
 
-
+/**
+ * Returns the matrix element (i,j).
+ * @parameter row index i
+ * @parameter col index j
+ * @return element (i,j)
+ */
 template<class T, int N> T Matrix<T,N>::get( int i, int j )
 {
 	return mat[i*N+j];
 }
 
-//template<class Pattern, class TheSite, int T_Ndim, int T_Nc> complex Link<Pattern, TheSite, T_Ndim, T_Nc>::get( int i, int j )
-//{
-//	// TODO check if make_cucomplex is overloaded for double precision usage.
-//	return complex( data[Pattern::getIndex( site, mu, i, j, 0 )], data[Pattern::getIndex( site, mu, i, j, 1 )] );
-//}
-
+/**
+ * Sets the matrix element (i,j).
+ * @parameter row index i
+ * @parameter col index j
+ * @parameter element to set
+ */
 template<class T, int N> void Matrix<T,N>::set( int i, int j, T c )
 {
 	mat[i*N+j] = c;
 }
 
+/**
+ * Trace.
+ */
 template<class T, int N> T Matrix<T,N>::trace()
 {
 	T c;
@@ -62,52 +69,9 @@ template<class T, int N> T Matrix<T,N>::trace()
 	return c;
 }
 
-//template<class Pattern, class TheSite, int T_Ndim, int T_Nc> complex Link<Pattern, TheSite, T_Ndim, T_Nc>::det()
-//{
-//	assert( T_Nc == 3 ); // TODO do it properly
-//	complex c( 0, 0 );
-//	complex temp( 1, 0 );
-//	temp *= get(0,0);
-//	temp *= get(1,1);
-//	temp *= get(2,2);
-//	c += temp;
-//
-//	temp = complex( 1, 0 );
-//	temp *= get(0,1);
-//	temp *= get(1,2);
-//	temp *= get(2,0);
-//	c += temp;
-//
-//	temp = complex( 1, 0 );
-//	temp *= get(0,2);
-//	temp *= get(1,0);
-//	temp *= get(2,1);
-//	c += temp;
-//
-//
-//
-//	temp = complex( 1, 0 );
-//	temp *= get(2,0);
-//	temp *= get(1,1);
-//	temp *= get(0,2);
-//	c -= temp;
-//
-//	temp = complex( 1, 0 );
-//	temp *= get(1,0);
-//	temp *= get(0,1);
-//	temp *= get(2,2);
-//	c -= temp;
-//
-//	temp = complex( 1, 0 );
-//	temp *= get(0,0);
-//	temp *= get(2,1);
-//	temp *= get(1,2);
-//	c -= temp;
-//
-//	return c;
-//}
-
-
+/**
+ * Add and assign...
+ */
 template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator+=( Matrix<T,N> a )
 {
 	for(int i = 0; i < 3; i++ )
