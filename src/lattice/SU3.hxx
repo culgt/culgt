@@ -42,8 +42,8 @@ public:
 	CUDA_HOST_DEVICE inline void set( lat_group_dim_t i, lat_group_dim_t j, complex c);
 	CUDA_HOST_DEVICE inline void set(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, complex c);
 	CUDA_HOST_DEVICE inline SU3<Type>& operator+=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
-	template<bool reconstructThirdLine,class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
+	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLine( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
 	CUDA_HOST_DEVICE inline complex det();
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline void identity();
@@ -173,7 +173,7 @@ template<class Type> SU3<Type>& SU3<Type>::operator+=( SU3<Type> c )
  */
 template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator=( SU3<Type2> c )
 {
-	for( lat_group_dim_t i = 0; i < 2; i++ ) // TODO this has to be i < 3, but is hacked here for test of the reconstruction-technique speed
+	for( lat_group_dim_t i = 0; i < 3; i++ )
 		for( lat_group_dim_t j = 0; j < 3; j++ )
 		{
 			mat.set(i,j,c.mat.get(i,j));
@@ -182,11 +182,11 @@ template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator=( SU3<
 }
 
 /**
- * TODO how can i choose this function at function call?
+ * Assignement like operator=, but does not copy the third line.
  */
-template<class Type> template<bool reconstructThirdLine, class Type2> SU3<Type>& SU3<Type>::operator=( SU3<Type2> c )
+template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutThirdLine( SU3<Type2> c )
 {
-	for( lat_group_dim_t i = 0; i < (reconstructThirdLine)?(2):(3); i++ )
+	for( lat_group_dim_t i = 0; i < 2; i++ )
 		for( lat_group_dim_t j = 0; j < 3; j++ )
 		{
 			mat.set(i,j,c.mat.get(i,j));

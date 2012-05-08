@@ -73,11 +73,11 @@ template <lat_dim_t Nd, bool par> SiteIndex<Nd, par>::SiteIndex( const lat_coord
 
 template <lat_dim_t Nd, bool par> SiteIndex<Nd, par>::SiteIndex( const SiteIndex<Nd,par> &s )
 {
+	this->index = s.index;
 	latticeSize = 1;
 	for( lat_dim_t i = 0; i < Nd; i++ )
 	{
 		this->size[i] = s.size[i];
-		this->index = s.index;
 		latticeSize *= size[i];
 	}
 }
