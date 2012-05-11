@@ -42,13 +42,21 @@ public:
 	CUDA_HOST_DEVICE inline void set( lat_group_dim_t i, lat_group_dim_t j, complex c);
 	CUDA_HOST_DEVICE inline void set(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, complex c);
 	CUDA_HOST_DEVICE inline SU3<Type>& operator+=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
+	CUDA_HOST_DEVICE inline SU3<Type>& operator-=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
+	CUDA_HOST_DEVICE inline SU3<Type>& operator*=( SU3<Type> );
+
+	CUDA_HOST_DEVICE inline SU3<Type>& operator/=( complex );
+	CUDA_HOST_DEVICE inline SU3<Type>& operator-=( complex );
+
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
+//	template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLine( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
 	CUDA_HOST_DEVICE inline complex det();
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline void identity();
 	CUDA_HOST_DEVICE inline void zero();
 	CUDA_HOST_DEVICE inline void projectSU3();
+	CUDA_HOST_DEVICE inline SU3<Type>& hermitian();
 
 	CUDA_HOST_DEVICE inline void reconstructThirdLine();
 
@@ -57,6 +65,8 @@ public:
 
 	CUDA_HOST_DEVICE inline void leftSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Quaternion<Real> *q );
 	CUDA_HOST_DEVICE inline void rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Quaternion<Real> *q );
+
+	CUDA_HOST_DEVICE inline void print();
 
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type> operator*( SU3<Type2> b  );
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type> operator+( SU3<Type2> b  );
@@ -169,6 +179,36 @@ template<class Type> SU3<Type>& SU3<Type>::operator+=( SU3<Type> c )
 }
 
 /**
+ * Delegate operation to underlying storage class.
+ */
+template<class Type> SU3<Type>& SU3<Type>::operator-=( SU3<Type> c )
+{
+	mat -= c.mat;
+	return *this;
+}
+
+/**
+ * Delegate operation to underlying storage class.
+ */
+template<class Type> SU3<Type>& SU3<Type>::operator*=( SU3<Type> c )
+{
+	mat *= c.mat;
+	return *this;
+}
+
+template<class Type> SU3<Type>& SU3<Type>::operator/=( complex c )
+{
+	mat /= c;
+	return *this;
+}
+
+template<class Type> SU3<Type>& SU3<Type>::operator-=( complex c )
+{
+	mat -= c;
+	return *this;
+}
+
+/**
  * Assignment operator allowing different storage class at right and left side of the assignement.
  */
 template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator=( SU3<Type2> c )
@@ -180,6 +220,15 @@ template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator=( SU3<
 		}
 	return *this;
 }
+
+///**
+// * TODO comments!
+// * We return always with storage type Matrix. Think about how this can be done in a nice way.
+// */
+//template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> )
+//{
+//
+//}
 
 /**
  * Assignement like operator=, but does not copy the third line.
@@ -294,6 +343,29 @@ template<class Type> void SU3<Type>::identity()
 			}
 		}
 	}
+}
+
+/**
+ * Set matrix to its hermitian. TODO this is a straight forward implementation, do it in a fast way!!!
+ */
+template<class Type> SU3<Type>& SU3<Type>::hermitian()
+{
+	Matrix<complex,3> temp;
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		for( lat_group_dim_t j = 0; j < 3; j++ )
+		{
+			temp.set(j,i,get(i,j).conj());
+		}
+	}
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		for( lat_group_dim_t j = 0; j < 3; j++ )
+		{
+			set(i,j,temp.get(i,j));
+		}
+	}
+	return *this;
 }
 
 /**
@@ -419,6 +491,14 @@ template<class Type> void SU3<Type>::leftSubgroupMult( lat_group_dim_t i, lat_gr
 		set( j, k,  JK );
 	}
 }
+
+template<class Type> void SU3<Type>::print()
+{
+	printf( "[%f+i*%f\t %f+i*%f\t %f+i*%f\n", get(0,0).x, get(0,0).y, get(0,1).x, get(0,1).y, get(0,2).x, get(0,2).y );
+	printf( "%f+i*%f\t %f+i*%f\t %f+i*%f\n", get(1,0).x, get(1,0).y, get(1,1).x, get(1,1).y, get(1,2).x, get(1,2).y );
+	printf( "%f+i*%f\t %f+i*%f\t %f+i*%f]\n", get(2,0).x, get(2,0).y, get(2,1).x, get(2,1).y, get(2,2).x, get(2,2).y );
+}
+
 
 
 //template<class Type> void SU3<Type>::rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] )

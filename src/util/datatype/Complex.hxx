@@ -27,6 +27,7 @@ public:
 	CUDA_HOST_DEVICE inline Complex<datatype>& operator*=( const Complex<datatype> a );
 	CUDA_HOST_DEVICE inline Complex<datatype>& operator*=( const datatype a );
 	CUDA_HOST_DEVICE inline Complex<datatype>& operator/=( const datatype a );
+	CUDA_HOST_DEVICE inline Complex<datatype>& operator/=( const Complex<datatype> a );
 	datatype x; // we use the naming convention of cuComplex.h
 	datatype y;
 };
@@ -117,6 +118,17 @@ template<class datatype> Complex<datatype>& Complex<datatype>::operator/=( const
 {
 	x /= a;
 	y /= a;
+	return *this;
+}
+
+template<class datatype> Complex<datatype>& Complex<datatype>::operator/=( const Complex<datatype> a )
+{
+	datatype re = x;
+	datatype im = y;
+	datatype abs = a.x*a.x+a.y*a.y;
+	x = (re*a.x + im*a.y)/abs;
+	y = (-re*a.y + im*a.x)/abs;
+
 	return *this;
 }
 

@@ -17,11 +17,16 @@ template<class T, int N> class Matrix
 {
 public:
 	CUDA_HOST_DEVICE inline Matrix();
+//	CUDA_HOST_DEVICE inline Matrix( const Matrix<T,N> &m );
 	CUDA_HOST_DEVICE inline virtual ~Matrix();
 	CUDA_HOST_DEVICE inline T get(int i, int j);
 	CUDA_HOST_DEVICE inline void set(int i, int j, T c);
 	CUDA_HOST_DEVICE inline T trace();
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator+=( Matrix<T,N> );
+	CUDA_HOST_DEVICE inline Matrix<T, N>& operator-=( Matrix<T,N> );
+	CUDA_HOST_DEVICE inline Matrix<T, N>& operator-=( T );
+	CUDA_HOST_DEVICE inline Matrix<T, N>& operator/=( T );
+	CUDA_HOST_DEVICE inline Matrix<T, N>& operator*=( Matrix<T,N> );
 	T mat[N*N]; // array keeping the matrix TODO make this private?
 private:
 };
@@ -29,6 +34,17 @@ private:
 template<class T, int N> Matrix<T,N>::Matrix()
 {
 }
+
+//template<class T, int N> Matrix<T,N>::Matrix( const Matrix<T,N> &m )
+//{
+//	for(int i = 0; i < N; i++ )
+//	{
+//		for( int j = 0; j < N; j++ )
+//		{
+//			mat[i*N+j] = m.mat[i*N+j];
+//		}
+//	}
+//}
 
 template<class T, int N> Matrix<T,N>::~Matrix()
 {
@@ -74,11 +90,67 @@ template<class T, int N> T Matrix<T,N>::trace()
  */
 template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator+=( Matrix<T,N> a )
 {
-	for(int i = 0; i < 3; i++ )
+	for(int i = 0; i < N; i++ )
 	{
-		for( int j = 0; j < 3; j++ )
+		for( int j = 0; j < N; j++ )
 		{
 			mat[i*N+j] += a.mat[i*N+j];
+		}
+	}
+	return *this;
+}
+
+/**
+ * Subtract and assign...
+ */
+template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator-=( Matrix<T,N> a )
+{
+	for(int i = 0; i < N; i++ )
+	{
+		for( int j = 0; j < N; j++ )
+		{
+			mat[i*N+j] -= a.mat[i*N+j];
+		}
+	}
+	return *this;
+}
+
+template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator-=( T a )
+{
+	for(int i = 0; i < N; i++ )
+	{
+		mat[i*N+i] -= a;
+	}
+	return *this;
+}
+
+template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator/=( T a )
+{
+	for(int i = 0; i < N; i++ )
+	{
+		for( int j = 0; j < N; j++ )
+		{
+			mat[i*N+j] /= a;
+		}
+	}
+	return *this;
+}
+
+/**
+ * Multiply and assign...
+ * TODO do it better
+ */
+template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator*=( Matrix<T,N> a )
+{
+	Matrix<T,N> temp( *this );
+	for(int i = 0; i < N; i++ )
+	{
+		for( int j = 0; j < N; j++ )
+		{
+			for( int k = 0; k < N; k++ )
+			{
+				mat[i*N+j] = temp.mat[i*N+k] * a.mat[k*N+j];
+			}
 		}
 	}
 	return *this;

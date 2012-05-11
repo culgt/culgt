@@ -28,6 +28,7 @@ public:
 	CUDA_HOST_DEVICE inline void set(int i, int j, complex c);
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline Link<Pattern, TheSite, T_Ndim, T_Nc>& operator+=( Link<Pattern, TheSite, T_Ndim, T_Nc> );
+
 	Real* data; // pointer to the link array
 private:
 	TheSite site; // current lattice site
