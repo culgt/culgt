@@ -63,6 +63,11 @@ typedef GpuLandauPattern< SiteCoord<Ndim,true>,Ndim,Nc> Gpu;
 typedef Link<Gpu,SiteCoord<Ndim,true>,Ndim,Nc> TLink;
 
 
+__device__ inline Real cuFabs( Real a )
+{
+	return (a>0)?(a):(-a);
+}
+
 void initNeighbourTable( lat_index_t* nnt )
 {
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
@@ -70,18 +75,22 @@ void initNeighbourTable( lat_index_t* nnt )
 	s.calculateNeighbourTable( nnt );
 }
 
-__global__ void printGaugeQuality( Real* dGff )
+__global__ void printGaugeQuality( Real* dGff, Real* dA )
 {
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
 	SiteCoord<4,true> s(size);
 
 	Real gff = 0;
+	Real temp = 0;
 	for( int i = 0; i < s.getLatticeSize(); i++ )
 	{
 		gff+= dGff[i];
+		if( cuFabs(dA[i]) > temp ) temp = cuFabs(dA[i]);
 	}
 
-	printf( "gff: %1.10f\n", gff/Real(s.getLatticeSize())/3./4. );
+
+	printf( "gff: %1.10f\t\tdA: %1.10f\n", gff/Real(s.getLatticeSize())/4./3., temp );
+
 
 }
 
@@ -102,53 +111,73 @@ __global__ void projectSU3( Real* U )
 	}
 }
 
-__global__ void generateGaugeQuality( Real *U, Real *dGff )
+__global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
 {
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
 	SiteCoord<4,true> s(size);
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 
+	Matrix<complex,Nc> locMatSum;
+	SU3<Matrix<complex,Nc> > Sum(locMatSum);
+
+	Sum.zero();
+
+	// TODO check if there is a faster way to compute DELTA
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		s.setLatticeIndex( site );
+
+		Matrix<complex,Nc> locMat;
+		SU3<Matrix<complex,Nc> > temp(locMat);
+
+		TLink linkUp( U, s, mu );
+		SU3<TLink> globUp( linkUp );
+
+		temp.assignWithoutThirdLine( globUp );
+		temp.reconstructThirdLine();
+		Sum += temp;
+
+		s.setNeighbour(mu,-1);
+		TLink linkDw( U, s, mu );
+		SU3<TLink> globDw( linkDw );
+		temp.assignWithoutThirdLine( globDw );
+		temp.reconstructThirdLine();
+		Sum -= temp;
+	}
+
+	Sum -= Sum.trace()/Real(3.);
+
+	Matrix<complex,Nc> locMatSumHerm;
+	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
+	SumHerm = Sum;
+	SumHerm.hermitian();
+
+	Sum -= SumHerm;
+
+	Real prec = 0;
+	for( int i = 0; i < 3; i++ )
+	{
+		for( int j = 0; j < 3; j++ )
+		{
+			prec += Sum.get(i,j).abs_squared();
+		}
+	}
+
+	dA[site] = prec;
+
+
 	s.setLatticeIndex( site );
-
-	// TODO calculate DELTA
-
-//	for( int mu = 1; mu < 4; mu++ )
-//	{
-//		TLink3 linkUp( U, s, mu ); // TODO s should be passed by reference
-//		SU3<TLink3> globUp( linkUp );
-//
-//		s.setNeighbour(mu,-1); // TODO but then this is not possible
-//		TLink3 linkDw( U, s, mu );
-//		SU3<TLink3> globDw( linkDw );
-//
-//		Matrix<complex,Nc> locMatUp;
-//		SU3<Matrix<complex,Nc> > Aup(locMatUp);
-//
-//		Matrix<complex,Nc> locMatDw;
-//		SU3<Matrix<complex,Nc> > Adw(locMatDw);
-//
-//		Aup = globUp - globUp.hermitian();
-//		Aup = globDw - globDw.hermitian();
-//
-//		Aup /= complex(0,2);
-//		Adw /= complex(0,2);
-//
-//		complex trUp = Aup.trace();
-//		complex trDw = ADw.trace();
-//
-//		Aup -= complex(0,Real(1/3))*trUp;
-//		Adw -= complex(0,Real(1/3))*trDw;
-//	}
-
-
-
 	Real result = 0;
 
+	Matrix<complex,Nc> locTemp;
+	SU3<Matrix<complex,Nc> > temp(locTemp);
 	for( int mu = 0; mu < 4; mu++ )
 	{
 		TLink linkUp( U, s, mu );
 		SU3<TLink> globUp( linkUp );
-		result += globUp.trace().x;
+		temp.assignWithoutThirdLine( globUp );
+		temp.reconstructThirdLine();
+		result += temp.trace().x;
 	}
 
 	dGff[site] = result;
@@ -273,9 +302,11 @@ int main(int argc, char* argv[])
 	Real* dU;
 	cudaMalloc( &dU, arraySize*sizeof(Real) );
 
-	// device memory for collecting the parts of the gauge fixing functional
+	// device memory for collecting the parts of the gauge fixing functional and divA
 	Real *dGff;
 	cudaMalloc( &dGff, s.getLatticeSize()*sizeof(Real) );
+	Real *dA;
+	cudaMalloc( &dA, s.getLatticeSize()*sizeof(Real) );
 
 	// host memory for the neighbour table
 	lat_index_t* nn = (lat_index_t*)malloc( s.getLatticeSize()*(2*(Ndim))*sizeof(lat_index_t) );
@@ -321,13 +352,13 @@ int main(int argc, char* argv[])
 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
 		// calculate and print the gauge quality
-		generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff );
-		printGaugeQuality<<<1,1>>>(dGff);
+		generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
+		printGaugeQuality<<<1,1>>>(dGff, dA);
 
 
 		float orParameter = 1.7;
 
-		for( int i = 0; i < 5000; i++ )
+		for( int i = 0; i < 1000; i++ )
 		{
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, orParameter );
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, orParameter );
@@ -335,8 +366,8 @@ int main(int argc, char* argv[])
 			if( i % 100 == 0 )
 			{
 				projectSU3<<<numBlocks*2,32>>>( dU );
-				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff );
-				printGaugeQuality<<<1,1>>>(dGff);
+				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
+				printGaugeQuality<<<1,1>>>(dGff, dA);
 			}
 		}
 		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );

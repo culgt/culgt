@@ -117,84 +117,12 @@ __global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
 	SiteCoord<3,true> s(size);
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 
-
-	// TODO delta does not work.
-
-
-//
-//	Matrix<complex,Nc> locMatSum;
-//	SU3<Matrix<complex,Nc> > Sum(locMatSum);
-//
-//	Sum.zero();
-//
-//	// TODO calculate DELTA the fast way
-//	for( int mu = 1; mu < 4; mu++ )
-//	{
-//		s.setLatticeIndex( site );
-//		Matrix<complex,Nc> locMat;
-//		SU3<Matrix<complex,Nc> > temp(locMat);
-//
-//		Matrix<complex,Nc> locMatUp;
-//		SU3<Matrix<complex,Nc> > Aup(locMatUp);
-//
-//		Matrix<complex,Nc> locMatDw;
-//		SU3<Matrix<complex,Nc> > Adw(locMatDw);
-//
-//
-//		TLink3 linkUp( U, s, mu );
-//		SU3<TLink3> globUp( linkUp );
-//
-//		temp.assignWithoutThirdLine( globUp );
-//		temp.reconstructThirdLine();
-//		Aup += temp;
-//		Aup -= temp.hermitian();
-//
-//
-//		s.setNeighbour(mu,-1);
-//		TLink3 linkDw( U, s, mu );
-//		SU3<TLink3> globDw( linkDw );
-//		temp.assignWithoutThirdLine( globDw );
-//		temp.reconstructThirdLine();
-//		Adw += temp;
-//		Adw -= temp.hermitian();
-//
-//		Aup /= complex(0,2);
-//		Adw /= complex(0,2);
-//
-//		complex trUp = Aup.trace();
-//		complex trDw = Adw.trace();
-//
-//		Aup -= complex(0,Real(1./3.))*trUp;
-//		Adw -= complex(0,Real(1./3.))*trDw;
-//
-////	if( site == 0 ) printf( "%f, %f\n", Aup.det().x, Aup.trace().x );
-//		Sum += Aup;
-//		Sum -= Adw;
-//	}
-////	if( site == 0 ) printf( "%f, %f\n", Sum.det().x, Sum.trace().x );
-//
-//	Matrix<complex,Nc> locMatSumHerm;
-//	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
-//	SumHerm = Sum;
-////	if( site == 0 ) Sum.print();
-//	SumHerm.hermitian();
-////	if( site == 0 ) SumHerm.print();
-//	Sum *= SumHerm;
-////	if( site == 0 ) printf( "%f, %f\n", Sum.det().x, SumHerm.det().x );
-//	dA[site] = Sum.trace().x;
-////	if( site == 0 ) printf( "%f, %f\n", Sum.trace().x, Sum.trace().y );
-//
-//
-
-
-
-
 	Matrix<complex,Nc> locMatSum;
 	SU3<Matrix<complex,Nc> > Sum(locMatSum);
 
 	Sum.zero();
 
-	// TODO calculate DELTA the fast way
+	// TODO check if there is a faster way to compute DELTA
 	for( int mu = 1; mu < 4; mu++ )
 	{
 		s.setLatticeIndex( site );
@@ -209,7 +137,7 @@ __global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
 		temp.reconstructThirdLine();
 		Sum += temp;
 
-		s.setNeighbour(mu,-1);
+		s.setNeighbour(mu-1,-1);
 		TLink3 linkDw( U, s, mu );
 		SU3<TLink3> globDw( linkDw );
 		temp.assignWithoutThirdLine( globDw );
@@ -241,12 +169,16 @@ __global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
 	s.setLatticeIndex( site );
 	Real result = 0;
 
+
+	Matrix<complex,Nc> locTemp;
+	SU3<Matrix<complex,Nc> > temp(locTemp);
 	for( int mu = 1; mu < 4; mu++ )
 	{
 		TLink3 linkUp( U, s, mu );
 		SU3<TLink3> globUp( linkUp );
-		globUp.reconstructThirdLine(); // TODO do it locally
-		result += globUp.trace().x;
+		temp.assignWithoutThirdLine( globUp ); // TODO don't load twice
+		temp.reconstructThirdLine();
+		result += temp.trace().x;
 	}
 
 	dGff[site] = result;
@@ -403,6 +335,7 @@ int main(int argc, char* argv[])
 	{
 
 		stringstream filename(stringstream::out);
+//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
 		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
 
 		bool loadOk = lf.load( s, filename.str(), U );
@@ -434,7 +367,7 @@ int main(int argc, char* argv[])
 
 			float orParameter = 1.7;
 
-			for( int i = 0; i < 5000; i++ )
+			for( int i = 0; i < 10000; i++ )
 			{
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, orParameter );
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, orParameter );
