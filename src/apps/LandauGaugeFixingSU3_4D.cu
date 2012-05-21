@@ -204,7 +204,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 	s.setLatticeIndex( site );
 	if( updown==1 )
 	{
-		s.setNeighbour(mu,0);
+		s.setNeighbour(mu,false);
 	}
 
 //	if(id == 0) printf("bin in or\n");
@@ -330,6 +330,8 @@ int main(int argc, char* argv[])
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
 
 
+
+
 	for( int i = 0; i < 1; i++ )
 	{
 
@@ -347,6 +349,7 @@ int main(int argc, char* argv[])
 		{
 			cout << "File loaded." << endl;
 		}
+//		Real polBefore = calculatePolyakovLoopAverage( U );
 
 		// copying configuration t ...
 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
@@ -358,7 +361,7 @@ int main(int argc, char* argv[])
 
 		float orParameter = 1.7;
 
-		for( int i = 0; i < 1000; i++ )
+		for( int i = 0; i < 15000; i++ )
 		{
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, orParameter );
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, orParameter );
@@ -372,6 +375,7 @@ int main(int argc, char* argv[])
 		}
 		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 
+//		cout << "Polyakov loop: " << polBefore << " - " << calculatePolyakovLoopAverage( U ) << endl;
 	}
 
 	allTimer.stop();
