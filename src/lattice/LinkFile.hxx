@@ -39,7 +39,8 @@ public:
 	LinkFile();
 	virtual ~LinkFile();
 	bool load( TheSite site, std::string filename, Real *U );
-	bool save( std::string filename, Real U );
+	bool save( TheSite site, std::string filename, Real *U );
+	Header filetype;
 };
 
 template <class Header, class Footer, class FilePattern, class MemoryPattern, class TheSite> LinkFile<Header, Footer, FilePattern, MemoryPattern, TheSite>::LinkFile()
@@ -68,10 +69,10 @@ template <class Header, class Footer, class FilePattern, class MemoryPattern, cl
 
 	// load header
 
-	Header header;
-	if( !header.load( &file ) )
+	if( !filetype.loadHeader( &file ) )
 	{
 		util::Logger::log( util::ERROR, "Can't read header");
+		return false;
 	}
 
 	// load config
@@ -103,6 +104,71 @@ template <class Header, class Footer, class FilePattern, class MemoryPattern, cl
 		int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
 		U[index] = temp;
 //		break;
+	}
+
+
+	// load footer
+//	if( !footer.load( file ) )
+//	{
+//		util::Logger::log( util::ERROR, "Can't read footer");
+//	}
+
+
+	file.close();
+	return true;
+}
+
+
+/**
+ *
+ */
+template <class Header, class Footer, class FilePattern, class MemoryPattern, class TheSite> bool LinkFile<Header, Footer, FilePattern, MemoryPattern, TheSite>::save( TheSite site, std::string filename, Real *U )
+{
+	// open file
+	std::fstream file;
+	file.open( filename.c_str(), std::ios::out | std::ios::binary);
+
+	if( !file )
+	{
+		util::Logger::log( util::ERROR, "Can't open file");
+		util::Logger::log( util::ERROR, filename.c_str() );
+		return false;
+	}
+
+	// save header
+
+	if( !filetype.saveHeader( &file ) )
+	{
+		util::Logger::log( util::ERROR, "Can't read header");
+		return false;
+	}
+
+	// load config
+
+	// calculate number of reals in configuration:
+	int configSize = 1;
+	// calculate lattice size
+	for( int i = 0; i < site.Ndim; i++ )
+	{
+		configSize *= site.size[i];
+	}
+
+	std::cout << "lattice size: " << configSize << std::endl;
+
+	// * number of directions mu * Nc^2 * 2 (complex number)
+	configSize *= FilePattern::Ndim * FilePattern::Nc * FilePattern::Nc * 2;
+
+	std::cout << "Ndim: " << FilePattern::Ndim << std::endl;
+
+	std::cout << "total size: " << configSize << std::endl;
+
+	Real temp;
+	for( int i = 0; i < configSize; i++ )
+	{
+		// load number
+		int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
+		temp = U[index];
+		file.write( (char*)&temp, sizeof(Real) );
 	}
 
 

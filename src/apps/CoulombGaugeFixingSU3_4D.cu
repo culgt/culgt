@@ -22,7 +22,7 @@
 #include "../lattice/LinkFile.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
-#include "../lattice/filetypes/HeaderVogt.hxx"
+#include "../lattice/filetypes/FileVogt.hxx"
 
 using namespace std;
 
@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
 	allTimer.reset();
 
 	SiteCoord<4,true> s(size);
-	LinkFile<HeaderVogt, void, Standard, Gpu, SiteCoord<4,true> > lf;
+	LinkFile<FileVogt, void, Standard, Gpu, SiteCoord<4,true> > lf;
 
 
 	// allocate Memory
@@ -331,12 +331,18 @@ int main(int argc, char* argv[])
 
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
 
+//	uint kernelTimer;
+//	cutCreateTimer( &kernelTimer );
+
+	double totalKernelTime = 0;
+
 	for( int i = 0; i < 1; i++ )
 	{
 
 		stringstream filename(stringstream::out);
 //		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+		filename << "/home/vogt/configs/STUDIENARBEIT/N16/config_n16t16beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt.gf";
 
 		bool loadOk = lf.load( s, filename.str(), U );
 
@@ -367,25 +373,51 @@ int main(int argc, char* argv[])
 
 			float orParameter = 1.7;
 
-			for( int i = 0; i < 10000; i++ )
+			Chronotimer kernelTimer;
+			kernelTimer.reset();
+			kernelTimer.start();
+			for( int i = 0; i < 5000; i++ )
 			{
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, orParameter );
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, orParameter );
 
-				if( i % 100 == 0 )
-				{
-					projectSU3<<<numBlocks*2,32>>>( dUtUp );
-					projectSU3<<<numBlocks*2,32>>>( dUtDw );
-					generateGaugeQuality<<<numBlocks*2,32>>>(dUtUp, dGff, dA );
-					printGaugeQuality<<<1,1>>>(dGff, dA);
-				}
+//				if( i % 100 == 0 )
+//				{
+//					projectSU3<<<numBlocks*2,32>>>( dUtUp );
+//					projectSU3<<<numBlocks*2,32>>>( dUtDw );
+//					generateGaugeQuality<<<numBlocks*2,32>>>(dUtUp, dGff, dA );
+//					printGaugeQuality<<<1,1>>>(dGff, dA);
+//				}
 			}
+			cudaThreadSynchronize();
+			kernelTimer.stop();
+			cout << "kernel time for timeslice: " << kernelTimer.getTime() << " s"<< endl;
+			totalKernelTime += kernelTimer.getTime();
 			// copy back TODO: copying back timeslice t is not necessary (only in the end)
 			cudaMemcpy( &U[t*timesliceArraySize], dUtUp, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 			cudaMemcpy( &U[tDw*timesliceArraySize], dUtDw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 		}
+
+
+		filename << ".gf";
+		bool saveOk = lf.save( s, filename.str(), U );
+		if( !saveOk )
+		{
+			cout << "Error while writing." << endl;
+			break;
+		}
+		else
+		{
+			cout << "File written." << endl;
+		}
+
 	}
 
 	allTimer.stop();
-	cout << "total time: " << allTimer.getTime() << endl;
+	cout << "total time: " << allTimer.getTime() << " s" << endl;
+	cout << "total kernel time: " << totalKernelTime << " s" << endl;
+	cout << (double)((long)2253*(long)s.getLatticeSize()*(long)5000)/totalKernelTime/1.0e9 << " GFlops at "
+			<< (double)((long)192*(long)s.getLatticeSize()*(long)(5000)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
+
+
 }

@@ -330,6 +330,7 @@ int main(int argc, char* argv[])
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
 
 
+	double totalKernelTime = 0;
 
 
 	for( int i = 0; i < 1; i++ )
@@ -361,23 +362,35 @@ int main(int argc, char* argv[])
 
 		float orParameter = 1.7;
 
-		for( int i = 0; i < 15000; i++ )
+		Chronotimer kernelTimer;
+		kernelTimer.reset();
+		kernelTimer.start();
+		for( int i = 0; i < 5000; i++ )
 		{
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, orParameter );
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, orParameter );
 
-			if( i % 100 == 0 )
-			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
-				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
-				printGaugeQuality<<<1,1>>>(dGff, dA);
-			}
+//			if( i % 100 == 0 )
+//			{
+//				projectSU3<<<numBlocks*2,32>>>( dU );
+//				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
+//				printGaugeQuality<<<1,1>>>(dGff, dA);
+//			}
 		}
+		cudaThreadSynchronize();
+		kernelTimer.stop();
+		cout << "kernel time for timeslice: " << kernelTimer.getTime() << " s"<< endl;
+		totalKernelTime += kernelTimer.getTime();
 		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 
 //		cout << "Polyakov loop: " << polBefore << " - " << calculatePolyakovLoopAverage( U ) << endl;
 	}
 
 	allTimer.stop();
-	cout << "total time: " << allTimer.getTime() << endl;
+	cout << "total time: " << allTimer.getTime() << " s" << endl;
+	cout << "total kernel time: " << totalKernelTime << " s" << endl;
+
+	cout << (double)((long)2253*(long)s.getLatticeSize()*(long)5000)/totalKernelTime/1.0e9 << " GFlops at "
+				<< (double)((long)192*(long)s.getLatticeSize()*(long)(5000)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
+
 }

@@ -15,6 +15,8 @@
 #define CUDA_HOST_DEVICE
 #endif
 
+
+// this is quatsch oder?
 #ifdef __CUDA_ARCH__
 #define CUDA_DEVICE __device__
 #else
