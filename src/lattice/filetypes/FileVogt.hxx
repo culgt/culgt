@@ -17,6 +17,8 @@ public:
 	virtual ~FileVogt();
 	bool loadHeader( std::fstream* file );
 	bool saveHeader( std::fstream* file );
+	bool loadFooter( std::fstream* file );
+	bool saveFooter( std::fstream* file );
 	short ndim;
 	short nc;
 	short latsize[20];
@@ -78,6 +80,16 @@ bool FileVogt::saveHeader( std::fstream* file )
 	file->write( (char*)&lengthOfReal, sizeof(short) ); // length of real
 	std::cout << lengthOfReal << std::endl;
 
+	return true;
+}
+
+bool FileVogt::loadFooter( std::fstream* file )
+{
+	return true;
+}
+
+bool FileVogt::saveFooter( std::fstream* file )
+{
 	return true;
 }
 

@@ -23,6 +23,7 @@
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
 #include "../lattice/filetypes/FileVogt.hxx"
+#include "../util/datatype/lattice_typedefs.h"
 
 using namespace std;
 
@@ -289,7 +290,7 @@ int main(int argc, char* argv[])
 	allTimer.reset();
 
 	SiteCoord<4,true> s(size);
-	LinkFile<FileVogt, void, Standard, Gpu, SiteCoord<4,true> > lf;
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lf;
 
 
 	// allocate Memory
@@ -341,8 +342,8 @@ int main(int argc, char* argv[])
 
 		stringstream filename(stringstream::out);
 //		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-		filename << "/home/vogt/configs/STUDIENARBEIT/N16/config_n16t16beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt.gf";
+		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+//		filename << "/home/vogt/configs/STUDIENARBEIT/N16/config_n16t16beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt.gf";
 
 		bool loadOk = lf.load( s, filename.str(), U );
 

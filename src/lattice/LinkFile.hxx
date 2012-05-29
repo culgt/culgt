@@ -7,7 +7,7 @@
  * The pattern for saving configurations is usually such that matrices are stored in contiguous regions the memory pattern
  * for CUDA is completely different. This template class accepts as arguments the FilePattern, i.e. the array pattern on file side,
  * the MemoryPattern.
- * To allow a high flexibility you can define Header and Footer classes that are called before/after the read of the configuration.
+ * To allow a high flexibility you can define FileType classes that specify header and/or footer that are called before/after the read of the configuration.
  *
  * The intension of this class is to cover all possible File- and MemoryPatterns. This causes some computation overhead which can
  * be avoided by spezializations of this class.
@@ -33,28 +33,28 @@
 #include <iomanip>
 #include "../util/datatype/datatypes.h"
 
-template<class Header, class Footer, class FilePattern, class MemoryPattern, class TheSite> class LinkFile
+template<class FileType, class FilePattern, class MemoryPattern, class TheSite> class LinkFile
 {
 public:
 	LinkFile();
 	virtual ~LinkFile();
 	bool load( TheSite site, std::string filename, Real *U );
 	bool save( TheSite site, std::string filename, Real *U );
-	Header filetype;
+	FileType filetype;
 };
 
-template <class Header, class Footer, class FilePattern, class MemoryPattern, class TheSite> LinkFile<Header, Footer, FilePattern, MemoryPattern, TheSite>::LinkFile()
+template <class FileType, class FilePattern, class MemoryPattern, class TheSite> LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::LinkFile()
 {
 }
 
-template <class Header, class Footer, class FilePattern, class MemoryPattern, class TheSite> LinkFile<Header, Footer, FilePattern, MemoryPattern, TheSite>::~LinkFile()
+template <class FileType, class FilePattern, class MemoryPattern, class TheSite> LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::~LinkFile()
 {
 }
 
 /**
  *
  */
-template <class Header, class Footer, class FilePattern, class MemoryPattern, class TheSite> bool LinkFile<Header, Footer, FilePattern, MemoryPattern, TheSite>::load( TheSite site, std::string filename, Real *U )
+template <class FileType, class FilePattern, class MemoryPattern, class TheSite> bool LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::load( TheSite site, std::string filename, Real *U )
 {
 	// open file
 	std::fstream file;
@@ -108,10 +108,10 @@ template <class Header, class Footer, class FilePattern, class MemoryPattern, cl
 
 
 	// load footer
-//	if( !footer.load( file ) )
-//	{
-//		util::Logger::log( util::ERROR, "Can't read footer");
-//	}
+	if( !filetype.loadFooter( &file ) )
+	{
+		util::Logger::log( util::ERROR, "Can't read footer");
+	}
 
 
 	file.close();
@@ -122,7 +122,7 @@ template <class Header, class Footer, class FilePattern, class MemoryPattern, cl
 /**
  *
  */
-template <class Header, class Footer, class FilePattern, class MemoryPattern, class TheSite> bool LinkFile<Header, Footer, FilePattern, MemoryPattern, TheSite>::save( TheSite site, std::string filename, Real *U )
+template <class FileType, class FilePattern, class MemoryPattern, class TheSite> bool LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::save( TheSite site, std::string filename, Real *U )
 {
 	// open file
 	std::fstream file;
@@ -136,10 +136,9 @@ template <class Header, class Footer, class FilePattern, class MemoryPattern, cl
 	}
 
 	// save header
-
 	if( !filetype.saveHeader( &file ) )
 	{
-		util::Logger::log( util::ERROR, "Can't read header");
+		util::Logger::log( util::ERROR, "Can't write header");
 		return false;
 	}
 
@@ -172,11 +171,11 @@ template <class Header, class Footer, class FilePattern, class MemoryPattern, cl
 	}
 
 
-	// load footer
-//	if( !footer.load( file ) )
-//	{
-//		util::Logger::log( util::ERROR, "Can't read footer");
-//	}
+	// save footer
+	if( !filetype.saveFooter( &file ) )
+	{
+		util::Logger::log( util::ERROR, "Can't read footer");
+	}
 
 
 	file.close();
