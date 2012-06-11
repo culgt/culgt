@@ -22,7 +22,7 @@
 #include "../lattice/LinkFile.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
-#include "../lattice/filetypes/HeaderVogt.hxx"
+#include "../lattice/filetypes/FileVogt.hxx"
 
 using namespace std;
 
@@ -75,22 +75,25 @@ void initNeighbourTable( lat_index_t* nnt )
 	s.calculateNeighbourTable( nnt );
 }
 
-__global__ void printGaugeQuality( Real* dGff, Real* dA )
+__global__ void printGaugeQuality( double* dGff, double* dA )
 {
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
 	SiteCoord<4,true> s(size);
 
-	Real gff = 0;
-	Real temp = 0;
-	for( int i = 0; i < s.getLatticeSize(); i++ )
+	double gff = dGff[0];
+	double y, t;
+	double c = 0;
+	double temp = 0;
+	for( int i = 1; i < s.getLatticeSize(); i++ )
 	{
-		gff+= dGff[i];
+		y = dGff[i] - c;
+		t = gff + y;
+		c = ( t - gff ) - y;
+		gff = t;
 		if( cuFabs(dA[i]) > temp ) temp = cuFabs(dA[i]);
 	}
 
-
 	printf( "gff: %1.10f\t\tdA: %1.10f\n", gff/Real(s.getLatticeSize())/4./3., temp );
-
 
 }
 
@@ -111,7 +114,7 @@ __global__ void projectSU3( Real* U )
 	}
 }
 
-__global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
+__global__ void generateGaugeQuality( Real *U, double *dGff, double *dA )
 {
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
 	SiteCoord<4,true> s(size);
@@ -154,7 +157,7 @@ __global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
 
 	Sum -= SumHerm;
 
-	Real prec = 0;
+	double prec = 0;
 	for( int i = 0; i < 3; i++ )
 	{
 		for( int j = 0; j < 3; j++ )
@@ -167,7 +170,7 @@ __global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
 
 
 	s.setLatticeIndex( site );
-	Real result = 0;
+	double result = 0;
 
 	Matrix<complex,Nc> locTemp;
 	SU3<Matrix<complex,Nc> > temp(locTemp);
@@ -291,7 +294,7 @@ int main(int argc, char* argv[])
 	allTimer.reset();
 
 	SiteCoord<4,true> s(size);
-	LinkFile<HeaderVogt, void, Standard, Gpu, SiteCoord<4,true> > lf;
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lf;
 
 
 	// allocate Memory
@@ -303,10 +306,10 @@ int main(int argc, char* argv[])
 	cudaMalloc( &dU, arraySize*sizeof(Real) );
 
 	// device memory for collecting the parts of the gauge fixing functional and divA
-	Real *dGff;
-	cudaMalloc( &dGff, s.getLatticeSize()*sizeof(Real) );
-	Real *dA;
-	cudaMalloc( &dA, s.getLatticeSize()*sizeof(Real) );
+	double *dGff;
+	cudaMalloc( &dGff, s.getLatticeSize()*sizeof(double) );
+	double *dA;
+	cudaMalloc( &dA, s.getLatticeSize()*sizeof(double) );
 
 	// host memory for the neighbour table
 	lat_index_t* nn = (lat_index_t*)malloc( s.getLatticeSize()*(2*(Ndim))*sizeof(lat_index_t) );
@@ -337,7 +340,7 @@ int main(int argc, char* argv[])
 	{
 
 		stringstream filename(stringstream::out);
-		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+		filename << "/data/msk/config_n32t32beta6105_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
 
 		bool loadOk = lf.load( s, filename.str(), U );
 
@@ -373,8 +376,8 @@ int main(int argc, char* argv[])
 //			if( i % 100 == 0 )
 //			{
 //				projectSU3<<<numBlocks*2,32>>>( dU );
-//				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
-//				printGaugeQuality<<<1,1>>>(dGff, dA);
+				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
+				printGaugeQuality<<<1,1>>>(dGff, dA);
 //			}
 		}
 		cudaThreadSynchronize();
