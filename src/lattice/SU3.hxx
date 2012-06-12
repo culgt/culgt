@@ -56,6 +56,7 @@ public:
 	CUDA_HOST_DEVICE inline void identity();
 	CUDA_HOST_DEVICE inline void zero();
 	CUDA_HOST_DEVICE inline void projectSU3();
+	CUDA_HOST_DEVICE inline void projectSU3withoutThirdRow();
 	CUDA_HOST_DEVICE inline SU3<Type>& hermitian();
 
 	CUDA_HOST_DEVICE inline void reconstructThirdLine();
@@ -438,6 +439,56 @@ template<class Type> void SU3<Type>::projectSU3()
 //	set( 2, 1, get(0,2).conj() * get(1,0).conj() - get(0,0).conj() * get(1,2).conj() );
 //
 //	set( 2, 2, get(0,0).conj() * get(1,1).conj() - get(0,1).conj() * get(1,0).conj() );
+}
+
+/**
+ * Project back to SU3. Needed because of numerical inaccuracy.
+ * Does not touch third row. TODO: We have to find a way to do this implicit.
+ *
+ * Technique:
+ * - Normalize fist row
+ * - Orthogonalize second row with respect to the first row.
+ * - Normalize second row
+ * - Reconstruct the third row from the first two rows (cross-product).
+ */
+template<class Type> void SU3<Type>::projectSU3withoutThirdRow()
+{
+	Real abs_u = 0, abs_v = 0;
+	Complex<Real> sp(0.,0.);
+
+	// normalize first row
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		abs_u += get( 0, i ).abs_squared();
+	}
+
+	abs_u = sqrt(abs_u);
+
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		set( 0, i, get(0,i)/abs_u );
+	}
+
+	// orthogonalize second row
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		sp += get( 1,i ) * get( 0, i ).conj();
+	}
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		set( 1, i, get(1,i) - get( 0, i)*sp );
+	}
+
+	// normalize second row
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		abs_v += get( 1, i ).abs_squared();
+	}
+	abs_v = sqrt(abs_v);
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+	{
+		set( 1, i, get(1,i)/abs_v );
+	}
 }
 
 /**

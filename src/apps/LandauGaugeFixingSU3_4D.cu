@@ -230,6 +230,9 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 	// do the subgroup iteration
 	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
 
+	// project back
+	globU.projectSU3withoutThirdRow();
+
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
 }
@@ -340,7 +343,9 @@ int main(int argc, char* argv[])
 	{
 
 		stringstream filename(stringstream::out);
-		filename << "/data/msk/config_n32t32beta6105_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+//		filename << "/data/msk/config_n32t32beta6105_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+
 
 		bool loadOk = lf.load( s, filename.str(), U );
 
@@ -376,13 +381,13 @@ int main(int argc, char* argv[])
 //			if( i % 100 == 0 )
 //			{
 //				projectSU3<<<numBlocks*2,32>>>( dU );
-				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
-				printGaugeQuality<<<1,1>>>(dGff, dA);
+//				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
+//				printGaugeQuality<<<1,1>>>(dGff, dA);
 //			}
 		}
 		cudaThreadSynchronize();
 		kernelTimer.stop();
-		cout << "kernel time for timeslice: " << kernelTimer.getTime() << " s"<< endl;
+		cout << "kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
 		totalKernelTime += kernelTimer.getTime();
 		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 

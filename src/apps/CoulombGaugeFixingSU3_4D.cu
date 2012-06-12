@@ -91,7 +91,7 @@ __global__ void printGaugeQuality( Real* dGff, Real* dA )
 		if( cuFabs(dA[i]) > temp ) temp = cuFabs(dA[i]);
 	}
 
-	printf( "gff: %1.10f\t\tdA: %1.10f\n", gff/Real(s.getLatticeSize())/3./3., temp );
+	printf( "gff: %E\t\tdA: %E\n", gff/Real(s.getLatticeSize())/3./3., temp );
 
 }
 
@@ -377,18 +377,19 @@ int main(int argc, char* argv[])
 			Chronotimer kernelTimer;
 			kernelTimer.reset();
 			kernelTimer.start();
-			for( int i = 0; i < 5000; i++ )
+			for( int i = 0; i < 15000; i++ )
 			{
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, orParameter );
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, orParameter );
 
-//				if( i % 100 == 0 )
-//				{
-//					projectSU3<<<numBlocks*2,32>>>( dUtUp );
-//					projectSU3<<<numBlocks*2,32>>>( dUtDw );
-//					generateGaugeQuality<<<numBlocks*2,32>>>(dUtUp, dGff, dA );
-//					printGaugeQuality<<<1,1>>>(dGff, dA);
-//				}
+				if( i % 100 == 0 )
+				{
+					projectSU3<<<numBlocks*2,32>>>( dUtUp );
+					projectSU3<<<numBlocks*2,32>>>( dUtDw );
+					generateGaugeQuality<<<numBlocks*2,32>>>(dUtUp, dGff, dA );
+					printGaugeQuality<<<1,1>>>(dGff, dA);
+					cout << "time: " << kernelTimer.getTime() << " s"<< endl;
+				}
 			}
 			cudaThreadSynchronize();
 			kernelTimer.stop();
