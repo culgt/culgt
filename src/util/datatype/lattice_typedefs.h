@@ -23,4 +23,7 @@ typedef int lat_index_t;
 // type for index of the global link array
 typedef int lat_array_index_t;
 
+// type for the kind of gauge, i.e. Landau, Coulomb, ...
+enum GaugeType {LANDAU, COULOMB};
+
 #endif /* LATTICE_TYPEDEFS_H_ */
