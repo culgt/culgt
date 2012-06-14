@@ -10,6 +10,7 @@
 #include <sstream>
 #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
@@ -22,6 +23,7 @@
 #include "../lattice/LinkFile.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
+#include "../lattice/filetypes/FileMDP.hxx"
 #include "../lattice/filetypes/FileVogt.hxx"
 
 using namespace std;
@@ -75,27 +77,6 @@ void initNeighbourTable( lat_index_t* nnt )
 	s.calculateNeighbourTable( nnt );
 }
 
-__global__ void printGaugeQuality( double* dGff, double* dA )
-{
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteCoord<4,true> s(size);
-
-	double gff = dGff[0];
-	double y, t;
-	double c = 0;
-	double temp = 0;
-	for( int i = 1; i < s.getLatticeSize(); i++ )
-	{
-		y = dGff[i] - c;
-		t = gff + y;
-		c = ( t - gff ) - y;
-		gff = t;
-		if( cuFabs(dA[i]) > temp ) temp = cuFabs(dA[i]);
-	}
-
-	printf( "gff: %1.10f\t\tdA: %1.10f\n", gff/Real(s.getLatticeSize())/4./3., temp );
-
-}
 
 __global__ void projectSU3( Real* U )
 {
@@ -113,79 +94,6 @@ __global__ void projectSU3( Real* U )
 		globUp.projectSU3();
 	}
 }
-
-__global__ void generateGaugeQuality( Real *U, double *dGff, double *dA )
-{
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteCoord<4,true> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	Matrix<complex,Nc> locMatSum;
-	SU3<Matrix<complex,Nc> > Sum(locMatSum);
-
-	Sum.zero();
-
-	// TODO check if there is a faster way to compute DELTA
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		s.setLatticeIndex( site );
-
-		Matrix<complex,Nc> locMat;
-		SU3<Matrix<complex,Nc> > temp(locMat);
-
-		TLink linkUp( U, s, mu );
-		SU3<TLink> globUp( linkUp );
-
-		temp.assignWithoutThirdLine( globUp );
-		temp.reconstructThirdLine();
-		Sum += temp;
-
-		s.setNeighbour(mu,-1);
-		TLink linkDw( U, s, mu );
-		SU3<TLink> globDw( linkDw );
-		temp.assignWithoutThirdLine( globDw );
-		temp.reconstructThirdLine();
-		Sum -= temp;
-	}
-
-	Sum -= Sum.trace()/Real(3.);
-
-	Matrix<complex,Nc> locMatSumHerm;
-	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
-	SumHerm = Sum;
-	SumHerm.hermitian();
-
-	Sum -= SumHerm;
-
-	double prec = 0;
-	for( int i = 0; i < 3; i++ )
-	{
-		for( int j = 0; j < 3; j++ )
-		{
-			prec += Sum.get(i,j).abs_squared();
-		}
-	}
-
-	dA[site] = prec;
-
-
-	s.setLatticeIndex( site );
-	double result = 0;
-
-	Matrix<complex,Nc> locTemp;
-	SU3<Matrix<complex,Nc> > temp(locTemp);
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		TLink linkUp( U, s, mu );
-		SU3<TLink> globUp( linkUp );
-		temp.assignWithoutThirdLine( globUp );
-		temp.reconstructThirdLine();
-		result += temp.trace().x;
-	}
-
-	dGff[site] = result;
-}
-
 
 
 __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter )
@@ -231,7 +139,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
 
 	// project back
-	globU.projectSU3withoutThirdRow();
+	//globU.projectSU3withoutThirdRow();
 
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
@@ -297,7 +205,7 @@ int main(int argc, char* argv[])
 	allTimer.reset();
 
 	SiteCoord<4,true> s(size);
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lf;
+	LinkFile<FileMDP, Standard, Gpu, SiteCoord<4,true> > lf;
 
 
 	// allocate Memory
@@ -307,12 +215,6 @@ int main(int argc, char* argv[])
 	// device memory for configuration
 	Real* dU;
 	cudaMalloc( &dU, arraySize*sizeof(Real) );
-
-	// device memory for collecting the parts of the gauge fixing functional and divA
-	double *dGff;
-	cudaMalloc( &dGff, s.getLatticeSize()*sizeof(double) );
-	double *dA;
-	cudaMalloc( &dA, s.getLatticeSize()*sizeof(double) );
 
 	// host memory for the neighbour table
 	lat_index_t* nn = (lat_index_t*)malloc( s.getLatticeSize()*(2*(Ndim))*sizeof(lat_index_t) );
@@ -334,17 +236,19 @@ int main(int argc, char* argv[])
 	allTimer.start();
 
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
+	
+	// instantiate GaugeFixingStats object
+	GaugeFixingStats gaugeStats( dU, LANDAU, s.getLatticeSize(), 1.0e-6 );
 
 
 	double totalKernelTime = 0;
-
 
 	for( int i = 0; i < 1; i++ )
 	{
 
 		stringstream filename(stringstream::out);
-//		filename << "/data/msk/config_n32t32beta6105_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+		filename << "/data/msk/config_n32t32beta6105_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
 
 
 		bool loadOk = lf.load( s, filename.str(), U );
@@ -363,10 +267,9 @@ int main(int argc, char* argv[])
 		// copying configuration t ...
 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
-		// calculate and print the gauge quality
-		generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
-		printGaugeQuality<<<1,1>>>(dGff, dA);
-
+		// check the current gauge quality
+		gaugeStats.generateGaugeQuality();
+		printf( "gff: %1.10f\t\tdA: %1.10f\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
 		float orParameter = 1.7;
 
@@ -381,8 +284,11 @@ int main(int argc, char* argv[])
 //			if( i % 100 == 0 )
 //			{
 //				projectSU3<<<numBlocks*2,32>>>( dU );
-//				generateGaugeQuality<<<numBlocks*2,32>>>(dU, dGff, dA );
-//				printGaugeQuality<<<1,1>>>(dGff, dA);
+		// check the current gauge quality
+			gaugeStats.generateGaugeQuality();
+			printf( "gff: %1.10f\t\tdA: %e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+
+
 //			}
 		}
 		cudaThreadSynchronize();

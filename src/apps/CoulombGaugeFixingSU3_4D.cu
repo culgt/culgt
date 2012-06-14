@@ -342,7 +342,7 @@ int main(int argc, char* argv[])
 
 		stringstream filename(stringstream::out);
 //		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+		filename << "/data/msk/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
 //		filename << "/home/vogt/configs/STUDIENARBEIT/N16/config_n16t16beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt.gf";
 
 		bool loadOk = lf.load( s, filename.str(), U );
@@ -357,7 +357,7 @@ int main(int argc, char* argv[])
 			cout << "File loaded." << endl;
 		}
 
-		for( int t = 0; t < s.size[0]; t++ )
+		for( int t = 0; t < 1; t++ )//s.size[0]; t++ )
 		{
 			int tDw = (t > 0)?(t-1):(s.size[0]-1); // calculating t-1 (periodic boundaries)
 
@@ -418,7 +418,7 @@ int main(int argc, char* argv[])
 	allTimer.stop();
 	cout << "total time: " << allTimer.getTime() << " s" << endl;
 	cout << "total kernel time: " << totalKernelTime << " s" << endl;
-	cout << (double)((long)2253*(long)s.getLatticeSize()*(long)5000)/totalKernelTime/1.0e9 << " GFlops at "
+	cout << (double)((long)2205*(long)s.getLatticeSize()*(long)5000)/totalKernelTime/1.0e9 << " GFlops at "
 			<< (double)((long)192*(long)s.getLatticeSize()*(long)(5000)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
 
