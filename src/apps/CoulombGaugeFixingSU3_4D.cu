@@ -10,6 +10,7 @@
 #include <sstream>
 #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
@@ -86,6 +87,7 @@ FileType fileType;
 
 // lattice setup
 const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+__constant__ lat_coord_t dSize[Ndim] = {Nt,Nx,Ny,Nz};
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
@@ -110,22 +112,22 @@ __device__ inline Real cuFabs( Real a )
 	return (a>0)?(a):(-a);
 }
 
-__global__ void printGaugeQuality( Real* dGff, Real* dA )
-{
-	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
-	SiteCoord<3,true> s(size);
-
-	Real gff = 0;
-	Real temp = 0;
-	for( int i = 0; i < s.getLatticeSize(); i++ )
-	{
-		gff+= dGff[i];
-		if( cuFabs(dA[i]) > temp ) temp = cuFabs(dA[i]);
-	}
-
-	printf( "gff: %E\t\tdA: %E\n", gff/Real(s.getLatticeSize())/3./3., temp );
-
-}
+//__global__ void printGaugeQuality( Real* dGff, Real* dA )
+//{
+//	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
+//	SiteCoord<3,true> s(size);
+//
+//	Real gff = 0;
+//	Real temp = 0;
+//	for( int i = 0; i < s.getLatticeSize(); i++ )
+//	{
+//		gff+= dGff[i];
+//		if( cuFabs(dA[i]) > temp ) temp = cuFabs(dA[i]);
+//	}
+//
+//	printf( "gff: %E\t\tdA: %E\n", gff/Real(s.getLatticeSize())/3./3., temp );
+//
+//}
 
 __global__ void projectSU3( Real* U )
 {
@@ -144,78 +146,78 @@ __global__ void projectSU3( Real* U )
 	}
 }
 
-__global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
-{
-	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
-	SiteCoord<3,true> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	Matrix<complex,Nc> locMatSum;
-	SU3<Matrix<complex,Nc> > Sum(locMatSum);
-
-	Sum.zero();
-
-	// TODO check if there is a faster way to compute DELTA
-	for( int mu = 1; mu < 4; mu++ )
-	{
-		s.setLatticeIndex( site );
-
-		Matrix<complex,Nc> locMat;
-		SU3<Matrix<complex,Nc> > temp(locMat);
-
-		TLink3 linkUp( U, s, mu );
-		SU3<TLink3> globUp( linkUp );
-
-		temp.assignWithoutThirdLine( globUp );
-		temp.reconstructThirdLine();
-		Sum += temp;
-
-		s.setNeighbour(mu-1,-1);
-		TLink3 linkDw( U, s, mu );
-		SU3<TLink3> globDw( linkDw );
-		temp.assignWithoutThirdLine( globDw );
-		temp.reconstructThirdLine();
-		Sum -= temp;
-	}
-
-	Sum -= Sum.trace()/Real(3.);
-
-	Matrix<complex,Nc> locMatSumHerm;
-	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
-	SumHerm = Sum;
-	SumHerm.hermitian();
-
-	Sum -= SumHerm;
-
-	Real prec = 0;
-	for( int i = 0; i < 3; i++ )
-	{
-		for( int j = 0; j < 3; j++ )
-		{
-			prec += Sum.get(i,j).abs_squared();
-		}
-	}
-
-	dA[site] = prec;
-
-
-	s.setLatticeIndex( site );
-	Real result = 0;
-
-
-	Matrix<complex,Nc> locTemp;
-	SU3<Matrix<complex,Nc> > temp(locTemp);
-	for( int mu = 1; mu < 4; mu++ )
-	{
-		TLink3 linkUp( U, s, mu );
-		SU3<TLink3> globUp( linkUp );
-		temp.assignWithoutThirdLine( globUp ); // TODO don't load twice
-		temp.reconstructThirdLine();
-		result += temp.trace().x;
-	}
-
-	dGff[site] = result;
-}
+//__global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
+//{
+//	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
+//	SiteCoord<3,true> s(size);
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	Matrix<complex,Nc> locMatSum;
+//	SU3<Matrix<complex,Nc> > Sum(locMatSum);
+//
+//	Sum.zero();
+//
+//	// TODO check if there is a faster way to compute DELTA
+//	for( int mu = 1; mu < 4; mu++ )
+//	{
+//		s.setLatticeIndex( site );
+//
+//		Matrix<complex,Nc> locMat;
+//		SU3<Matrix<complex,Nc> > temp(locMat);
+//
+//		TLink3 linkUp( U, s, mu );
+//		SU3<TLink3> globUp( linkUp );
+//
+//		temp.assignWithoutThirdLine( globUp );
+//		temp.reconstructThirdLine();
+//		Sum += temp;
+//
+//		s.setNeighbour(mu-1,-1);
+//		TLink3 linkDw( U, s, mu );
+//		SU3<TLink3> globDw( linkDw );
+//		temp.assignWithoutThirdLine( globDw );
+//		temp.reconstructThirdLine();
+//		Sum -= temp;
+//	}
+//
+//	Sum -= Sum.trace()/Real(3.);
+//
+//	Matrix<complex,Nc> locMatSumHerm;
+//	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
+//	SumHerm = Sum;
+//	SumHerm.hermitian();
+//
+//	Sum -= SumHerm;
+//
+//	Real prec = 0;
+//	for( int i = 0; i < 3; i++ )
+//	{
+//		for( int j = 0; j < 3; j++ )
+//		{
+//			prec += Sum.get(i,j).abs_squared();
+//		}
+//	}
+//
+//	dA[site] = prec;
+//
+//
+//	s.setLatticeIndex( site );
+//	Real result = 0;
+//
+//
+//	Matrix<complex,Nc> locTemp;
+//	SU3<Matrix<complex,Nc> > temp(locTemp);
+//	for( int mu = 1; mu < 4; mu++ )
+//	{
+//		TLink3 linkUp( U, s, mu );
+//		SU3<TLink3> globUp( linkUp );
+//		temp.assignWithoutThirdLine( globUp ); // TODO don't load twice
+//		temp.reconstructThirdLine();
+//		result += temp.trace().x;
+//	}
+//
+//	dGff[site] = result;
+//}
 
 
 
@@ -411,8 +413,9 @@ int main(int argc, char* argv[])
 
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
 
-//	uint kernelTimer;
-//	cutCreateTimer( &kernelTimer );
+	lat_coord_t *pointerToSize;
+	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
+	GaugeFixingStats<Ndim,Nc,COULOMB> gaugeStats( dUtUp, COULOMB, s.getLatticeSizeTimeslice(), 1.0e-6, pointerToSize );
 
 	double totalKernelTime = 0;
 	long totalStepNumber = 0;
@@ -465,8 +468,8 @@ int main(int argc, char* argv[])
 			// TODO it is not necessary to copy the (t-1) again for t>0, simply swap pointers on device side...
 
 			// calculate and print the gauge quality
-			generateGaugeQuality<<<numBlocks*2,32>>>(dUtUp, dGff, dA );
-			printGaugeQuality<<<1,1>>>(dGff, dA);
+			gaugeStats.generateGaugeQuality();
+			printf( "gff: %1.10f\t\tdA: %e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
 
 			float orParameter = 1.7;
@@ -481,11 +484,13 @@ int main(int argc, char* argv[])
 
 				if( i % 100 == 0 )
 				{
-					projectSU3<<<numBlocks*2,32>>>( dUtUp );
-					projectSU3<<<numBlocks*2,32>>>( dUtDw );
-					generateGaugeQuality<<<numBlocks*2,32>>>(dUtUp, dGff, dA );
-					printGaugeQuality<<<1,1>>>(dGff, dA);
-//					cout << "time: " << kernelTimer.getTime() << " s"<< endl;
+//					projectSU3<<<numBlocks*2,32>>>( dUtUp );
+//					projectSU3<<<numBlocks*2,32>>>( dUtDw );
+
+					gaugeStats.generateGaugeQuality();
+					printf( "gff: %1.10f\t\tdA: %e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+
+					if( gaugeStats.getCurrentA() < orPrecision ) break;
 				}
 
 				totalStepNumber++;

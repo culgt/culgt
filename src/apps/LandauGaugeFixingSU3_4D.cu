@@ -86,6 +86,7 @@ FileType fileType;
 
 // lattice setup
 const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+__constant__ lat_coord_t dSize[Ndim] = {Nt,Nx,Ny,Nz};
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
@@ -323,7 +324,9 @@ int main(int argc, char* argv[])
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
 	
 	// instantiate GaugeFixingStats object
-	GaugeFixingStats gaugeStats( dU, LANDAU, s.getLatticeSize(), 1.0e-6 );
+	lat_coord_t *pointerToSize;
+	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
+	GaugeFixingStats<Ndim,Nc,LANDAU> gaugeStats( dU, LANDAU, s.getLatticeSize(), 1.0e-6, pointerToSize );
 
 
 	double totalKernelTime = 0;
