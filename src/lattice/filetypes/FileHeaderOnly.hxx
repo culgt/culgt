@@ -1,5 +1,5 @@
 /*
- * FileMDP.hxx
+ * FileHeaderOnly.hxx
  * 
  * Class to read configurations in a "generic form" of the mdp-format,
  * i.e., the same data ordering as in the mdp-format is expected
@@ -10,19 +10,19 @@
  *      Author: schroeck
  */
 
-#ifndef FILEMDP_HXX_
-#define FILEMDP_HXX_
+#ifndef FILEHEADERONLY_HXX_
+#define FILEHEADERONLY_HXX_
 
 #include <iostream>
 #include <fstream>
 
 using namespace std;
 
-class FileMDP
+class FileHeaderOnly
 {
 public:
-	FileMDP();
-	virtual ~FileMDP();
+	FileHeaderOnly();
+	virtual ~FileHeaderOnly();
 	bool loadHeader( std::fstream* file );
 	bool saveHeader( std::fstream* file );
 	bool loadFooter( std::fstream* file );
@@ -39,7 +39,7 @@ private:
 };
 
 
-FileMDP::FileMDP()
+FileHeaderOnly::FileHeaderOnly()
 {
 	//TODO get the lattice constants from main
 	const lat_dim_t Ndim = 4;
@@ -71,12 +71,12 @@ FileMDP::FileMDP()
 	arraySize=Ndim*Nc*Nc*2*Nx*Ny*Nz*Nt*sizeof(Real);
 }
 
-FileMDP::~FileMDP()
+FileHeaderOnly::~FileHeaderOnly()
 {
 }
 
 
-bool FileMDP::loadHeader( std::fstream* file )
+bool FileHeaderOnly::loadHeader( std::fstream* file )
 {
 	//what's the offset (the header length)?
 	file->seekg(0, ios::end);
@@ -99,7 +99,7 @@ bool FileMDP::loadHeader( std::fstream* file )
 }
 
 
-bool FileMDP::saveHeader( std::fstream* file )
+bool FileHeaderOnly::saveHeader( std::fstream* file )
 {
 	file->write(header,offset);
 	
@@ -109,12 +109,12 @@ bool FileMDP::saveHeader( std::fstream* file )
 		return true;
 }
 
-bool FileMDP::loadFooter( std::fstream* file )
+bool FileHeaderOnly::loadFooter( std::fstream* file )
 {
 	return true;
 }
 
-bool FileMDP::saveFooter( std::fstream* file )
+bool FileHeaderOnly::saveFooter( std::fstream* file )
 {
 	return true;
 }

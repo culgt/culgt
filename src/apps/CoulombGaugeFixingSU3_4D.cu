@@ -23,7 +23,14 @@
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
 #include "../lattice/filetypes/FileVogt.hxx"
+#include "../lattice/filetypes/FilePlain.hxx"
+#include "../lattice/filetypes/FileHeaderOnly.hxx"
+#include "../lattice/filetypes/filetype_typedefs.h"
 #include "../util/datatype/lattice_typedefs.h"
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/options_description.hpp>
+
 
 using namespace std;
 
@@ -53,6 +60,31 @@ const lat_coord_t Nt = _T_;
 #error "Define T (the lattice size in t-direction)"
 #endif
 
+
+// boost program options setup
+boost::program_options::variables_map options_vm;
+boost::program_options::options_description options_desc("Allowed options");
+
+// parameters from command line or config file
+int nconf;
+long seed; // TODO check datatype
+int orMaxIter;
+float orParameter;
+float orPrecision;
+int saSteps;
+float saMin;
+float saMax;
+int gaugeCopies;
+string fileEnding;
+string fileBasename;
+int fileStartnumber;
+int fileNumberformat;
+string configFile;
+bool noRandomTrafo;
+FileType fileType;
+
+
+// lattice setup
 const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
@@ -280,6 +312,49 @@ Real calculatePolyakovLoopAverage( Real *U )
 
 int main(int argc, char* argv[])
 {
+	// read parameters (command line or given config file)
+	options_desc.add_options()
+		("help", "produce help message")
+		("nconf,m", boost::program_options::value<int>(&nconf)->default_value(1), "how many files to gaugefix")
+		("ormaxiter", boost::program_options::value<int>(&orMaxIter)->default_value(1000), "Max. number of OR iterations")
+		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
+		("sasteps", boost::program_options::value<int>(&saSteps)->default_value(1000), "number of SA steps")
+		("samin", boost::program_options::value<float>(&saMin)->default_value(.01), "min. SA temperature")
+		("samax", boost::program_options::value<float>(&saMax)->default_value(.4), "max. SA temperature")
+		("orparameter", boost::program_options::value<float>(&orParameter)->default_value(1.7), "OR parameter")
+		("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
+		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
+		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
+		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
+		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
+		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
+		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
+		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
+
+		("norandomtrafo", boost::program_options::value<bool>(&noRandomTrafo)->default_value(false), "no random gauge trafo" )
+		;
+
+	boost::program_options::positional_options_description options_p;
+	options_p.add("config-file", -1);
+
+	boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
+			options(options_desc).positional(options_p).run(), options_vm);
+	boost::program_options::notify(options_vm);
+
+	ifstream cfg( configFile.c_str() );
+	boost::program_options::store(boost::program_options::parse_config_file( cfg, options_desc), options_vm);
+	boost::program_options::notify(options_vm);
+
+	if (options_vm.count("help")) {
+		cout << "Usage: " << argv[0] << " [options] [config-file]" << endl;
+		cout << options_desc << "\n";
+		return 1;
+	}
+
+
+
+
+
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties(&deviceProp, 0);
 
@@ -290,7 +365,11 @@ int main(int argc, char* argv[])
 	allTimer.reset();
 
 	SiteCoord<4,true> s(size);
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lf;
+
+	// TODO maybe we should choose the filetype on compile time
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
 
 
 	// allocate Memory
@@ -336,16 +415,34 @@ int main(int argc, char* argv[])
 //	cutCreateTimer( &kernelTimer );
 
 	double totalKernelTime = 0;
+	long totalStepNumber = 0;
 
-	for( int i = 0; i < 1; i++ )
+
+	for( int i = fileStartnumber; i < fileStartnumber+nconf; i++ )
 	{
 
 		stringstream filename(stringstream::out);
-//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-		filename << "/data/msk/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-//		filename << "/home/vogt/configs/STUDIENARBEIT/N16/config_n16t16beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt.gf";
+		filename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << fileEnding;
+//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+		cout << "loading " << filename.str() << " as " << fileType << endl;
 
-		bool loadOk = lf.load( s, filename.str(), U );
+		bool loadOk;
+
+		switch( fileType )
+		{
+		case VOGT:
+			loadOk = lfVogt.load( s, filename.str(), U );
+			break;
+		case PLAIN:
+			loadOk = lfPlain.load( s, filename.str(), U );
+			break;
+		case HEADERONLY:
+			loadOk = lfHeaderOnly.load( s, filename.str(), U );
+			break;
+		default:
+			cout << "Filetype not set to a known value. Exiting";
+			exit(1);
+		}
 
 		if( !loadOk )
 		{
@@ -357,7 +454,7 @@ int main(int argc, char* argv[])
 			cout << "File loaded." << endl;
 		}
 
-		for( int t = 0; t < 1; t++ )//s.size[0]; t++ )
+		for( int t = 0; t < s.size[0]; t++ )
 		{
 			int tDw = (t > 0)?(t-1):(s.size[0]-1); // calculating t-1 (periodic boundaries)
 
@@ -377,7 +474,7 @@ int main(int argc, char* argv[])
 			Chronotimer kernelTimer;
 			kernelTimer.reset();
 			kernelTimer.start();
-			for( int i = 0; i < 15000; i++ )
+			for( int i = 0; i < orMaxIter; i++ )
 			{
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, orParameter );
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, orParameter );
@@ -388,8 +485,10 @@ int main(int argc, char* argv[])
 					projectSU3<<<numBlocks*2,32>>>( dUtDw );
 					generateGaugeQuality<<<numBlocks*2,32>>>(dUtUp, dGff, dA );
 					printGaugeQuality<<<1,1>>>(dGff, dA);
-					cout << "time: " << kernelTimer.getTime() << " s"<< endl;
+//					cout << "time: " << kernelTimer.getTime() << " s"<< endl;
 				}
+
+				totalStepNumber++;
 			}
 			cudaThreadSynchronize();
 			kernelTimer.stop();
@@ -401,25 +500,25 @@ int main(int argc, char* argv[])
 		}
 
 
-		filename << ".gf";
-		bool saveOk = lf.save( s, filename.str(), U );
-		if( !saveOk )
-		{
-			cout << "Error while writing." << endl;
-			break;
-		}
-		else
-		{
-			cout << "File written." << endl;
-		}
+//		filename << ".gf";
+//		bool saveOk = lf.save( s, filename.str(), U );
+//		if( !saveOk )
+//		{
+//			cout << "Error while writing." << endl;
+//			break;
+//		}
+//		else
+//		{
+//			cout << "File written." << endl;
+//		}
 
 	}
 
 	allTimer.stop();
 	cout << "total time: " << allTimer.getTime() << " s" << endl;
 	cout << "total kernel time: " << totalKernelTime << " s" << endl;
-	cout << (double)((long)2205*(long)s.getLatticeSize()*(long)5000)/totalKernelTime/1.0e9 << " GFlops at "
-			<< (double)((long)192*(long)s.getLatticeSize()*(long)(5000)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
+	cout << (double)((long)2205*(long)s.getLatticeSize()*(long)totalStepNumber)/totalKernelTime/1.0e9/(double)s.size[0] << " GFlops at "
+			<< (double)((long)192*(long)s.getLatticeSize()*(long)(totalStepNumber)*(long)sizeof(Real))/totalKernelTime/1.0e9/(double)s.size[0] << "GB/s memory throughput." << endl;
 
 
 }
