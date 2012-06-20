@@ -69,6 +69,7 @@ boost::program_options::options_description options_desc("Allowed options");
 int nconf;
 long seed; // TODO check datatype
 int orMaxIter;
+int orCheckPrec;
 float orParameter;
 float orPrecision;
 int saSteps;
@@ -237,6 +238,7 @@ int main(int argc, char* argv[])
 		("samax", boost::program_options::value<float>(&saMax)->default_value(.4), "max. SA temperature")
 		("orparameter", boost::program_options::value<float>(&orParameter)->default_value(1.7), "OR parameter")
 		("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
+		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "How often to check the gauge precision")
 		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
 		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
 		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
@@ -277,9 +279,9 @@ int main(int argc, char* argv[])
 
 
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, 0);
+	cudaGetDeviceProperties(&deviceProp, 1);
 
-	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
+	printf("\nDevice %d: \"%s\"\n", 1, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 	Chronotimer allTimer;
@@ -373,9 +375,9 @@ int main(int argc, char* argv[])
 		// copying configuration ...
 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
-		// check the current gauge quality
+		// calculate and print the gauge quality
+		printf( "i:\t\tgff:\t\tdA:\n");
 		gaugeStats.generateGaugeQuality();
-		printf( "gff: %1.10f\t\tdA: %1.10f\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
 		Chronotimer kernelTimer;
 		kernelTimer.reset();
@@ -385,12 +387,12 @@ int main(int argc, char* argv[])
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, orParameter );
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, orParameter );
 
-			if( i % 100 == 0 )
+			if( i % orCheckPrec == 0 )
 			{
 //				projectSU3<<<numBlocks*2,32>>>( dU );
 		// check the current gauge quality
 			gaugeStats.generateGaugeQuality();
-			printf( "gff: %1.10f\t\tdA: %e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+			printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
 			if( gaugeStats.getCurrentA() < orPrecision ) break;
 			}

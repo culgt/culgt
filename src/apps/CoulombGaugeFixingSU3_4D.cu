@@ -23,6 +23,7 @@
 #include "../lattice/LinkFile.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
+#include "../lattice/filetypes/FileMDP.hxx"
 #include "../lattice/filetypes/FileVogt.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
 #include "../lattice/filetypes/FileHeaderOnly.hxx"
@@ -70,6 +71,7 @@ boost::program_options::options_description options_desc("Allowed options");
 int nconf;
 long seed; // TODO check datatype
 int orMaxIter;
+int orCheckPrec;
 float orParameter;
 float orPrecision;
 int saSteps;
@@ -325,6 +327,7 @@ int main(int argc, char* argv[])
 		("samax", boost::program_options::value<float>(&saMax)->default_value(.4), "max. SA temperature")
 		("orparameter", boost::program_options::value<float>(&orParameter)->default_value(1.7), "OR parameter")
 		("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
+		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
 		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
 		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
 		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
@@ -358,9 +361,9 @@ int main(int argc, char* argv[])
 
 
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, 0);
+	cudaGetDeviceProperties(&deviceProp, 1);
 
-	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
+	printf("\nDevice %d: \"%s\"\n", 1, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 	Chronotimer allTimer;
@@ -428,6 +431,8 @@ int main(int argc, char* argv[])
 		filename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << fileEnding;
 //		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
 		cout << "loading " << filename.str() << " as " << fileType << endl;
+		
+		cout << filename.str() << endl;
 
 		bool loadOk;
 
@@ -468,8 +473,8 @@ int main(int argc, char* argv[])
 			// TODO it is not necessary to copy the (t-1) again for t>0, simply swap pointers on device side...
 
 			// calculate and print the gauge quality
+			printf( "i:\t\tgff:\t\tdA:\n");
 			gaugeStats.generateGaugeQuality();
-			printf( "gff: %1.10f\t\tdA: %e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
 
 			float orParameter = 1.7;
@@ -482,13 +487,13 @@ int main(int argc, char* argv[])
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, orParameter );
 				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, orParameter );
 
-				if( i % 100 == 0 )
+				if( i % orCheckPrec == 0 )
 				{
 //					projectSU3<<<numBlocks*2,32>>>( dUtUp );
 //					projectSU3<<<numBlocks*2,32>>>( dUtDw );
 
 					gaugeStats.generateGaugeQuality();
-					printf( "gff: %1.10f\t\tdA: %e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
 					if( gaugeStats.getCurrentA() < orPrecision ) break;
 				}
