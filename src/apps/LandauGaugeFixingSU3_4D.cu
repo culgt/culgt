@@ -326,9 +326,9 @@ int main(int argc, char* argv[])
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
 	
 	// instantiate GaugeFixingStats object
-	lat_coord_t *pointerToSize;
-	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,LANDAU> gaugeStats( dU, LANDAU, s.getLatticeSize(), 1.0e-6, pointerToSize );
+	lat_coord_t *devicePointerToSize;
+	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
+	GaugeFixingStats<Ndim,Nc,LANDAU> gaugeStats( dU, &size[0], devicePointerToSize );
 
 
 	double totalKernelTime = 0;

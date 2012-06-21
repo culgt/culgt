@@ -23,7 +23,6 @@
 #include "../lattice/LinkFile.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
-#include "../lattice/filetypes/FileMDP.hxx"
 #include "../lattice/filetypes/FileVogt.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
 #include "../lattice/filetypes/FileHeaderOnly.hxx"
@@ -361,9 +360,9 @@ int main(int argc, char* argv[])
 
 
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, 1);
+	cudaGetDeviceProperties(&deviceProp, 0);
 
-	printf("\nDevice %d: \"%s\"\n", 1, deviceProp.name);
+	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 	Chronotimer allTimer;
@@ -418,7 +417,7 @@ int main(int argc, char* argv[])
 
 	lat_coord_t *pointerToSize;
 	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,COULOMB> gaugeStats( dUtUp, COULOMB, s.getLatticeSizeTimeslice(), 1.0e-6, pointerToSize );
+	GaugeFixingStats<Ndim-1,Nc,COULOMB> gaugeStats( dUtUp, &size[1], pointerToSize );
 
 	double totalKernelTime = 0;
 	long totalStepNumber = 0;
