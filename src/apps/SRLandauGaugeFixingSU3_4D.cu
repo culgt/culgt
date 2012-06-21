@@ -11,7 +11,7 @@
 #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
+#include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
 #include "../lattice/access_pattern/GpuLandauPattern.hxx"
@@ -165,8 +165,8 @@ __global__ void __launch_bounds__(256,2) orStep( Real* U, lat_index_t* nn, bool 
 	locU.reconstructThirdLine();
 
 	// define the update algorithm
-	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
+	SrUpdate overrelax( orParameter );
+	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, SrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
 
 	// do the subgroup iteration
 	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
@@ -279,9 +279,9 @@ int main(int argc, char* argv[])
 
 
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, 0);
+	cudaGetDeviceProperties(&deviceProp, 1);
 
-	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
+	printf("\nDevice %d: \"%s\"\n", 1, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 	Chronotimer allTimer;
