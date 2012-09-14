@@ -9,4 +9,4 @@ MAG:
 	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc MAGaugeFixingSU3_4D.cu -use_fast_math -o MAG -D_T_=64 -D_X_=20 -lboost_program_options
 
 clean:
-	rm coulomb landau MAG
+	rm coulomb landau SRlandau MAG
