@@ -68,7 +68,12 @@ FileHeaderOnly::FileHeaderOnly()
 	#endif
 	//-----------------
 	
-	arraySize=Ndim*Nc*Nc*2*Nx*Ny*Nz*Nt*sizeof(Real);
+#ifdef FILESP
+	arraySize=Ndim*Nc*Nc*2*Nx*Ny*Nz*Nt*sizeof(float);
+#else
+	arraySize=Ndim*Nc*Nc*2*Nx*Ny*Nz*Nt*sizeof(double);
+#endif
+
 }
 
 FileHeaderOnly::~FileHeaderOnly()

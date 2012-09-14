@@ -67,6 +67,7 @@ boost::program_options::options_description options_desc("Allowed options");
 
 // parameters from command line or config file
 int nconf;
+int devicenumb;
 long seed; // TODO check datatype
 int orMaxIter;
 int orCheckPrec;
@@ -80,6 +81,7 @@ string fileEnding;
 string postFixLabel;
 string fileBasename;
 int fileStartnumber;
+int fileStepsize;
 int fileNumberformat;
 string configFile;
 bool noRandomTrafo;
@@ -167,7 +169,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
+	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, U1xU1> subgroupStep( &locU, overrelax, id, mu, updown );
 
 	// do the subgroup iteration
 	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
@@ -231,6 +233,7 @@ int main(int argc, char* argv[])
 	// read parameters (command line or given config file)
 	options_desc.add_options()
 		("help", "produce help message")
+		("devicenumb", boost::program_options::value<int>(&devicenumb)->default_value(0), "which CUDA device to use")
 		("nconf,m", boost::program_options::value<int>(&nconf)->default_value(1), "how many files to gaugefix")
 		("ormaxiter", boost::program_options::value<int>(&orMaxIter)->default_value(1000), "Max. number of OR iterations")
 		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
@@ -241,10 +244,11 @@ int main(int argc, char* argv[])
 		("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
 		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
 		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
-		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
-		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it (default _Landau)")
+		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename")
+		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it")
 		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
 		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
+		("stepsize", boost::program_options::value<int>(&fileStepsize)->default_value(1), "file numbering startnumber, startnumber+stepsize,...")
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
@@ -330,7 +334,7 @@ int main(int argc, char* argv[])
 	// instantiate GaugeFixingStats object
 	lat_coord_t *devicePointerToSize;
 	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,LANDAU> gaugeStats( dU, &size[0], devicePointerToSize );
+	GaugeFixingStats<Ndim,Nc,U1xU1,AVERAGE> gaugeStats( dU, &size[0], devicePointerToSize );
 
 
 	double totalKernelTime = 0;

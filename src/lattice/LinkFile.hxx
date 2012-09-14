@@ -94,15 +94,24 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 
 	std::cout << "total size: " << configSize << std::endl;
 
-	Real temp;
+#ifdef FILESP
+	float temp;
+#else
+	double temp;
+#endif
+	
 	for( int i = 0; i < configSize; i++ )
 	{
 		// load number
-		file.read( (char*)&temp, sizeof(Real) );
+#ifdef FILESP
+		file.read( (char*)&temp, sizeof(float) );
+#else
+		file.read( (char*)&temp, sizeof(double) );
+#endif
 //		std::cout << temp << std::endl;
 //		if( i < 18 ) std::cout << temp << std::endl;
 		int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
-		U[index] = temp;
+		U[index] = (Real)temp;
 //		break;
 	}
 
@@ -161,13 +170,22 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 
 	std::cout << "total size: " << configSize << std::endl;
 
-	Real temp;
+#ifdef FILESP
+	float temp;
+#else
+	double temp;
+#endif
+	
 	for( int i = 0; i < configSize; i++ )
 	{
 		// load number
 		int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
-		temp = U[index];
-		file.write( (char*)&temp, sizeof(Real) );
+		temp = (Real)U[index];
+#ifdef FILESP
+		file.write( (char*)&temp, sizeof(float) );
+#else
+		file.write( (char*)&temp, sizeof(double) );
+#endif
 	}
 
 

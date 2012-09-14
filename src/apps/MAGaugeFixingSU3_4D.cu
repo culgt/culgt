@@ -384,14 +384,15 @@ int main(int argc, char* argv[])
 		logfile << "#i:\t\tgff:\t\tdA:" << endl;
 		gaugeStats.generateGaugeQuality();
 		printf( "   \t\t%1.10f\t\t%e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+		Real CurrentOrParameter = orParameter;
 
 		Chronotimer kernelTimer;
 		kernelTimer.reset();
 		kernelTimer.start();
 		for( int j = 0; j < orMaxIter; j++ )
 		{
-			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, orParameter, 2*j );
-			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, orParameter, 2*j+1 );
+			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, CurrentOrParameter, 2*j );
+			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, CurrentOrParameter, 2*j+1 );
 			
 			// check the current gauge quality
 			if( j % orCheckPrec == 0 )
@@ -403,7 +404,7 @@ int main(int argc, char* argv[])
 
 				if( gaugeStats.getCurrentA() < orPrecision ) break;
 				if( !( gaugeStats.getCurrentA() > 0 ) ) break; //check for NaN
-				if( gaugeStats.getCurrentA() < 1.0e-8 ) orParameter=0.0;
+				if( gaugeStats.getCurrentA() < 1.0e-8 ) CurrentOrParameter=0.0;
 			}
 
 			totalStepNumber++;

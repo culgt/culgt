@@ -16,6 +16,20 @@
 	typedef float Real;
 #endif
 
+#ifdef 	FILEOPPOSITEPREC
+	#ifdef DOUBLEPRECISION
+		#define FILESP
+	#else
+		#define FILEDP
+	#endif
+#else
+	#ifdef DOUBLEPRECISION
+		#define FILEDP
+	#else
+		#define FILESP
+	#endif
+#endif
+	
 typedef Complex<Real> complex;
 
 #endif /* DATATYPES_H_ */
