@@ -167,6 +167,7 @@ template<class Type> Quaternion<Real> SU3<Type>::getSubgroupQuaternion( lat_grou
 	temp = mat.get(jSub,iSub);
 	q[2] -= temp.x;
 	q[1] += temp.y;
+
 	return q;
 }
 

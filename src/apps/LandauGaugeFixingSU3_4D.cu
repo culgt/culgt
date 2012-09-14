@@ -77,6 +77,7 @@ float saMin;
 float saMax;
 int gaugeCopies;
 string fileEnding;
+string postFixLabel;
 string fileBasename;
 int fileStartnumber;
 int fileNumberformat;
@@ -129,7 +130,7 @@ __global__ void projectSU3( Real* U )
 }
 
 
-__global__ void __launch_bounds__(256,2) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter )
+__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter )
 {
 	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
@@ -171,11 +172,11 @@ __global__ void __launch_bounds__(256,2) orStep( Real* U, lat_index_t* nn, bool 
 	// do the subgroup iteration
 	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
 
-	// project back
-	//globU.projectSU3withoutThirdRow();
-
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
+	
+	// project back
+	//globU.projectSU3withoutThirdRow();
 }
 
 
@@ -241,6 +242,7 @@ int main(int argc, char* argv[])
 		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
 		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
 		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
+		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it (default _Landau)")
 		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
 		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")

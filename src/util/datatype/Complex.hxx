@@ -33,6 +33,7 @@ public:
 };
 
 
+
 template<class datatype> Complex<datatype>::Complex(const datatype x, const datatype y)
 {
 	this->x = x;

@@ -25,7 +25,8 @@ public:
 	CUDA_HOST_DEVICE inline Complex<T> get( int i, int j );
 	CUDA_HOST_DEVICE inline void set( int i, int j, Complex<T> c );
 	CUDA_HOST_DEVICE inline Quaternion<T>& hermitian();
-	CUDA_HOST_DEVICE inline Complex<T> det();
+	CUDA_HOST_DEVICE inline Complex<T> det(); //is the implementation correct???
+	CUDA_HOST_DEVICE inline Quaternion<T>& project_SU2();
 private:
 	T quat[4];
 };
@@ -133,6 +134,19 @@ template<class T> Complex<T> Quaternion<T>::det()
 {
 	Complex<T> c( quat[0]*quat[0]-quat[3]*quat[3]+quat[2]*quat[2]-quat[1]*quat[1], 0 ); // TODO im
 	return c;
+}
+
+/**
+ * normalizes to det=1
+ */
+template<class T> Quaternion<T>& Quaternion<T>::project_SU2()
+{
+	T c = rsqrt(quat[0]*quat[0]+quat[1]*quat[1]+quat[2]*quat[2]+quat[3]*quat[3]);
+	quat[0] *= c;
+	quat[1] *= c;
+	quat[2] *= c;
+	quat[3] *= c;
+	return *this;
 }
 
 #endif /* QUATERNION_HXX_ */

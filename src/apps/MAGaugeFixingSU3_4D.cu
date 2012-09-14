@@ -1,8 +1,8 @@
 /*
  * test_gaugefixing.cpp
  *
- *  Created on: Apr 18, 2012
- *      Author: vogt
+ *  Created on: Sep. 10, 2012
+ *      Author: vogt & schroeck
  */
 
 #include <iostream>
@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
+#include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
@@ -21,7 +22,7 @@
 #include "../lattice/SU3.hxx"
 #include "../lattice/Matrix.hxx"
 #include "../lattice/LinkFile.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
+//#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
 #include "../lattice/filetypes/FileHeaderOnly.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
@@ -81,6 +82,7 @@ string fileEnding;
 string postFixLabel;
 string fileBasename;
 int fileStartnumber;
+int fileStepsize;
 int fileNumberformat;
 string configFile;
 bool noRandomTrafo;
@@ -131,7 +133,7 @@ __global__ void projectSU3( Real* U )
 }
 
 
-__global__ void __launch_bounds__(256,2) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter )
+__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
 {
 	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
@@ -168,14 +170,13 @@ __global__ void __launch_bounds__(256,2) orStep( Real* U, lat_index_t* nn, bool 
 
 	// define the update algorithm
 	SrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, SrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown, counter );
+	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, SrUpdate, MAG> subgroupStep( &locU, overrelax, id, mu, updown, counter );
 
 	// do the subgroup iteration
 	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
 
 	// copy link back
-	globU.assignWithoutThirdLine(locU);
-//	globU=locU;
+	globU=locU;
 	
 	// project back
 //	globU.projectSU3withoutThirdRow();
@@ -233,7 +234,7 @@ int main(int argc, char* argv[])
 	// read parameters (command line or given config file)
 	options_desc.add_options()
 		("help", "produce help message")
-		("devicenumb", boost::program_options::value<int>(&devicenumb)->default_value(0), "which CUDA device to use (default 0)")
+		("devicenumb", boost::program_options::value<int>(&devicenumb)->default_value(0), "which CUDA device to use")
 		("nconf,m", boost::program_options::value<int>(&nconf)->default_value(1), "how many files to gaugefix")
 		("ormaxiter", boost::program_options::value<int>(&orMaxIter)->default_value(1000), "Max. number of OR iterations")
 		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
@@ -244,10 +245,11 @@ int main(int argc, char* argv[])
 		("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
 		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
 		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
-		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
-		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it (default _Landau)")
+		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename")
+		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it")
 		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
 		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
+		("stepsize", boost::program_options::value<int>(&fileStepsize)->default_value(1), "file numbering startnumber, startnumber+stepsize,...")
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
@@ -271,8 +273,6 @@ int main(int argc, char* argv[])
 		cout << options_desc << "\n";
 		return 1;
 	}
-
-
 
 
 
@@ -327,19 +327,19 @@ int main(int argc, char* argv[])
 	// instantiate GaugeFixingStats object
 	lat_coord_t *devicePointerToSize;
 	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,LANDAU,AVERAGE> gaugeStats( dU, &size[0], devicePointerToSize );
+	GaugeFixingStats<Ndim,Nc,MAG,AVERAGE> gaugeStats( dU, &size[0], devicePointerToSize );
 
 
 	double totalKernelTime = 0;
 
 	long totalStepNumber = 0;
 
-	for( int i = fileStartnumber; i < fileStartnumber+nconf; i++ )
+	for( int i = fileStartnumber; i < fileStartnumber+nconf*fileStepsize; i+=fileStepsize )
 	{
 
 		stringstream filename(stringstream::out);
 		filename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << fileEnding;
-//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+
 		cout << "loading " << filename.str() << " as " << fileType << endl;
 
 		bool loadOk;
@@ -371,13 +371,17 @@ int main(int argc, char* argv[])
 		}
 //		Real polBefore = calculatePolyakovLoopAverage( U );
 
+		// open logfile
+		filename << postFixLabel << ".log";
+		fstream logfile;
+		logfile.open( filename.str().c_str(), fstream::out );
+
 		// copying configuration ...
 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
 		// calculate and print the gauge quality
 		printf( "i:\t\tgff:\t\tdA:\n");
-		gaugeStats.generateGaugeQuality();
-		
+		logfile << "#i:\t\tgff:\t\tdA:" << endl;
 		gaugeStats.generateGaugeQuality();
 		printf( "   \t\t%1.10f\t\t%e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
@@ -395,10 +399,11 @@ int main(int argc, char* argv[])
 				projectSU3<<<numBlocks*2,32>>>( dU );
 				gaugeStats.generateGaugeQuality();
 				printf( "%d\t\t%1.10f\t\t%e\n", j, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+				logfile << j << '\t' << gaugeStats.getCurrentGff() << '\t' << gaugeStats.getCurrentA() << endl;
 
 				if( gaugeStats.getCurrentA() < orPrecision ) break;
 				if( !( gaugeStats.getCurrentA() > 0 ) ) break; //check for NaN
-//				if( gaugeStats.getCurrentA() < 1.0e-8 ) orParameter=0.0;
+				if( gaugeStats.getCurrentA() < 1.0e-8 ) orParameter=0.0;
 			}
 
 			totalStepNumber++;
@@ -406,10 +411,36 @@ int main(int argc, char* argv[])
 		cudaThreadSynchronize();
 		kernelTimer.stop();
 		cout << "kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
+		logfile << "#kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
 		totalKernelTime += kernelTimer.getTime();
 		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 
 //		cout << "Polyakov loop: " << polBefore << " - " << calculatePolyakovLoopAverage( U ) << endl;
+
+		//close logfile
+		logfile.close();
+		
+		//saving file
+		stringstream outfilename(stringstream::out);
+		outfilename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << postFixLabel << fileEnding;
+
+		cout << "saving " << outfilename.str() << " as " << fileType << endl;
+
+		switch( fileType )
+		{
+		case VOGT:
+			loadOk = lfVogt.save( s, outfilename.str(), U );
+			break;
+		case PLAIN:
+			loadOk = lfPlain.save( s, outfilename.str(), U );
+			break;
+		case HEADERONLY:
+			loadOk = lfHeaderOnly.save( s, outfilename.str(), U );
+			break;
+		default:
+			cout << "Filetype not set to a known value. Exiting";
+			exit(1);
+		}
 	}
 
 	allTimer.stop();

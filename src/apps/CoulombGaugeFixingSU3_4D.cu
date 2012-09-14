@@ -78,6 +78,7 @@ float saMin;
 float saMax;
 int gaugeCopies;
 string fileEnding;
+string postFixLabel;
 string fileBasename;
 int fileStartnumber;
 int fileNumberformat;
@@ -329,6 +330,7 @@ int main(int argc, char* argv[])
 		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
 		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
 		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
+		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it (default _Coulomb)")
 		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
 		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
