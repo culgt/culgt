@@ -81,9 +81,9 @@ public:
 
 
 	//TODO what if we compile on g++? We can't have a __device__ function!!!
-#ifdef CUDA
+//#ifdef CUDA
 	template<class SubgroupOperationClass> __device__ static inline void perSubgroup(SubgroupOperationClass t);
-#endif
+//#endif
 };
 
 /**
@@ -615,7 +615,7 @@ template<class Type> void SU3<Type>::print()
 
 
 
-#ifdef CUDA
+//#ifdef CUDA
 /**
  * Performs an operation defined in the SubgroupOperationClass by calling its subgroup() function for 3 SU3 subgroups.
  * Check an example application, like the Coulomb-gaugefixing routine.
@@ -626,7 +626,7 @@ template<class Type> template<class SubgroupOperationClass> void SU3<Type>::perS
 	t.subgroup(0,2);
 	t.subgroup(1,2);
 }
-#endif
+//#endif
 
 
 #endif /* SU3_HXX_ */

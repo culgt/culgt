@@ -87,7 +87,7 @@ int fileNumberformat;
 string configFile;
 bool noRandomTrafo;
 FileType fileType;
-
+ReinterpretReal reinterpretReal;
 
 // lattice setup
 const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
@@ -180,7 +180,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, U1xU1> subgroupStep( &locU, overrelax, id, mu, updown );
+	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
 
 	// do the subgroup iteration
 	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
@@ -364,7 +364,7 @@ int main(int argc, char* argv[])
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
-
+		("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpretReal)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = convert input as float and cast to Real, DOUBLE = ...)")
 		("norandomtrafo", boost::program_options::value<bool>(&noRandomTrafo)->default_value(false), "no random gauge trafo" )
 		;
 
@@ -450,7 +450,7 @@ int main(int argc, char* argv[])
 	// instantiate GaugeFixingStats object
 	lat_coord_t *devicePointerToSize;
 	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,U1xU1,AVERAGE> gaugeStats( dU, &size[0], devicePointerToSize );
+	GaugeFixingStats<Ndim,Nc,LANDAU,AVERAGE> gaugeStats( dU, &size[0], devicePointerToSize );
 
 
 	double totalKernelTime = 0;
@@ -470,12 +470,15 @@ int main(int argc, char* argv[])
 		switch( fileType )
 		{
 		case VOGT:
+			lfVogt.reinterpret = reinterpretReal;
 			loadOk = lfVogt.load( s, filename.str(), U );
 			break;
 		case PLAIN:
+			lfPlain.reinterpret = reinterpretReal;
 			loadOk = lfPlain.load( s, filename.str(), U );
 			break;
 		case HEADERONLY:
+			lfHeaderOnly.reinterpret = reinterpretReal;
 			loadOk = lfHeaderOnly.load( s, filename.str(), U );
 			break;
 		default:
@@ -517,14 +520,14 @@ int main(int argc, char* argv[])
 			if( i % orCheckPrec == 0 )
 			{
 
-		// check the current gauge quality
-			gaugeStats.generateGaugeQuality();
-			printf( "%d\t\t%1.10f\t\t%e", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+			// check the current gauge quality
+				gaugeStats.generateGaugeQuality();
+				printf( "%d\t\t%1.10f\t\t%e", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
-			calculatePlaquette<<<s.getLatticeSize()/32,32>>>( dU, dNn, dPlaquette );
-			printPlaquette<<<1,1>>>(dPlaquette );
+				calculatePlaquette<<<s.getLatticeSize()/32,32>>>( dU, dNn, dPlaquette );
+				printPlaquette<<<1,1>>>(dPlaquette );
 
-			if( gaugeStats.getCurrentA() < orPrecision ) break;
+				if( gaugeStats.getCurrentA() < orPrecision ) break;
 			}
 
 			totalStepNumber++;
