@@ -10,6 +10,38 @@
 
 #include <boost/algorithm/string.hpp>
 
+
+enum ReinterpretReal {STANDARD, DOUBLE, FLOAT};
+
+std::istream& operator>>(std::istream& in, ReinterpretReal& t)
+{
+    std::string token;
+    in >> token;
+    if ( boost::iequals(token, "STANDARD" ) )
+        t = STANDARD;
+    else if (boost::iequals(token, "DOUBLE" ))
+        t = DOUBLE;
+    else if (boost::iequals(token, "FLOAT" ) )
+    	t = FLOAT;
+    return in;
+}
+
+std::ostream& operator<<(std::ostream& out, ReinterpretReal& t)
+{
+    std::string token;
+    if (t == STANDARD)
+        token = "STANDARD";
+    else if (t == DOUBLE)
+    	token = "DOUBLE";
+    else if (t == FLOAT )
+    	token = "FLOAT";
+    out << token;
+    return out;
+}
+
+
+
+
 enum FileType {PLAIN, HEADERONLY, VOGT};
 
 std::istream& operator>>(std::istream& in, FileType& t)

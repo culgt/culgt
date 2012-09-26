@@ -32,6 +32,11 @@
 #include <iostream>
 #include <iomanip>
 #include "../util/datatype/datatypes.h"
+#include "../util/log/Logger.hxx"
+#include "filetypes/filetype_typedefs.h"
+
+
+// TODO IMPORTANT: replace TheSite by an array that contains the lattice extents (we must not use TheSite, but only its size, because the types of Site may be different in File- and MemoryPattern)
 
 template<class FileType, class FilePattern, class MemoryPattern, class TheSite> class LinkFile
 {
@@ -41,10 +46,12 @@ public:
 	bool load( TheSite site, std::string filename, Real *U );
 	bool save( TheSite site, std::string filename, Real *U );
 	FileType filetype;
+	ReinterpretReal reinterpret; // defined in "filetypes/filetype_typedefs.h"
 };
 
 template <class FileType, class FilePattern, class MemoryPattern, class TheSite> LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::LinkFile()
 {
+	reinterpret = STANDARD;
 }
 
 template <class FileType, class FilePattern, class MemoryPattern, class TheSite> LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::~LinkFile()
@@ -94,25 +101,38 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 
 	std::cout << "total size: " << configSize << std::endl;
 
-#ifdef FILESP
-	float temp;
-#else
-	double temp;
-#endif
-	
-	for( int i = 0; i < configSize; i++ )
+	if( reinterpret == STANDARD )
 	{
-		// load number
-#ifdef FILESP
-		file.read( (char*)&temp, sizeof(float) );
-#else
-		file.read( (char*)&temp, sizeof(double) );
-#endif
-//		std::cout << temp << std::endl;
-//		if( i < 18 ) std::cout << temp << std::endl;
-		int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
-		U[index] = (Real)temp;
-//		break;
+		Real temp;
+		for( int i = 0; i < configSize; i++ )
+		{
+			// load number
+			file.read( (char*)&temp, sizeof(Real) );
+			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
+			U[index] = temp;
+		}
+	}
+	else if( reinterpret == DOUBLE )
+	{
+		double temp;
+		for( int i = 0; i < configSize; i++ )
+		{
+			// load number as DOUBLE
+			file.read( (char*)&temp, sizeof(double) );
+			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
+			U[index] = (Real)temp; // cast to type Real
+		}
+	}
+	else if( reinterpret == FLOAT )
+	{
+		float temp;
+		for( int i = 0; i < configSize; i++ )
+		{
+			// load number AS FLOAT
+			file.read( (char*)&temp, sizeof(float) );
+			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
+			U[index] = (Real)temp; // cast to type Real
+		}
 	}
 
 
@@ -170,23 +190,49 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 
 	std::cout << "total size: " << configSize << std::endl;
 
-#ifdef FILESP
-	float temp;
-#else
-	double temp;
-#endif
-	
-	for( int i = 0; i < configSize; i++ )
+
+
+
+
+
+
+	if( reinterpret == STANDARD )
 	{
-		// load number
-		int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
-		temp = (Real)U[index];
-#ifdef FILESP
-		file.write( (char*)&temp, sizeof(float) );
-#else
-		file.write( (char*)&temp, sizeof(double) );
-#endif
+		Real temp;
+		for( int i = 0; i < configSize; i++ )
+		{
+			// load number
+			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
+			temp = U[index];
+			file.write( (char*)&temp, sizeof(Real) );
+		}
 	}
+	else if( reinterpret == DOUBLE )
+	{
+		double temp;
+		for( int i = 0; i < configSize; i++ )
+		{
+			// load number
+			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
+			temp = (double)U[index];
+			file.write( (char*)&temp, sizeof(double) );
+		}
+	}
+	else if( reinterpret == FLOAT )
+	{
+		float temp;
+		for( int i = 0; i < configSize; i++ )
+		{
+			// load number
+			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
+			temp = (float)U[index];
+			file.write( (char*)&temp, sizeof(float) );
+		}
+	}
+
+
+
+
 
 
 	// save footer

@@ -23,6 +23,7 @@
 #include "../util/log/Logger.hxx"
 #include "../util/cuda/cuda_host_device.h"
 #include "../util/datatype/lattice_typedefs.h"
+#include <assert.h>
 
 /**
  * The template parameter "bool par" defines normal indexing (par==false) or parity split indexing (par==true).
@@ -38,14 +39,16 @@ public:
 	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd] );
 	CUDA_HOST_DEVICE inline SiteIndex( const SiteIndex<Nd,par> &s);
 	CUDA_HOST_DEVICE inline virtual ~SiteIndex();
-	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
+	CUDA_HOST_DEVICE inline lat_coord_t operator[](lat_dim_t i);
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex();
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
+	CUDA_HOST_DEVICE inline void setLatticeIndexTimeslice( lat_index_t latticeIndex, lat_coord_t t );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSize();
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndexTimeslice();
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice();
+	CUDA_HOST_DEVICE inline lat_coord_t getLatticeSizeDirection( lat_dim_t i );
 	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, bool up );
 
 	CUDA_HOST_DEVICE inline void calculateNeighbourTable( lat_index_t* nn );
@@ -53,11 +56,11 @@ public:
 	static const lat_dim_t Ndim = Nd;
 	lat_index_t* nn;
 
+	lat_coord_t size[Nd];
+	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex( const lat_coord_t site[Nd] );
 private:
 	lat_index_t index;
-	lat_coord_t size[Nd];
 	lat_index_t latticeSize;
-	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex( const lat_coord_t site[Nd] );
 };
 
 
@@ -80,6 +83,7 @@ template <lat_dim_t Nd, bool par> SiteIndex<Nd, par>::SiteIndex( const SiteIndex
 		this->size[i] = s.size[i];
 		latticeSize *= size[i];
 	}
+	this->nn = s.nn;
 }
 
 template <lat_dim_t Nd, bool par> SiteIndex<Nd, par>::~SiteIndex()
@@ -90,10 +94,22 @@ template <lat_dim_t Nd, bool par> SiteIndex<Nd, par>::~SiteIndex()
  * TODO
  * Returns the i-coordinate of the current site.
  */
-template<lat_dim_t Nd, bool par> lat_coord_t& SiteIndex<Nd,par>::operator[](lat_dim_t i)
+template<lat_dim_t Nd, bool par> lat_coord_t SiteIndex<Nd,par>::operator[](lat_dim_t i)
 {
-	// TODO
-	assert(false);
+	lat_index_t temp = index;
+	if( !par )
+	{
+		for( lat_dim_t j = Nd-1; j >= 0; j-- )
+		{
+			if( i == j ) return temp % size[j];
+			else temp /= size[j];
+		}
+	}
+	else
+	{
+		// TODO
+		assert(false);
+	}
 }
 
 /**
@@ -116,6 +132,18 @@ template<lat_dim_t Nd, bool par> void SiteIndex<Nd, par>::setLatticeIndex( lat_i
 }
 
 /**
+ * Sets the lattice index.
+ * @param lattice index
+ * @return void
+ */
+template<lat_dim_t Nd, bool par> void SiteIndex<Nd, par>::setLatticeIndexTimeslice( lat_index_t latticeIndex, lat_coord_t t )
+{
+	if( !par )
+		index = t*getLatticeSizeTimeslice() + latticeIndex;
+	else assert(false);
+}
+
+/**
  * // TODO
  * If par == true this simpliy sets the given index, if par == false the index has to be converted to the non-split index.
  */
@@ -127,7 +155,7 @@ template<lat_dim_t Nd, bool par> void SiteIndex<Nd, par>::setLatticeIndexFromPar
 
 /**
  * // TODO
- * If par == false this simpliy sets the given index, if par == false the index has to be converted to the split index.
+ * If par == false this simpliy sets the given index, if par == true the index has to be converted to the split index.
  */
 template<lat_dim_t Nd, bool par> void SiteIndex<Nd, par>::setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex )
 {
@@ -147,13 +175,17 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteIndex<Nd, par>::getLatticeSize(
 
 /**
  * TODO
- * Returns the index within a timeslice, i.e. modulo size[0]
+ * Returns the index within a timeslice
  * @return lattice index in timeslice
  */
 template<lat_dim_t Nd, bool par> lat_index_t SiteIndex<Nd, par>::getLatticeIndexTimeslice()
 {
-	// TODO
-	assert(false);
+	if( !par )
+	{
+		return index % getLatticeSizeTimeslice();
+	}
+	else
+		assert(false);
 }
 
 /**
@@ -163,6 +195,15 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteIndex<Nd, par>::getLatticeIndex
 template<lat_dim_t Nd, bool par> lat_index_t SiteIndex<Nd, par>::getLatticeSizeTimeslice()
 {
 	return latticeSize/size[0];
+}
+
+/**
+ * Returns the size of the lattice in direction i
+ * @return size of timeslice
+ */
+template<lat_dim_t Nd, bool par> lat_coord_t SiteIndex<Nd, par>::getLatticeSizeDirection( lat_dim_t i )
+{
+	return size[i];
 }
 
 /**

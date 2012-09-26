@@ -29,8 +29,12 @@ public:
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline Link<Pattern, TheSite, T_Ndim, T_Nc>& operator+=( Link<Pattern, TheSite, T_Ndim, T_Nc> );
 
-	Real* data; // pointer to the link array
+	CUDA_HOST_DEVICE inline TheSite& getSite();
+	CUDA_HOST_DEVICE inline void setMu( int mu );
+	CUDA_HOST_DEVICE inline void setPointer( Real* pointer );
+
 private:
+	Real* data; // pointer to the link array
 	TheSite site; // current lattice site
 	int mu; // direction of the link
 };
@@ -42,6 +46,23 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> Link<Pattern, TheSi
 template<class Pattern, class TheSite, int T_Ndim, int T_Nc> Link<Pattern, TheSite, T_Ndim, T_Nc>::~Link()
 {
 }
+
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> TheSite& Link<Pattern, TheSite, T_Ndim, T_Nc>::getSite()
+{
+	return site;
+}
+
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::setMu( int mu )
+{
+	this->mu = mu;
+}
+
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::setPointer( Real* pointer )
+{
+	this->data = pointer;
+}
+
+
 
 /**
  * Returns the matrix element (i,j).

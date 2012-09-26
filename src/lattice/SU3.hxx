@@ -24,11 +24,12 @@
 #ifndef SU3_HXX_
 #define SU3_HXX_
 
+#include "../util/cuda/cuda_host_device.h"
 #include "../util/datatype/datatypes.h"
 #include "Matrix.hxx"
 #include "Link.hxx"
 #include "Quaternion.hxx"
-
+#include <math.h>
 
 template<class Type> class SU3
 {
@@ -36,6 +37,9 @@ public:
 	CUDA_HOST_DEVICE SU3( Type mat );
 	CUDA_HOST_DEVICE SU3();
 	Type mat;
+
+	CUDA_HOST_DEVICE inline Type& getMat();
+
 	CUDA_HOST_DEVICE inline complex get( lat_group_dim_t i, lat_group_dim_t j );
 	CUDA_HOST_DEVICE inline complex get(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j);
 	CUDA_HOST_DEVICE inline Quaternion<Real> getSubgroupQuaternion( lat_group_dim_t iSub, lat_group_dim_t jSub ); // TODO binding this class to class Quaternion is not good style -> make this a static function elsewhere
@@ -43,14 +47,17 @@ public:
 	CUDA_HOST_DEVICE inline void set(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, complex c);
 	CUDA_HOST_DEVICE inline SU3<Type>& operator+=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
 	CUDA_HOST_DEVICE inline SU3<Type>& operator-=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
-	CUDA_HOST_DEVICE inline SU3<Type>& operator*=( SU3<Type> );
+	CUDA_HOST_DEVICE inline SU3<Type>& operator*=( SU3<Type> );  // TODO can we overload this for arbitrary Type2 (we need some temporary matrix but we don't know of which type we want it!
+																	// The problem boils down to that we can't do SU3<Link>*SU3<Link> because we don't know where to store the data...
+																	// Maybe the SU3 wrapper is not as good as it looked in the first place.
 
 	CUDA_HOST_DEVICE inline SU3<Type>& operator/=( complex );
 	CUDA_HOST_DEVICE inline SU3<Type>& operator-=( complex );
 
-	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
-//	template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
-	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLine( SU3<Type2> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
+	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator+=( SU3<Type2> );
+	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> );
+//	template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> );
+	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLine( SU3<Type2> );
 	CUDA_HOST_DEVICE inline complex det();
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline void identity();
@@ -72,7 +79,11 @@ public:
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type> operator*( SU3<Type2> b  );
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type> operator+( SU3<Type2> b  );
 
+
+	//TODO what if we compile on g++? We can't have a __device__ function!!!
+#ifdef CUDA
 	template<class SubgroupOperationClass> __device__ static inline void perSubgroup(SubgroupOperationClass t);
+#endif
 };
 
 /**
@@ -88,6 +99,11 @@ template<class Type> SU3<Type>::SU3( Type mat ) : mat(mat)
  */
 template<class Type> SU3<Type>::SU3()
 {
+}
+
+template<class Type> Type& SU3<Type>::getMat()
+{
+	return mat;
 }
 
 /**
@@ -177,6 +193,19 @@ template<class Type> Quaternion<Real> SU3<Type>::getSubgroupQuaternion( lat_grou
 template<class Type> SU3<Type>& SU3<Type>::operator+=( SU3<Type> c )
 {
 	mat += c.mat;
+	return *this;
+}
+
+/**
+ *
+ */
+template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator+=( SU3<Type2> c )
+{
+	for( lat_group_dim_t i = 0; i < 3; i++ )
+		for( lat_group_dim_t j = 0; j < 3; j++ )
+		{
+			mat.set(i,j,mat.get(i,j) + c.mat.get(i,j));
+		}
 	return *this;
 }
 
@@ -586,7 +615,7 @@ template<class Type> void SU3<Type>::print()
 
 
 
-
+#ifdef CUDA
 /**
  * Performs an operation defined in the SubgroupOperationClass by calling its subgroup() function for 3 SU3 subgroups.
  * Check an example application, like the Coulomb-gaugefixing routine.
@@ -597,6 +626,7 @@ template<class Type> template<class SubgroupOperationClass> void SU3<Type>::perS
 	t.subgroup(0,2);
 	t.subgroup(1,2);
 }
+#endif
 
 
 #endif /* SU3_HXX_ */

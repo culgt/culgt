@@ -12,6 +12,7 @@
 
 #include "../util/datatype/datatypes.h"
 #include <iostream>
+#include <fstream>
 
 template<class T, int N> class Matrix
 {
@@ -27,6 +28,10 @@ public:
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator-=( T );
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator/=( T );
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator*=( Matrix<T,N> );
+	CUDA_HOST_DEVICE inline Matrix<T, N>& operator*=( T );
+	CUDA_HOST_DEVICE inline Matrix<T, N>& operator=( T );
+	CUDA_HOST_DEVICE inline T& operator[]( int i );
+	CUDA_HOST_DEVICE inline void print();
 	T mat[N*N]; // array keeping the matrix TODO make this private?
 private:
 };
@@ -143,19 +148,67 @@ template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator/=( T a )
 template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator*=( Matrix<T,N> a )
 {
 	Matrix<T,N> temp( *this );
+
 	for(int i = 0; i < N; i++ )
 	{
 		for( int j = 0; j < N; j++ )
 		{
+			mat[i*N+j] = 0;
 			for( int k = 0; k < N; k++ )
 			{
-				mat[i*N+j] = temp.mat[i*N+k] * a.mat[k*N+j];
+				mat[i*N+j] += temp.mat[i*N+k] * a.mat[k*N+j];
 			}
 		}
 	}
 	return *this;
 }
 
+template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator*=( T c )
+{
+	for(int i = 0; i < N; i++ )
+	{
+		for( int j = 0; j < N; j++ )
+		{
+			mat[i*N+j] *= c;
+		}
+	}
+	return *this;
+}
+
+
+template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator=( T c )
+{
+	T zero( 0 );
+	for(int i = 0; i < N; i++ )
+	{
+		for( int j = 0; j < N; j++ )
+		{
+			if( i == j ) set( i, j, c );
+			else set( i, j, zero );
+		}
+	}
+	return *this;
+}
+
+template<class T, int N> T& Matrix<T,N>::operator[]( int i )
+{
+	return mat[i];
+}
+
+template<class T, int N> void Matrix<T,N>::print()
+{
+	printf( "[" );
+	for( int i = 0; i < N; i++ )
+	{
+		for( int j = 0; j < N; j++ )
+		{
+			printf( "%f+i*%f", get(i,j).x, get(i,j).y );
+			if( j < N-1 ) printf( "\t" );
+		}
+		if( i < N-1 ) printf( "\n" );
+	}
+	printf( "]\n" );
+}
 
 
 #endif /* MATRIX_HXX_ */

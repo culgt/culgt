@@ -9,7 +9,7 @@
 #include <math.h>
 #include <sstream>
 #include <malloc.h>
-#include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStepSU2.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
@@ -18,8 +18,8 @@
 #include "../lattice/SiteCoord.hxx"
 #include "../lattice/SiteIndex.hxx"
 #include "../lattice/Link.hxx"
-#include "../lattice/SU3.hxx"
 #include "../lattice/Matrix.hxx"
+#include "../lattice/SU2.hxx"
 #include "../lattice/LinkFile.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
@@ -35,7 +35,7 @@
 using namespace std;
 
 const lat_dim_t Ndim = 4;
-const short Nc = 3;
+const short Nc = 2;
 
 #ifdef _X_
 const lat_coord_t Nx = _X_;
@@ -67,7 +67,6 @@ boost::program_options::options_description options_desc("Allowed options");
 
 // parameters from command line or config file
 int nconf;
-int devicenumb;
 long seed; // TODO check datatype
 int orMaxIter;
 int orCheckPrec;
@@ -79,10 +78,8 @@ float saMin;
 float saMax;
 int gaugeCopies;
 string fileEnding;
-string postFixLabel;
 string fileBasename;
 int fileStartnumber;
-int fileStepsize;
 int fileNumberformat;
 string configFile;
 bool noRandomTrafo;
@@ -115,32 +112,32 @@ void initNeighbourTable( lat_index_t* nnt )
 }
 
 
-__global__ void projectSU3( Real* U )
-{
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteCoord<4,true> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	s.setLatticeIndex( site );
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		TLink linkUp( U, s, mu );
-		SU3<TLink> globUp( linkUp );
-
-
-		Matrix<complex,Nc> locMat;
-		SU3<Matrix<complex,Nc> > locU(locMat);
-
-		locU.assignWithoutThirdLine(globUp);
-		locU.projectSU3withoutThirdRow();
-
-
-		globUp.assignWithoutThirdLine(locU);
-
-//		globUp.projectSU3withoutThirdRow();
-	}
-}
+//__global__ void projectSU3( Real* U )
+//{
+//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+//	SiteCoord<4,true> s(size);
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	s.setLatticeIndex( site );
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		TLink linkUp( U, s, mu );
+//		SU3<TLink> globUp( linkUp );
+//
+//
+//		Matrix<complex,Nc> locMat;
+//		SU3<Matrix<complex,Nc> > locU(locMat);
+//
+//		locU.assignWithoutThirdLine(globUp);
+//		locU.projectSU3withoutThirdRow();
+//
+//
+//		globUp.assignWithoutThirdLine(locU);
+//
+////		globUp.projectSU3withoutThirdRow();
+//	}
+//}
 
 
 __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter )
@@ -165,174 +162,194 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 		s.setNeighbour(mu,false);
 	}
 
+
 //	if(id == 0) printf("bin in or\n");
 
-	Matrix<complex,Nc> locMat;
-	SU3<Matrix<complex,Nc> > locU(locMat);
+//	Matrix<complex,Nc> locMat;
+//	SU2<Matrix<complex,Nc> > locU(locMat);
+
+	Quaternion<Real> locQuat;
+//	SU2<Quaternion<Real> > locU(locQuat);
 
 	TLinkIndex link( U, s, mu );
-
-	SU3<TLinkIndex> globU( link );
+	SU2<TLinkIndex> globU( link );
 
 	// make link local
-	locU.assignWithoutThirdLine(globU);
-	locU.reconstructThirdLine();
+//	locU.assignQuaternion(globU);
+
+	complex a = globU.get(0,0);
+	locQuat[0] = a.x;
+	locQuat[3] = a.y;
+	a = globU.get(0,1);
+	locQuat[2] = a.x;
+	locQuat[1] = a.y;
+
+
+//	if( id == 0 && mu == 0 && updown == 0 ) printf( "%f\n", globU.get(0,0).x );
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, U1xU1> subgroupStep( &locU, overrelax, id, mu, updown );
+	GaugeFixingStepSU2<OrUpdate, LANDAU> TheUpdate( &locQuat, overrelax, id, mu, updown );
 
-	// do the subgroup iteration
-	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
+	TheUpdate.apply();
+
+
+
+//	globU.assignQuaternion(locU);
+
+	// reproject
+	locQuat.projectSU2();
 
 	// copy link back
-	globU.assignWithoutThirdLine(locU);
-	
-	// project back
-	//globU.projectSU3withoutThirdRow();
+	a.x = locQuat[0];
+	a.y = locQuat[3];
+	globU.set(0,0,a);
+	a.x = locQuat[2];
+	a.y = locQuat[1];
+	globU.set(0,1,a);
 }
 
-__global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
-{
-	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
+//__global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
+//{
+//	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
+//	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
+//
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+//	SiteIndex<4,true> s(size);
+//	s.nn = nn;
+//
+//	Matrix<complex,Nc> matP;
+//	SU3<Matrix<complex,Nc> > P(matP);
+//
+//	Matrix<complex,Nc> matTemp;
+//	SU3<Matrix<complex,Nc> > temp(matTemp);
+//
+//
+//	double localPlaquette = 0;
+//
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		for( int nu = mu+1; nu < 4; nu++)
+//		{
+//			P.identity();
+//
+//			{
+//				s.setLatticeIndex( site );
+//
+//				TLinkIndex link( U, s, mu );
+//				SU3<TLinkIndex> globU( link );
+//
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//
+//				P *= temp;
+//			}
+//
+//			{
+//				s.setNeighbour( mu, true );
+//
+//				TLinkIndex link( U, s, nu );
+//				SU3<TLinkIndex> globU( link );
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//
+//				P *= temp;
+//			}
+//
+//			{
+//				s.setLatticeIndex( site );
+//				s.setNeighbour(nu, true );
+//
+//				TLinkIndex link( U, s, mu );
+//				SU3<TLinkIndex> globU( link );
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//				temp.hermitian();
+//
+//				P *= temp;
+//			}
+//
+//			{
+//				s.setLatticeIndex( site );
+//
+//				TLinkIndex link( U, s, nu );
+//				SU3<TLinkIndex> globU( link );
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//				temp.hermitian();
+//
+//				P *= temp;
+//			}
+//
+//
+//
+//
+//
+//			localPlaquette += P.trace().x;
+//		}
+//	}
+//
+//	dPlaquette[site] = localPlaquette/6./3.;
+////	dPlaquette[site] = 1;
+////	dPlaquette[site] = 0;
+//}
+//
+//__global__ void printPlaquette( double* dPlaquette )
+//{
+//	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
+//	SiteCoord<4,true> s(size);
+//
+//	double plaquette = 0;
+//	for( int i = 0; i < s.getLatticeSize(); i++ )
+//	{
+//		plaquette += dPlaquette[i];
+//	}
+//
+//	printf( "\t%E\n", plaquette/double(s.getLatticeSize()) );
+//
+//}
 
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteIndex<4,true> s(size);
-	s.nn = nn;
-
-	Matrix<complex,Nc> matP;
-	SU3<Matrix<complex,Nc> > P(matP);
-
-	Matrix<complex,Nc> matTemp;
-	SU3<Matrix<complex,Nc> > temp(matTemp);
-
-
-	double localPlaquette = 0;
-
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		for( int nu = mu+1; nu < 4; nu++)
-		{
-			P.identity();
-
-			{
-				s.setLatticeIndex( site );
-
-				TLinkIndex link( U, s, mu );
-				SU3<TLinkIndex> globU( link );
-
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-
-				P *= temp;
-			}
-
-			{
-				s.setNeighbour( mu, true );
-
-				TLinkIndex link( U, s, nu );
-				SU3<TLinkIndex> globU( link );
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-
-				P *= temp;
-			}
-
-			{
-				s.setLatticeIndex( site );
-				s.setNeighbour(nu, true );
-
-				TLinkIndex link( U, s, mu );
-				SU3<TLinkIndex> globU( link );
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-				temp.hermitian();
-
-				P *= temp;
-			}
-
-			{
-				s.setLatticeIndex( site );
-
-				TLinkIndex link( U, s, nu );
-				SU3<TLinkIndex> globU( link );
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-				temp.hermitian();
-
-				P *= temp;
-			}
-
-
-
-
-
-			localPlaquette += P.trace().x;
-		}
-	}
-
-	dPlaquette[site] = localPlaquette/6./3.;
-//	dPlaquette[site] = 1;
-//	dPlaquette[site] = 0;
-}
-
-__global__ void printPlaquette( double* dPlaquette )
-{
-	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
-	SiteCoord<4,true> s(size);
-
-	double plaquette = 0;
-	for( int i = 0; i < s.getLatticeSize(); i++ )
-	{
-		plaquette += dPlaquette[i];
-	}
-
-	printf( "\t%E\n", plaquette/double(s.getLatticeSize()) );
-
-}
-
-Real calculatePolyakovLoopAverage( Real *U )
-{
-	Matrix<complex,3> tempMat;
-	SU3<Matrix<complex,3> > temp( tempMat );
-	Matrix<complex,3> temp2Mat;
-	SU3<Matrix<complex,3> > temp2( temp2Mat );
-
-	SiteCoord<Ndim,true> s( size );
-
-	complex result(0,0);
-
-	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
-	{
-		for( s[2] = 0; s[2] < s.size[2]; s[2]++ )
-		{
-			for( s[3] = 0; s[3] < s.size[3]; s[3]++ )
-			{
-				temp.identity();
-				temp2.zero();
-
-				for( s[0] = 0; s[0] < s.size[0]; s[0]++ )
-				{
-
-					TLink link( U, s, 0 );
-					SU3<TLink> globU( link );
-
-					temp2 = temp2 + temp*globU;
-
-					temp = temp2;
-					temp2.zero();
-				}
-				result += temp.trace();
-			}
-		}
-	}
-
-	return sqrt(result.x*result.x+result.y*result.y) / (Real)(s.getLatticeSizeTimeslice()*Nc);
-}
+//Real calculatePolyakovLoopAverage( Real *U )
+//{
+//	Matrix<complex,3> tempMat;
+//	SU3<Matrix<complex,3> > temp( tempMat );
+//	Matrix<complex,3> temp2Mat;
+//	SU3<Matrix<complex,3> > temp2( temp2Mat );
+//
+//	SiteCoord<Ndim,true> s( size );
+//
+//	complex result(0,0);
+//
+//	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
+//	{
+//		for( s[2] = 0; s[2] < s.size[2]; s[2]++ )
+//		{
+//			for( s[3] = 0; s[3] < s.size[3]; s[3]++ )
+//			{
+//				temp.identity();
+//				temp2.zero();
+//
+//				for( s[0] = 0; s[0] < s.size[0]; s[0]++ )
+//				{
+//
+//					TLink link( U, s, 0 );
+//					SU3<TLink> globU( link );
+//
+//					temp2 = temp2 + temp*globU;
+//
+//					temp = temp2;
+//					temp2.zero();
+//				}
+//				result += temp.trace();
+//			}
+//		}
+//	}
+//
+//	return sqrt(result.x*result.x+result.y*result.y) / (Real)(s.getLatticeSizeTimeslice()*Nc);
+//}
 
 
 
@@ -344,7 +361,6 @@ int main(int argc, char* argv[])
 	// read parameters (command line or given config file)
 	options_desc.add_options()
 		("help", "produce help message")
-		("devicenumb", boost::program_options::value<int>(&devicenumb)->default_value(0), "which CUDA device to use")
 		("nconf,m", boost::program_options::value<int>(&nconf)->default_value(1), "how many files to gaugefix")
 		("ormaxiter", boost::program_options::value<int>(&orMaxIter)->default_value(1000), "Max. number of OR iterations")
 		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
@@ -356,11 +372,9 @@ int main(int argc, char* argv[])
 		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
 		("reproject", boost::program_options::value<int>(&reproject)->default_value(100), "reproject every arg-th step")
 		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
-		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename")
-		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it")
+		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
 		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
 		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
-		("stepsize", boost::program_options::value<int>(&fileStepsize)->default_value(1), "file numbering startnumber, startnumber+stepsize,...")
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
@@ -450,7 +464,7 @@ int main(int argc, char* argv[])
 	// instantiate GaugeFixingStats object
 	lat_coord_t *devicePointerToSize;
 	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,U1xU1,AVERAGE> gaugeStats( dU, &size[0], devicePointerToSize );
+	GaugeFixingStats<Ndim,Nc,LANDAU> gaugeStats( dU, &size[0], devicePointerToSize );
 
 
 	double totalKernelTime = 0;
@@ -509,20 +523,16 @@ int main(int argc, char* argv[])
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, orParameter );
 			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, orParameter );
 
-			if( i % reproject == 0)
-			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
-			}
 
 			if( i % orCheckPrec == 0 )
 			{
 
 		// check the current gauge quality
 			gaugeStats.generateGaugeQuality();
-			printf( "%d\t\t%1.10f\t\t%e", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+			printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
-			calculatePlaquette<<<s.getLatticeSize()/32,32>>>( dU, dNn, dPlaquette );
-			printPlaquette<<<1,1>>>(dPlaquette );
+//			calculatePlaquette<<<s.getLatticeSize()/32,32>>>( dU, dNn, dPlaquette );
+//			printPlaquette<<<1,1>>>(dPlaquette );
 
 			if( gaugeStats.getCurrentA() < orPrecision ) break;
 			}
@@ -542,7 +552,7 @@ int main(int argc, char* argv[])
 	cout << "total time: " << allTimer.getTime() << " s" << endl;
 	cout << "total kernel time: " << totalKernelTime << " s" << endl;
 
-	cout << (double)((long)2253*(long)s.getLatticeSize()*(long)totalStepNumber)/totalKernelTime/1.0e9 << " GFlops at "
-				<< (double)((long)192*(long)s.getLatticeSize()*(long)(totalStepNumber)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
+//	cout << (double)((long)2253*(long)s.getLatticeSize()*(long)totalStepNumber)/totalKernelTime/1.0e9 << " GFlops at "
+//				<< (double)((long)192*(long)s.getLatticeSize()*(long)(totalStepNumber)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
 }

@@ -33,7 +33,7 @@ template<lat_dim_t Nd, bool par> class SiteCoord
 public:
 	CUDA_HOST_DEVICE inline SiteCoord( const lat_coord_t size[Nd] );
 	CUDA_HOST_DEVICE inline SiteCoord( const SiteCoord<Nd,par> &s);
-	CUDA_HOST_DEVICE inline virtual ~SiteCoord();
+//	CUDA_HOST_DEVICE inline virtual ~SiteCoord();
 	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex();
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
@@ -68,10 +68,10 @@ template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::SiteCoord( const SiteCoord
 	}
 }
 
-template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::~SiteCoord()
-{
-	// TODO Auto-generated destructor stub
-}
+//template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::~SiteCoord()
+//{
+//	// TODO Auto-generated destructor stub
+//}
 
 template<lat_dim_t Nd, bool par> lat_coord_t& SiteCoord<Nd,par>::operator[](lat_dim_t i)
 {

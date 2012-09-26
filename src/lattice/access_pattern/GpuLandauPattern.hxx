@@ -9,7 +9,8 @@
 #define GPULANDAUPATTERN_HXX_
 
 #include "../../util/cuda/cuda_host_device.h"
-#include "../SiteCoord.hxx"
+#include "../../util/datatype/lattice_typedefs.h"
+//#include "../SiteCoord.hxx"
 #include <assert.h>
 
 template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuLandauPattern
