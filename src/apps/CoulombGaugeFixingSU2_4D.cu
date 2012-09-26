@@ -1112,7 +1112,7 @@ int main(int argc, char* argv[])
 	// instantiate GaugeFixingStats object
 	lat_coord_t *devicePointerToSize;
 	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
-	GaugeFixingStats<Ndim-1,Nc,COULOMB> gaugeStats( dUup, &size[1], devicePointerToSize );
+	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUup, &size[1], devicePointerToSize );
 
 
 	double totalKernelTime = 0;

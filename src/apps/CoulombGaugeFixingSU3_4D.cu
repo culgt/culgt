@@ -85,7 +85,7 @@ int fileNumberformat;
 string configFile;
 bool noRandomTrafo;
 FileType fileType;
-
+ReinterpretReal reinterpretReal;
 
 // lattice setup
 const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
@@ -109,10 +109,10 @@ void initNeighbourTable( lat_index_t* nnt )
 }
 
 
-__device__ inline Real cuFabs( Real a )
-{
-	return (a>0)?(a):(-a);
-}
+//__device__ inline Real cuFabs( Real a )
+//{
+//	return (a>0)?(a):(-a);
+//}
 
 //__global__ void printGaugeQuality( Real* dGff, Real* dA )
 //{
@@ -336,6 +336,7 @@ int main(int argc, char* argv[])
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
+		("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpretReal)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = convert input as float and cast to Real, DOUBLE = ...)")
 
 		("norandomtrafo", boost::program_options::value<bool>(&noRandomTrafo)->default_value(false), "no random gauge trafo" )
 		;
@@ -374,8 +375,11 @@ int main(int argc, char* argv[])
 
 	// TODO maybe we should choose the filetype on compile time
 	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
+	lfHeaderOnly.reinterpret = reinterpretReal;
 	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
+	lfVogt.reinterpret = reinterpretReal;
 	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
+	lfPlain.reinterpret = reinterpretReal;
 
 
 	// allocate Memory
@@ -419,7 +423,7 @@ int main(int argc, char* argv[])
 
 	lat_coord_t *pointerToSize;
 	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
-	GaugeFixingStats<Ndim-1,Nc,COULOMB> gaugeStats( dUtUp, &size[1], pointerToSize );
+	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUtUp, &size[1], pointerToSize );
 
 	double totalKernelTime = 0;
 	long totalStepNumber = 0;
