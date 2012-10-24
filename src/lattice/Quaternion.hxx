@@ -18,8 +18,10 @@
 #ifndef QUATERNION_HXX_
 #define QUATERNION_HXX_
 
+
 #include "../util/cuda/cuda_host_device.h"
 #include "../util/datatype/Complex.hxx"
+#include "../util/datatype/lattice_typedefs.h"
 
 template<class T> class Quaternion
 {

@@ -1015,7 +1015,7 @@ int main(int argc, char* argv[])
 		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
-		("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpretReal)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = convert input as float and cast to Real, DOUBLE = ...)")
+		("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpretReal)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = read input as float and cast to Real, DOUBLE = ...)")
 		("domc", boost::program_options::value<bool>(&doMc)->default_value(false), "do the MC tests...")
 
 
@@ -1111,9 +1111,10 @@ int main(int argc, char* argv[])
 	
 	// instantiate GaugeFixingStats object
 	lat_coord_t *devicePointerToSize;
-	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
+	cudaError_t error = cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
 	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUup, &size[1], devicePointerToSize );
 
+	cout << "get symbol adress error:" << cudaGetErrorString( error ) << endl;
 
 	double totalKernelTime = 0;
 

@@ -26,6 +26,7 @@
 
 #include "../util/cuda/cuda_host_device.h"
 #include "../util/datatype/datatypes.h"
+#include "../util/datatype/lattice_typedefs.h"
 #include "Matrix.hxx"
 #include "Link.hxx"
 #include "Quaternion.hxx"

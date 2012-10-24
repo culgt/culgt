@@ -4,12 +4,12 @@
  * For a detailed discussion see "Parallel random numbers: as easy as 1, 2, 3" (http://dl.acm.org/citation.cfm?doid=2063405)
  *
  * Any combination of the 4 * 32-bit counter and 2 * 32-bit key gives a uncorrelated random number.
- * As key we use the combination (thread id, seed), where seed can be choosen by the user.
+ * As key we use the combination (thread id, seed), where seed can be chosen by the user.
  * The counter is (kernelCounter, globalCounter, *, * ) where
  *  - kernelCounter is a local variable of the kernel and is incremented by each call to generate new random numbers
  *  - globalCounter is a kernel parameter, incrementing has to be done on host side. (TAKE CARE TO DO IT!)
  *    This means that each kernel that uses random numbers has to have an counter parameter which has to be incremented on each kernel call.
- *  - the other two counters are set arbitrarly.
+ *  - the other two counters are set arbitrarily.
  *
  * Each call to philox4x32 calculates 4 32 bit values.
  *
