@@ -8,7 +8,7 @@
 #include <iostream>
 #include <math.h>
 #include <sstream>
-#include <malloc.h>
+// #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
@@ -23,6 +23,7 @@
 #include "../lattice/LinkFile.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
+#include "../lattice/filetypes/FileMDP.hxx"
 #include "../lattice/filetypes/FileVogt.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
 #include "../lattice/filetypes/FileHeaderOnly.hxx"
@@ -132,8 +133,8 @@ __global__ void projectSU3( Real* U )
 //	SiteCoord<3,true> s(size);
 //	int site = blockIdx.x * blockDim.x + threadIdx.x;
 //
-//	Matrix<complex,Nc> locMatSum;
-//	SU3<Matrix<complex,Nc> > Sum(locMatSum);
+//	Matrix<Complex<Real>,Nc> locMatSum;
+//	SU3<Matrix<Complex<Real>,Nc> > Sum(locMatSum);
 //
 //	Sum.zero();
 //
@@ -142,8 +143,8 @@ __global__ void projectSU3( Real* U )
 //	{
 //		s.setLatticeIndex( site );
 //
-//		Matrix<complex,Nc> locMat;
-//		SU3<Matrix<complex,Nc> > temp(locMat);
+//		Matrix<Complex<Real>,Nc> locMat;
+//		SU3<Matrix<Complex<Real>,Nc> > temp(locMat);
 //
 //		TLink3 linkUp( U, s, mu );
 //		SU3<TLink3> globUp( linkUp );
@@ -162,8 +163,8 @@ __global__ void projectSU3( Real* U )
 //
 //	Sum -= Sum.trace()/Real(3.);
 //
-//	Matrix<complex,Nc> locMatSumHerm;
-//	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
+//	Matrix<Complex<Real>,Nc> locMatSumHerm;
+//	SU3<Matrix<Complex<Real>,Nc> > SumHerm(locMatSumHerm);
 //	SumHerm = Sum;
 //	SumHerm.hermitian();
 //
@@ -185,8 +186,8 @@ __global__ void projectSU3( Real* U )
 //	Real result = 0;
 //
 //
-//	Matrix<complex,Nc> locTemp;
-//	SU3<Matrix<complex,Nc> > temp(locTemp);
+//	Matrix<Complex<Real>,Nc> locTemp;
+//	SU3<Matrix<Complex<Real>,Nc> > temp(locTemp);
 //	for( int mu = 1; mu < 4; mu++ )
 //	{
 //		TLink3 linkUp( U, s, mu );
@@ -223,8 +224,8 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 		s.setNeighbour(mu-1,0);
 	}
 
-	Matrix<complex,Nc> locMat;
-	SU3<Matrix<complex,Nc> > locU(locMat);
+	Matrix<Complex<Real>,Nc> locMat;
+	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
 	TLink3_2 link( ((mu==0)&&(updown==1))?(UtDw):(UtUp), s, mu );
 
@@ -236,10 +237,10 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, COULOMB> subgroupStep( &locU, overrelax, id, mu, updown );
+	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, COULOMB> subgroupStep( &locU, overrelax, id, mu, updown );
 
 	// do the subgroup iteration
-	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
+	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
 
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
@@ -250,14 +251,14 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 
 Real calculatePolyakovLoopAverage( Real *U )
 {
-	Matrix<complex,3> tempMat;
-	SU3<Matrix<complex,3> > temp( tempMat );
-	Matrix<complex,3> temp2Mat;
-	SU3<Matrix<complex,3> > temp2( temp2Mat );
+	Matrix<Complex<Real>,3> tempMat;
+	SU3<Matrix<Complex<Real>,3> > temp( tempMat );
+	Matrix<Complex<Real>,3> temp2Mat;
+	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
 
 	SiteCoord<Ndim,true> s( HOST_CONSTANTS::SIZE );
 
-	complex result(0,0);
+	Complex<Real> result(0,0);
 
 	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
 	{
@@ -401,7 +402,7 @@ int main(int argc, char* argv[])
 
 //	lat_coord_t *pointerToSize;
 //	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
-	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUtUp, &HOST_CONSTANTS::SIZE[1] );
+	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUtUp, &HOST_CONSTANTS::SIZE[1], &DEVICE_CONSTANTS::SIZE[1] );
 
 	double totalKernelTime = 0;
 	long totalStepNumber = 0;

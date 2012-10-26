@@ -8,7 +8,7 @@
 #include <iostream>
 #include <math.h>
 #include <sstream>
-#include <malloc.h>
+// #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
@@ -79,10 +79,10 @@ typedef GpuLandauPattern< SiteCoord<Ndim,true>,Ndim,Nc> Gpu;
 typedef Link<Gpu,SiteCoord<Ndim,true>,Ndim,Nc> TLink;
 
 
-__device__ inline Real cuFabs( Real a )
-{
-	return (a>0)?(a):(-a);
-}
+// __device__ inline Real cuFabs( Real a )
+// {
+// 	return (a>0)?(a):(-a);
+// }
 
 void initNeighbourTable( lat_index_t* nnt )
 {
@@ -106,8 +106,8 @@ __global__ void projectSU3( Real* U )
 		SU3<TLink> globUp( linkUp );
 
 
-		Matrix<complex,Nc> locMat;
-		SU3<Matrix<complex,Nc> > locU(locMat);
+		Matrix<Complex<Real>,Nc> locMat;
+		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
 		locU.assignWithoutThirdLine(globUp);
 		locU.projectSU3withoutThirdRow();
@@ -144,8 +144,8 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 
 //	if(id == 0) printf("bin in or\n");
 
-	Matrix<complex,Nc> locMat;
-	SU3<Matrix<complex,Nc> > locU(locMat);
+	Matrix<Complex<Real>,Nc> locMat;
+	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
 	TLinkIndex link( U, s, mu );
 
@@ -157,10 +157,10 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
+	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
 
 	// do the subgroup iteration
-	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
+	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
 
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
@@ -169,7 +169,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 	//globU.projectSU3withoutThirdRow();
 }
 
-__global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
+__global__ void calculatePlaquette( Real *U, lat_index_t* nn, Real *dPlaquette )
 {
 	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
@@ -180,14 +180,14 @@ __global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette
 	SiteIndex<4,true> s(size);
 	s.nn = nn;
 
-	Matrix<complex,Nc> matP;
-	SU3<Matrix<complex,Nc> > P(matP);
+	Matrix<Complex<Real>,Nc> matP;
+	SU3<Matrix<Complex<Real>,Nc> > P(matP);
 
-	Matrix<complex,Nc> matTemp;
-	SU3<Matrix<complex,Nc> > temp(matTemp);
+	Matrix<Complex<Real>,Nc> matTemp;
+	SU3<Matrix<Complex<Real>,Nc> > temp(matTemp);
 
 
-	double localPlaquette = 0;
+	Real localPlaquette = 0;
 
 
 	for( int mu = 0; mu < 4; mu++ )
@@ -257,31 +257,31 @@ __global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette
 //	dPlaquette[site] = 0;
 }
 
-__global__ void printPlaquette( double* dPlaquette )
-{
-	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
-	SiteCoord<4,true> s(size);
-
-	double plaquette = 0;
-	for( int i = 0; i < s.getLatticeSize(); i++ )
-	{
-		plaquette += dPlaquette[i];
-	}
-
-	printf( "\t%E\n", plaquette/double(s.getLatticeSize()) );
-
-}
+// __global__ void printPlaquette( Real* dPlaquette )
+// {
+// 	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
+// 	SiteCoord<4,true> s(size);
+// 
+// 	Real plaquette = 0;
+// 	for( int i = 0; i < s.getLatticeSize(); i++ )
+// 	{
+// 		plaquette += dPlaquette[i];
+// 	}
+// 
+// 	printf( "\t%E\n", plaquette/Real(s.getLatticeSize()) );
+// 
+// }
 
 Real calculatePolyakovLoopAverage( Real *U )
 {
-	Matrix<complex,3> tempMat;
-	SU3<Matrix<complex,3> > temp( tempMat );
-	Matrix<complex,3> temp2Mat;
-	SU3<Matrix<complex,3> > temp2( temp2Mat );
+	Matrix<Complex<Real>,3> tempMat;
+	SU3<Matrix<Complex<Real>,3> > temp( tempMat );
+	Matrix<Complex<Real>,3> temp2Mat;
+	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
 
 	SiteCoord<Ndim,true> s( HOST_CONSTANTS::SIZE );
 
-	complex result(0,0);
+	Complex<Real> result(0,0);
 
 	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
 	{
@@ -407,8 +407,8 @@ int main(int argc, char* argv[])
 	cudaMalloc( &dNn, s.getLatticeSize()*(2*(Ndim))*sizeof( lat_index_t ) );
 
 
-	double* dPlaquette;
-	cudaMalloc( &dPlaquette, s.getLatticeSize()*sizeof(double) );
+	Real* dPlaquette;
+	cudaMalloc( &dPlaquette, s.getLatticeSize()*sizeof(Real) );
 
 
 
@@ -427,10 +427,10 @@ int main(int argc, char* argv[])
 	// instantiate GaugeFixingStats object
 //	lat_coord_t *devicePointerToSize;
 //	cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,LANDAU,AVERAGE> gaugeStats( dU, HOST_CONSTANTS::SIZE );
+	GaugeFixingStats<Ndim,Nc,LANDAU,AVERAGE> gaugeStats( dU, HOST_CONSTANTS::SIZE, DEVICE_CONSTANTS::SIZE );
 
 
-	double totalKernelTime = 0;
+	Real totalKernelTime = 0;
 
 	long totalStepNumber = 0;
 
@@ -480,6 +480,7 @@ int main(int argc, char* argv[])
 		// calculate and print the gauge quality
 		printf( "i:\t\tgff:\t\tdA:\n");
 		gaugeStats.generateGaugeQuality();
+		printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
 		Chronotimer kernelTimer;
 		kernelTimer.reset();
@@ -499,12 +500,12 @@ int main(int argc, char* argv[])
 
 			// check the current gauge quality
 				gaugeStats.generateGaugeQuality();
-				printf( "%d\t\t%1.10f\t\t%e", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+				printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
-				calculatePlaquette<<<s.getLatticeSize()/32,32>>>( dU, dNn, dPlaquette );
-				printPlaquette<<<1,1>>>(dPlaquette );
+// 				calculatePlaquette<<<s.getLatticeSize()/32,32>>>( dU, dNn, dPlaquette );
+// 				printPlaquette<<<1,1>>>(dPlaquette );
 
-				if( gaugeStats.getCurrentA() < orPrecision ) break;
+// 				if( gaugeStats.getCurrentA() < orPrecision ) break;
 			}
 
 			totalStepNumber++;
