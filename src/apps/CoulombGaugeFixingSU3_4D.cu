@@ -31,35 +31,13 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
-
+#include "../lattice/gaugefixing/GlobalConstants.hxx"
 
 using namespace std;
 
 const lat_dim_t Ndim = 4;
 const short Nc = 3;
 
-#ifdef _X_
-const lat_coord_t Nx = _X_;
-#else
-#error "Define X (the lattice size in x-direction)"
-#endif
-#ifdef _Y_
-const lat_coord_t Ny = _Y_;
-#else
-const lat_coord_t Ny = _X_;
-bool warnY = true; // TODO print the warning
-#endif
-#ifdef _Z_
-const lat_coord_t Nz = _Z_;
-#else
-const lat_coord_t Nz = _X_;
-bool warnZ = true;
-#endif
-#ifdef _T_
-const lat_coord_t Nt = _T_;
-#else
-#error "Define T (the lattice size in t-direction)"
-#endif
 
 
 // boost program options setup
@@ -88,8 +66,8 @@ FileType fileType;
 ReinterpretReal reinterpretReal;
 
 // lattice setup
-const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-__constant__ lat_coord_t dSize[Ndim] = {Nt,Nx,Ny,Nz};
+//const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+//__constant__ lat_coord_t dSize[Ndim] = {Nt,Nx,Ny,Nz};
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
@@ -277,7 +255,7 @@ Real calculatePolyakovLoopAverage( Real *U )
 	Matrix<complex,3> temp2Mat;
 	SU3<Matrix<complex,3> > temp2( temp2Mat );
 
-	SiteCoord<Ndim,true> s( size );
+	SiteCoord<Ndim,true> s( HOST_CONSTANTS::SIZE );
 
 	complex result(0,0);
 
@@ -371,7 +349,7 @@ int main(int argc, char* argv[])
 	Chronotimer allTimer;
 	allTimer.reset();
 
-	SiteCoord<4,true> s(size);
+	SiteCoord<4,true> s(HOST_CONSTANTS::SIZE);
 
 	// TODO maybe we should choose the filetype on compile time
 	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
@@ -421,9 +399,9 @@ int main(int argc, char* argv[])
 
 	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
 
-	lat_coord_t *pointerToSize;
-	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
-	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUtUp, &size[1], pointerToSize );
+//	lat_coord_t *pointerToSize;
+//	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
+	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUtUp, &HOST_CONSTANTS::SIZE[1] );
 
 	double totalKernelTime = 0;
 	long totalStepNumber = 0;
