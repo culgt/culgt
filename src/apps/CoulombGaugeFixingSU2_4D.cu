@@ -9,7 +9,7 @@
 #include <sstream>
 #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingStepSU2.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStatsV2.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
 #include "../lattice/gaugefixing/simulated_annealing/SaUpdate.hxx"
@@ -1006,7 +1006,8 @@ int main(int argc, char* argv[])
 //	lat_coord_t *devicePointerToSize;
 //	cudaError_t error = cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
 
-	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUup, &HOST_CONSTANTS::SIZE[1] );
+//	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUup, &HOST_CONSTANTS::SIZE[1] );
+	GaugeFixingStats<Ndim-1,Nc,CoulombKernelsSU2,AVERAGE> gaugeStats( dUup, &HOST_CONSTANTS::SIZE[1] );
 
 //	cout << "get symbol adress error:" << cudaGetErrorString( error ) << endl;
 
