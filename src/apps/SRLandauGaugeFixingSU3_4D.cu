@@ -376,7 +376,7 @@ int main(int argc, char* argv[])
 
 				if( gaugeStats.getCurrentA() < orPrecision ) break;
 				if( !( gaugeStats.getCurrentA() > 0 ) ) break; //check for NaN
-//				if( gaugeStats.getCurrentA() < 1.0e-8 ) orParameter=0.0;
+				if( gaugeStats.getCurrentA() < 1.0e-8 ) orParameter=0.0;
 			}
 
 			totalStepNumber++;

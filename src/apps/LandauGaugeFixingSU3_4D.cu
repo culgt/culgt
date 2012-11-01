@@ -14,6 +14,7 @@
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
+#include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
 #include "../lattice/access_pattern/GpuLandauPattern.hxx"
@@ -23,7 +24,7 @@
 #include "../lattice/SU3.hxx"
 #include "../lattice/Matrix.hxx"
 #include "../lattice/LinkFile.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
+//#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
 #include "../lattice/filetypes/FileHeaderOnly.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
@@ -108,8 +109,8 @@ __global__ void projectSU3( Real* U )
 		SU3<TLink> globUp( linkUp );
 
 
-		Matrix<complex,Nc> locMat;
-		SU3<Matrix<complex,Nc> > locU(locMat);
+		Matrix<Complex<Real>,Nc> locMat;
+		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
 		locU.assignWithoutThirdLine(globUp);
 		locU.projectSU3withoutThirdRow();
@@ -122,7 +123,7 @@ __global__ void projectSU3( Real* U )
 }
 
 
-__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter )
+__global__ void __launch_bounds__(128,8) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
 {
 	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
@@ -131,9 +132,9 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 	SiteIndex<4,true> s(size);
 	s.nn = nn;
 
-	const bool updown = threadIdx.x / 128;
-	const short mu = (threadIdx.x % 128) / 32;
-	const short id = (threadIdx.x % 128) % 32;
+	const bool updown = threadIdx.x / NSB4;
+	const short mu = (threadIdx.x % NSB4) / NSB;
+	const short id = (threadIdx.x % NSB4) % NSB;
 
 	int site = blockIdx.x * blockDim.x/8 + id;
 	if( parity == 1 ) site += s.getLatticeSize()/2;
@@ -146,8 +147,8 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 
 //	if(id == 0) printf("bin in or\n");
 
-	Matrix<complex,Nc> locMat;
-	SU3<Matrix<complex,Nc> > locU(locMat);
+	Matrix<Complex<Real>,Nc> locMat;
+	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
 	TLinkIndex link( U, s, mu );
 
@@ -159,16 +160,16 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
+	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown, counter );
 
 	// do the subgroup iteration
-	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
+	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
 
 	// copy link back
-	globU.assignWithoutThirdLine(locU);
+	globU=locU; //TODO with or without 3rd line?
 	
 	// project back
-	//globU.projectSU3withoutThirdRow();
+//	globU.projectSU3withoutThirdRow();
 }
 
 __global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
@@ -182,11 +183,11 @@ __global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette
 	SiteIndex<4,true> s(size);
 	s.nn = nn;
 
-	Matrix<complex,Nc> matP;
-	SU3<Matrix<complex,Nc> > P(matP);
+	Matrix<Complex<Real>,Nc> matP;
+	SU3<Matrix<Complex<Real>,Nc> > P(matP);
 
-	Matrix<complex,Nc> matTemp;
-	SU3<Matrix<complex,Nc> > temp(matTemp);
+	Matrix<Complex<Real>,Nc> matTemp;
+	SU3<Matrix<Complex<Real>,Nc> > temp(matTemp);
 
 
 	double localPlaquette = 0;
@@ -276,14 +277,14 @@ __global__ void printPlaquette( double* dPlaquette )
 
 Real calculatePolyakovLoopAverage( Real *U )
 {
-	Matrix<complex,3> tempMat;
-	SU3<Matrix<complex,3> > temp( tempMat );
-	Matrix<complex,3> temp2Mat;
-	SU3<Matrix<complex,3> > temp2( temp2Mat );
+	Matrix<Complex<Real>,3> tempMat;
+	SU3<Matrix<Complex<Real>,3> > temp( tempMat );
+	Matrix<Complex<Real>,3> temp2Mat;
+	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
 
 	SiteCoord<Ndim,true> s( HOST_CONSTANTS::SIZE );
 
-	complex result(0,0);
+	Complex<Real> result(0,0);
 
 	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
 	{
@@ -366,19 +367,11 @@ int main(int argc, char* argv[])
 
 
 
-
-
-
-
-
-
-
-
-
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, 0);
+	cudaGetDeviceProperties(&deviceProp, devicenumb);
+	cudaSetDevice(devicenumb);
 
-	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
+	printf("\nDevice %d: \"%s\"\n", devicenumb, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 	Chronotimer allTimer;
@@ -419,8 +412,8 @@ int main(int argc, char* argv[])
 	// copy neighbour table to device
 	cudaMemcpy( dNn, nn, s.getLatticeSize()*(2*(Ndim))*sizeof( lat_index_t ), cudaMemcpyHostToDevice );
 
-	int threadsPerBlock = 32*8; // 32 sites are updated within a block (8 threads are needed per site)
-	int numBlocks = s.getLatticeSize()/2/32; // // half of the lattice sites (a parity) are updated in a kernel call
+	int threadsPerBlock = NSB*8; // 32 sites are updated within a block (8 threads are needed per site)
+	int numBlocks = s.getLatticeSize()/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
 
 	allTimer.start();
 
@@ -436,12 +429,12 @@ int main(int argc, char* argv[])
 
 	long totalStepNumber = 0;
 
-	for( int i = fileStartnumber; i < fileStartnumber+nconf; i++ )
+	for( int i = fileStartnumber; i < fileStartnumber+nconf*fileStepsize; i+=fileStepsize )
 	{
 
 		stringstream filename(stringstream::out);
 		filename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << fileEnding;
-//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+
 		cout << "loading " << filename.str() << " as " << fileType << endl;
 
 		bool loadOk;
@@ -476,37 +469,40 @@ int main(int argc, char* argv[])
 		}
 //		Real polBefore = calculatePolyakovLoopAverage( U );
 
+		// open logfile
+		filename << postFixLabel << ".log";
+		fstream logfile;
+		logfile.open( filename.str().c_str(), fstream::out );
+
 		// copying configuration ...
 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
 		// calculate and print the gauge quality
 		printf( "i:\t\tgff:\t\tdA:\n");
+		logfile << "#i:\t\tgff:\t\tdA:" << endl;
 		gaugeStats.generateGaugeQuality();
+		printf( "   \t\t%1.10f\t\t%e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+		Real CurrentOrParameter = orParameter;
 
 		Chronotimer kernelTimer;
 		kernelTimer.reset();
 		kernelTimer.start();
-		for( int i = 0; i < orMaxIter; i++ )
+		for( int j = 0; j < orMaxIter; j++ )
 		{
-			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, orParameter );
-			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, orParameter );
-
-			if( i % reproject == 0)
+			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 0, CurrentOrParameter, 2*j );
+			orStep<<<numBlocks,threadsPerBlock>>>(dU, dNn, 1, CurrentOrParameter, 2*j+1 );
+			
+			// check the current gauge quality
+			if( j % orCheckPrec == 0 )
 			{
 				projectSU3<<<numBlocks*2,32>>>( dU );
-			}
-
-			if( i % orCheckPrec == 0 )
-			{
-
-			// check the current gauge quality
 				gaugeStats.generateGaugeQuality();
-				printf( "%d\t\t%1.10f\t\t%e", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
-
-				calculatePlaquette<<<s.getLatticeSize()/32,32>>>( dU, dNn, dPlaquette );
-				printPlaquette<<<1,1>>>(dPlaquette );
+				printf( "%d\t\t%1.10f\t\t%e\n", j, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+				logfile << j << '\t' << gaugeStats.getCurrentGff() << '\t' << gaugeStats.getCurrentA() << endl;
 
 				if( gaugeStats.getCurrentA() < orPrecision ) break;
+				if( !( gaugeStats.getCurrentA() > 0 ) ) break; //check for NaN
+// 				if( gaugeStats.getCurrentA() < 1.0e-8 ) CurrentOrParameter=0.0;
 			}
 
 			totalStepNumber++;
@@ -514,10 +510,36 @@ int main(int argc, char* argv[])
 		cudaThreadSynchronize();
 		kernelTimer.stop();
 		cout << "kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
+		logfile << "#kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
 		totalKernelTime += kernelTimer.getTime();
 		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 
 //		cout << "Polyakov loop: " << polBefore << " - " << calculatePolyakovLoopAverage( U ) << endl;
+
+		//close logfile
+		logfile.close();
+		
+		//saving file
+		stringstream outfilename(stringstream::out);
+		outfilename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << postFixLabel << fileEnding;
+
+		cout << "saving " << outfilename.str() << " as " << fileType << endl;
+
+		switch( fileType )
+		{
+		case VOGT:
+			loadOk = lfVogt.save( s, outfilename.str(), U );
+			break;
+		case PLAIN:
+			loadOk = lfPlain.save( s, outfilename.str(), U );
+			break;
+		case HEADERONLY:
+			loadOk = lfHeaderOnly.save( s, outfilename.str(), U );
+			break;
+		default:
+			cout << "Filetype not set to a known value. Exiting";
+			exit(1);
+		}
 	}
 
 	allTimer.stop();

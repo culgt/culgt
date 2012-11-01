@@ -40,29 +40,6 @@ using namespace std;
 const lat_dim_t Ndim = 4;
 const short Nc = 3;
 
-#ifdef _X_
-const lat_coord_t Nx = _X_;
-#else
-#error "Define X (the lattice size in x-direction)"
-#endif
-#ifdef _Y_
-const lat_coord_t Ny = _Y_;
-#else
-const lat_coord_t Ny = _X_;
-bool warnY = true; // TODO print the warning
-#endif
-#ifdef _Z_
-const lat_coord_t Nz = _Z_;
-#else
-const lat_coord_t Nz = _X_;
-bool warnZ = true;
-#endif
-#ifdef _T_
-const lat_coord_t Nt = _T_;
-#else
-#error "Define T (the lattice size in t-direction)"
-#endif
-
 
 // boost program options setup
 boost::program_options::variables_map options_vm;
@@ -206,7 +183,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 }
 
 
-__global__ void generateGaugeQuality( Real* UtUp, Real* UtDw, lat_index_t* nnt, float *dGff, float *dA )
+__global__ void generateGaugeQuality( Real* UtUp, Real* UtDw, lat_index_t* nnt, double *dGff, double *dA )
 {
 	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
@@ -221,7 +198,7 @@ __global__ void generateGaugeQuality( Real* UtUp, Real* UtDw, lat_index_t* nnt, 
 	Matrix<Complex<Real>,Nc> locMatSum;
 	SU3<Matrix<Complex<Real>,Nc> > Sum(locMatSum);
 	Sum.zero();
-	float result = 0;
+	double result = 0;
 
 
 	for( int mu = 0; mu < 4; mu++ )
@@ -265,7 +242,7 @@ __global__ void generateGaugeQuality( Real* UtUp, Real* UtDw, lat_index_t* nnt, 
 
 	Sum -= SumHerm;
 
-	float prec = 0;
+	double prec = 0;
 	for( int i = 0; i < 3; i++ )
 	{
 		for( int j = 0; j < 3; j++ )
@@ -278,18 +255,18 @@ __global__ void generateGaugeQuality( Real* UtUp, Real* UtDw, lat_index_t* nnt, 
 }
 
 
-__global__ void averageGaugeQuality( float* dGff, float* dA )
+__global__ void averageGaugeQuality( double* dGff, double* dA )
 {
-	float gff = 0;
-	float A = 0;
+	double gff = 0;
+	double A = 0;
 	for( int i = 0; i < Nx*Ny*Nz; i++ )
 	{
 		gff+= dGff[i];
 		A += dA[i];
 	}
 	
-	dGff[0] = gff/float(Nx*Ny*Nz)/4./3.;
-	dA[0]   = A/float(Nx*Ny*Nz)/3.;
+	dGff[0] = gff/double(Nx*Ny*Nz)/4./3.;
+	dA[0]   = A/double(Nx*Ny*Nz)/3.;
 }
 
 
@@ -332,6 +309,7 @@ __global__ void averageGaugeQuality( float* dGff, float* dA )
 // 	}
 // 
 // 	return sqrt(result.x*result.x+result.y*result.y) / (Real)(s.getLatticeSizeTimeslice()*Nc);
+
 // }
 
 
@@ -421,11 +399,11 @@ int main(int argc, char* argv[])
 		cudaMalloc( &dU[t], timesliceArraySize*sizeof(Real) );
 
 	// device memory for collecting the parts of the gauge fixing functional and divA
-	float *dGff;
-	cudaMalloc( &dGff, s.getLatticeSizeTimeslice()*sizeof(float) );
-	float *dA;
-	cudaMalloc( &dA, s.getLatticeSizeTimeslice()*sizeof(float) );
-	float gff[2], A[2];
+	double *dGff;
+	cudaMalloc( &dGff, s.getLatticeSizeTimeslice()*sizeof(double) );
+	double *dA;
+	cudaMalloc( &dA, s.getLatticeSizeTimeslice()*sizeof(double) );
+	double gff[2], A[2];
 
 	// host memory for the timeslice neighbour table
 	lat_index_t* nnt = (lat_index_t*)malloc( s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof(lat_index_t) );
@@ -451,7 +429,7 @@ int main(int argc, char* argv[])
 // 	lat_coord_t *pointerToSize;
 // 	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
 
-	float totalKernelTime = 0;
+	double totalKernelTime = 0;
 	long totalStepNumber = 0;
 
 
@@ -506,12 +484,12 @@ int main(int argc, char* argv[])
 			int tDw = (t > 0)?(t-1):(s.size[0]-1);
 			generateGaugeQuality<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt, dGff, dA );
 			averageGaugeQuality<<<1,1>>>( dGff, dA );
-			cudaMemcpy( gff, dGff, sizeof(float), cudaMemcpyDeviceToHost );
-			cudaMemcpy( A, dA,     sizeof(float), cudaMemcpyDeviceToHost );
+			cudaMemcpy( gff, dGff, sizeof(double), cudaMemcpyDeviceToHost );
+			cudaMemcpy( A, dA,     sizeof(double), cudaMemcpyDeviceToHost );
 			gff[1]+=gff[0];
 			A[1]  +=A[0];
 		}
-		printf( "\n-\t\t%1.10f\t\t%e\n", gff[1]/(float)Nt, A[1]/(float)Nt );
+		printf( "\n-\t\t%1.10f\t\t%e\n", gff[1]/(double)Nt, A[1]/(double)Nt );
 		
 		Chronotimer kernelTimer;
 		kernelTimer.reset();
@@ -538,12 +516,12 @@ int main(int argc, char* argv[])
 					int tDw = (t > 0)?(t-1):(s.size[0]-1);
 					generateGaugeQuality<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt, dGff, dA );
 					averageGaugeQuality<<<1,1>>>( dGff, dA );
-					cudaMemcpy( gff, dGff, sizeof(float), cudaMemcpyDeviceToHost );
-					cudaMemcpy( A, dA,     sizeof(float), cudaMemcpyDeviceToHost );
+					cudaMemcpy( gff, dGff, sizeof(double), cudaMemcpyDeviceToHost );
+					cudaMemcpy( A, dA,     sizeof(double), cudaMemcpyDeviceToHost );
 					gff[1]+=gff[0];
 					A[1]  +=A[0];
 				}
-				printf( "%d\t\t%1.10f\t\t%e\n", j, gff[1]/(float)Nt, A[1]/(float)Nt );
+				printf( "%d\t\t%1.10f\t\t%e\n", j, gff[1]/(double)Nt, A[1]/(double)Nt );
 				
 				if( A[1] < orPrecision ) break;
 			}

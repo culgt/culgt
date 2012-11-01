@@ -39,6 +39,10 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuLandauPattern<Site, T_Ndim,T_Nc>::getIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
 {
 	return s.getLatticeIndex() + s.getLatticeSize()*( c + 2 * ( j + T_Nc *( i + T_Nc * mu ) ) );
+//	return s.getLatticeIndex() + s.getLatticeSize()*( mu + T_Ndim * ( c + 2 * ( j + T_Nc * i ) ) );
+//	return s.getLatticeIndex() + s.getLatticeSize()*( c + 2 * ( j + T_Nc *( mu + T_Ndim * i ) ) );
+//	return s.getLatticeIndex() + s.getLatticeSize()*( mu + T_Ndim * ( i + T_Nc * ( j + T_Nc * c ) ) );
+//	return ( c + 2 * ( j + T_Nc *( i + T_Nc * ( mu + T_Ndim * ( s[3] + Nx * ( s[2] + Nx * ( s[1] + Nx * s[0] ) ) ) ) ) ) );
 }
 
 /**
