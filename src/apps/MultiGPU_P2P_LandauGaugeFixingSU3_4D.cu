@@ -321,7 +321,7 @@ int main(int argc, char* argv[])
 	deviceCount = ( deviceCount<numbDevices ? deviceCount : numbDevices );
 	
 	int device;
-	for (device = 0; device < deviceCount; ++device) 
+	for( device=0; device<deviceCount; device++ ) 
 	{
 		cudaDeviceProp deviceProp;
 		cudaGetDeviceProperties(&deviceProp, device);
@@ -330,11 +330,30 @@ int main(int argc, char* argv[])
 	}
 	
 	// allow peer-to-peer (P2P) acces of neighboring devices
-	for (device = 0; device < deviceCount; ++device) 
+	cudaError_t cuerr;
+	for( device=0; device<deviceCount; device++ )
 	{
 		cudaSetDevice(device);
-		cudaDeviceEnablePeerAccess( (device+1)%deviceCount, (device+1)%deviceCount );
-		cudaDeviceEnablePeerAccess( (device+deviceCount-1)%deviceCount, (device+deviceCount-1)%deviceCount );
+		cout << "cudaDeviceEnablePeerAccess " << device << " to " << (device+1)%deviceCount << ": ";
+		cuerr = cudaDeviceEnablePeerAccess( (device+1)%deviceCount, 0 );
+		cout << cudaGetErrorString( cuerr ) << endl;
+		
+		cout << "cudaDeviceEnablePeerAccess " << device << " to " << (device+deviceCount-1)%deviceCount << ": ";
+		cuerr = cudaDeviceEnablePeerAccess( (device+deviceCount-1)%deviceCount, 0 );
+		cout << cudaGetErrorString( cuerr ) << endl;
+	}
+
+	
+	// test if P2P is allowed
+	int canAccessPeer[1];
+	for( device=0; device<deviceCount; device++ )
+	{
+		int peerDevicePos = (device+1)%deviceCount;
+		int peerDeviceNeg = (device+deviceCount-1)%deviceCount;
+		cudaDeviceCanAccessPeer( canAccessPeer, device, peerDevicePos );
+		cout << "Device " << device << " can access device " << peerDevicePos << ": " << canAccessPeer[0] << endl;
+		cudaDeviceCanAccessPeer( canAccessPeer, device, peerDeviceNeg );
+		cout << "Device " << device << " can access device " << peerDeviceNeg << ": " << canAccessPeer[0] << endl;
 	}
 	
 	// array to distribute the timeslices to the devices
@@ -351,9 +370,9 @@ int main(int argc, char* argv[])
 	for( int t=0; t<Nt; t++ )
 		numbTimeSlices[theDevice[t]]++;
 	
-	cout << "Time-slice distribution:" << endl;
+	cout << "\nTime-slice distribution:" << endl;
 	cout << "Device" << '\t' << "#slices" << endl;
- 	for( device=0; device<numbDevices; device++ )
+ 	for( device=0; device<deviceCount; device++ )
  		cout << device << '\t' << numbTimeSlices[device] << endl;
 
 
@@ -385,22 +404,22 @@ int main(int argc, char* argv[])
 	float *dGff[32];
 	float *dA[32];
 	
-	for( device=0; device<numbDevices; device++ )
+	for( device=0; device<deviceCount; device++ )
 	{
 		cudaSetDevice(device);
 		cudaMalloc( &dGff[device], s.getLatticeSizeTimeslice()*sizeof(float) );
 		cudaMalloc( &dA[device], s.getLatticeSizeTimeslice()*sizeof(float) );
 	}
 	
-	// host memory (to collect the results)
-	float gff[2], A[2];
+	// host memory (two fields to collect the results)
+	float gff[2][32], A[2][32];
 
 	// host memory for the timeslice neighbour table
 	lat_index_t* nnt = (lat_index_t*)malloc( s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof(lat_index_t) );
 
 	// device memory for the timeslice neighbour table
 	lat_index_t *dNnt[32];
-	for( device=0; device<numbDevices; device++ )
+	for( device=0; device<deviceCount; device++ )
 	{
 		cudaSetDevice(device);
 		cudaMalloc( &dNnt[device], s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof(lat_index_t) );
@@ -410,7 +429,7 @@ int main(int argc, char* argv[])
 	initNeighbourTable( nnt );
 	
 	// copy neighbour table to device
-	for( device=0; device<numbDevices; device++ )
+	for( device=0; device<deviceCount; device++ )
 	{
 		cudaSetDevice(device);
 		cudaMemcpy( dNnt[device], nnt, s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof(lat_index_t), cudaMemcpyHostToDevice );
@@ -476,8 +495,11 @@ int main(int argc, char* argv[])
 
 		// calculate and print the gauge quality
 		printf( "i:\t\tgff:\t\tdA:\n");
-		gff[1]=0.0; 
-		A[1]  =0.0;
+		for( device=0; device<deviceCount; device++ )
+		{
+			gff[1][device]=0.0; 
+			A[1][device]  =0.0;
+		}
 		for( int t=0; t<Nt; t++ )
 		{
 // 			cout << t << ' ' << flush;
@@ -485,12 +507,17 @@ int main(int argc, char* argv[])
 			cudaSetDevice(theDevice[t]);
 			generateGaugeQuality<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt[theDevice[t]], dGff[theDevice[t]], dA[theDevice[t]] );
 			averageGaugeQuality<<<1,1>>>( dGff[theDevice[t]], dA[theDevice[t]] );
-			cudaMemcpy( gff, dGff[theDevice[t]], sizeof(float), cudaMemcpyDeviceToHost );
-			cudaMemcpy( A, dA[theDevice[t]],     sizeof(float), cudaMemcpyDeviceToHost );
-			gff[1]+=gff[0];
-			A[1]  +=A[0];
+			cudaMemcpy( &gff[0][theDevice[t]], dGff[theDevice[t]], sizeof(float), cudaMemcpyDeviceToHost );
+			cudaMemcpy( &A[0][theDevice[t]], dA[theDevice[t]],     sizeof(float), cudaMemcpyDeviceToHost );
+			gff[1][theDevice[t]]+=gff[0][theDevice[t]];
+			A[1][theDevice[t]]  +=A[0][theDevice[t]];
 		}
-		printf( "\n-\t\t%1.10f\t\t%e\n", gff[1]/(float)Nt, A[1]/(float)Nt );
+		for( device=1; device<deviceCount; device++ )
+		{
+			gff[1][0] += gff[1][device];
+			A[1][0]   += A[1][device];
+		}
+		printf( "\n-\t\t%1.10f\t\t%e\n", gff[1][0]/(float)Nt, A[1][0]/(float)Nt );
 		
 		Chronotimer kernelTimer;
 		kernelTimer.reset();
@@ -510,23 +537,31 @@ int main(int argc, char* argv[])
 			// calculate and print the gauge quality
 			if( j % orCheckPrec == 0 )
 			{
-				gff[1]=0.0; 
-				A[1]  =0.0;
+				for( device=0; device<deviceCount; device++ )
+				{
+					gff[1][device]=0.0; 
+					A[1][device]  =0.0;
+				}
 				for( int t=0; t<Nt; t++ )
 				{
-// 					cout << t << ' ' << flush;
+		// 			cout << t << ' ' << flush;
 					int tDw = (t > 0)?(t-1):(s.size[0]-1);
 					cudaSetDevice(theDevice[t]);
 					generateGaugeQuality<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt[theDevice[t]], dGff[theDevice[t]], dA[theDevice[t]] );
 					averageGaugeQuality<<<1,1>>>( dGff[theDevice[t]], dA[theDevice[t]] );
-					cudaMemcpy( gff, dGff[theDevice[t]], sizeof(float), cudaMemcpyDeviceToHost );
-					cudaMemcpy( A, dA[theDevice[t]],     sizeof(float), cudaMemcpyDeviceToHost );
-					gff[1]+=gff[0];
-					A[1]  +=A[0];
+					cudaMemcpy( &gff[0][theDevice[t]], dGff[theDevice[t]], sizeof(float), cudaMemcpyDeviceToHost );
+					cudaMemcpy( &A[0][theDevice[t]], dA[theDevice[t]],     sizeof(float), cudaMemcpyDeviceToHost );
+					gff[1][theDevice[t]]+=gff[0][theDevice[t]];
+					A[1][theDevice[t]]  +=A[0][theDevice[t]];
 				}
-				printf( "%d\t\t%1.10f\t\t%e\n", j, gff[1]/(float)Nt, A[1]/(float)Nt );
+				for( device=1; device<deviceCount; device++ )
+				{
+					gff[1][0] += gff[1][device];
+					A[1][0]   += A[1][device];
+				}
+				printf( "%d\t\t%1.10f\t\t%e\n", j, gff[1][0]/(float)Nt, A[1][0]/(float)Nt );
 				
-				if( A[1] < orPrecision ) break;
+				if( A[1][0] < orPrecision ) break;
 			}
 
 			totalStepNumber++;
