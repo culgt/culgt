@@ -33,6 +33,7 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
 #include "../lattice/gaugefixing/GlobalConstants.hxx"
+#include "../util/rng/PhiloxWrapper.hxx"
 
 
 using namespace std;
@@ -111,14 +112,10 @@ __global__ void projectSU3( Real* U )
 
 		Matrix<Complex<Real>,Nc> locMat;
 		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
-
+		
 		locU.assignWithoutThirdLine(globUp);
 		locU.projectSU3withoutThirdRow();
-
-
 		globUp.assignWithoutThirdLine(locU);
-
-//		globUp.projectSU3withoutThirdRow();
 	}
 }
 
@@ -132,9 +129,9 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 	SiteIndex<4,true> s(size);
 	s.nn = nnt;
 
-	const bool updown = threadIdx.x / 128;
-	const short mu = (threadIdx.x % 128) / 32;
-	const short id = (threadIdx.x % 128) % 32;
+	const bool updown = threadIdx.x / NSB4;
+	const short mu = (threadIdx.x % NSB4) / NSB;
+	const short id = (threadIdx.x % NSB4) % NSB;
 
 	int site = blockIdx.x * blockDim.x/8 + id;
 	if( parity == 1 ) site += s.getLatticeSize()/2;
@@ -183,7 +180,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 }
 
 
-__global__ void generateGaugeQuality( Real* UtUp, Real* UtDw, lat_index_t* nnt, float *dGff, float *dA )
+__global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t* nnt, float *dGff, float *dA )
 {
 	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
@@ -269,6 +266,77 @@ __global__ void averageGaugeQuality( float* dGff, float* dA )
 	dA[0]   = A/float(Nx*Ny*Nz)/3.;
 }
 
+void generateGaugeQuality( Real** dU, int* theDevice, int deviceCount, float** dGff, float** dA, lat_index_t** dNnt, float &_gff, float &_A )
+{
+	SiteCoord<4,true> s(size);
+	
+	// host memory (two fields to collect the results)
+	static float gff[2][32], A[2][32];
+	
+	for( int device=0; device<deviceCount; device++ )
+	{
+		gff[1][device]=0.0; 
+		A[1][device]  =0.0;
+	}
+	for( int t=0; t<Nt; t++ )
+	{
+// 			cout << t << ' ' << flush;
+		int tDw = (t > 0)?(t-1):(s.size[0]-1);
+		cudaSetDevice(theDevice[t]);
+		generateGaugeQualityPerSite<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt[theDevice[t]], dGff[theDevice[t]], dA[theDevice[t]] );
+		averageGaugeQuality<<<1,1>>>( dGff[theDevice[t]], dA[theDevice[t]] );
+		cudaMemcpy( &gff[0][theDevice[t]], dGff[theDevice[t]], sizeof(float), cudaMemcpyDeviceToHost );
+		cudaMemcpy( &A[0][theDevice[t]], dA[theDevice[t]],     sizeof(float), cudaMemcpyDeviceToHost );
+		gff[1][theDevice[t]]+=gff[0][theDevice[t]];
+		A[1][theDevice[t]]  +=A[0][theDevice[t]];
+	}
+	cudaDeviceSynchronize();
+	
+	for( int device=1; device<deviceCount; device++ )
+	{
+		gff[1][0] += gff[1][device];
+		A[1][0]   += A[1][device];
+	}
+	_gff = gff[1][0]/(float)Nt;
+	_A = A[1][0]/(float)Nt;
+}
+
+__global__ void set_hot( Real* U, int counter)
+{
+	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+	SiteCoord<4,true> s(size);
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+	s.setLatticeIndex( site );
+	
+	PhiloxWrapper rng( site, 123, counter );
+
+	Quaternion<Real> q;
+	
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		TLink linkUp( U, s, mu );
+		SU3<TLink> globUp( linkUp );
+
+		Matrix<Complex<Real>,Nc> locMat;
+		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
+		
+		locU.identity();
+		
+		for( int i=0; i<2; i++ )
+			for( int j=i+1; j<3; j++ )
+			{
+				q[0] = rng.rand()*2.0-1.0;
+				q[1] = rng.rand()*2.0-1.0;
+				q[2] = rng.rand()*2.0-1.0;
+				q[3] = rng.rand()*2.0-1.0;
+				
+				q.projectSU2();
+				locU.rightSubgroupMult( i, j, &q );
+			}
+ 		globUp = locU;
+	}
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -331,30 +399,32 @@ int main(int argc, char* argv[])
 	
 	// allow peer-to-peer (P2P) acces of neighboring devices
 	cudaError_t cuerr;
-	for( device=0; device<deviceCount; device++ )
-	{
-		cudaSetDevice(device);
-		cout << "cudaDeviceEnablePeerAccess " << device << " to " << (device+1)%deviceCount << ": ";
-		cuerr = cudaDeviceEnablePeerAccess( (device+1)%deviceCount, 0 );
-		cout << cudaGetErrorString( cuerr ) << endl;
-		
-		cout << "cudaDeviceEnablePeerAccess " << device << " to " << (device+deviceCount-1)%deviceCount << ": ";
-		cuerr = cudaDeviceEnablePeerAccess( (device+deviceCount-1)%deviceCount, 0 );
-		cout << cudaGetErrorString( cuerr ) << endl;
-	}
+	if( deviceCount > 1 )
+		for( device=0; device<deviceCount; device++ )
+		{
+			cudaSetDevice(device);
+			cout << "cudaDeviceEnablePeerAccess " << device << " to " << (device+1)%deviceCount << ": ";
+			cuerr = cudaDeviceEnablePeerAccess( (device+1)%deviceCount, 0 );
+			cout << cudaGetErrorString( cuerr ) << endl;
+			
+			cout << "cudaDeviceEnablePeerAccess " << device << " to " << (device+deviceCount-1)%deviceCount << ": ";
+			cuerr = cudaDeviceEnablePeerAccess( (device+deviceCount-1)%deviceCount, 0 );
+			cout << cudaGetErrorString( cuerr ) << endl;
+		}
 
 	
 	// test if P2P is allowed
 	int canAccessPeer[1];
-	for( device=0; device<deviceCount; device++ )
-	{
-		int peerDevicePos = (device+1)%deviceCount;
-		int peerDeviceNeg = (device+deviceCount-1)%deviceCount;
-		cudaDeviceCanAccessPeer( canAccessPeer, device, peerDevicePos );
-		cout << "Device " << device << " can access device " << peerDevicePos << ": " << canAccessPeer[0] << endl;
-		cudaDeviceCanAccessPeer( canAccessPeer, device, peerDeviceNeg );
-		cout << "Device " << device << " can access device " << peerDeviceNeg << ": " << canAccessPeer[0] << endl;
-	}
+	if( deviceCount > 1 )
+		for( device=0; device<deviceCount; device++ )
+		{
+			int peerDevicePos = (device+1)%deviceCount;
+			int peerDeviceNeg = (device+deviceCount-1)%deviceCount;
+			cudaDeviceCanAccessPeer( canAccessPeer, device, peerDevicePos );
+			cout << "Device " << device << " can access device " << peerDevicePos << ": " << canAccessPeer[0] << endl;
+			cudaDeviceCanAccessPeer( canAccessPeer, device, peerDeviceNeg );
+			cout << "Device " << device << " can access device " << peerDeviceNeg << ": " << canAccessPeer[0] << endl;
+		}
 	
 	// array to distribute the timeslices to the devices
 	int theDevice[Nt];
@@ -383,9 +453,9 @@ int main(int argc, char* argv[])
 	SiteCoord<4,true> s(size);
 
 	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
+// 	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
+// 	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
+// 	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
 
 
 	// allocate Memory
@@ -410,9 +480,6 @@ int main(int argc, char* argv[])
 		cudaMalloc( &dGff[device], s.getLatticeSizeTimeslice()*sizeof(float) );
 		cudaMalloc( &dA[device], s.getLatticeSizeTimeslice()*sizeof(float) );
 	}
-	
-	// host memory (two fields to collect the results)
-	float gff[2][32], A[2][32];
 
 	// host memory for the timeslice neighbour table
 	lat_index_t* nnt = (lat_index_t*)malloc( s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof(lat_index_t) );
@@ -451,73 +518,63 @@ int main(int argc, char* argv[])
 
 	for( int i = fileStartnumber; i < fileStartnumber+nconf; i++ )
 	{
-		stringstream filename(stringstream::out);
-		filename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << fileEnding;
-//		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-		cout << "loading " << filename.str() << " as " << fileType << endl;
-		cout << filename.str() << endl;
-		bool loadOk;
-
-		switch( fileType )
-		{
-		case VOGT:
-			loadOk = lfVogt.load( s, filename.str(), U );
-			break;
-		case PLAIN:
-			loadOk = lfPlain.load( s, filename.str(), U );
-			break;
-		case HEADERONLY:
-			loadOk = lfHeaderOnly.load( s, filename.str(), U );
-			break;
-		default:
-			cout << "Filetype not set to a known value. Exiting";
-			exit(1);
-		}
-
-		if( !loadOk )
-		{
-			cout << "Error while loading. Trying next file." << endl;
-			break;
-		}
-		else
-		{
-			cout << "File loaded." << endl;
-		}
+// 		stringstream filename(stringstream::out);
+// 		filename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << fileEnding;
+// //		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
+// 		cout << "loading " << filename.str() << " as " << fileType << endl;
+// 		cout << filename.str() << endl;
+// 		bool loadOk;
+// 
+// 		switch( fileType )
+// 		{
+// 		case VOGT:
+// 			loadOk = lfVogt.load( s, filename.str(), U );
+// 			break;
+// 		case PLAIN:
+// 			loadOk = lfPlain.load( s, filename.str(), U );
+// 			break;
+// 		case HEADERONLY:
+// 			loadOk = lfHeaderOnly.load( s, filename.str(), U );
+// 			break;
+// 		default:
+// 			cout << "Filetype not set to a known value. Exiting";
+// 			exit(1);
+// 		}
+// 
+// 		if( !loadOk )
+// 		{
+// 			cout << "Error while loading. Trying next file." << endl;
+// 			break;
+// 		}
+// 		else
+// 		{
+// 			cout << "File loaded." << endl;
+// 		}
+// 		// copying all timeslices to devices
+// 		for( int t=0; t<Nt; t++ )
+// 		{
+// 			cudaSetDevice(theDevice[t]);
+// 			cudaMemcpy( dU[t], &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+// 		}		
 		
-// 		Real polBefore = calculatePolyakovLoopAverage( U );
-
-		// copying all timeslices to devices
+		
+		// don't load file, fill with random numbers - then projectSU3
+		cout << "\nWe fill dU with random SU(3) matrices.\n" << endl;
+		int unsigned counter = 0;//time(NULL);
+		
 		for( int t=0; t<Nt; t++ )
 		{
-			cudaSetDevice(theDevice[t]);
-			cudaMemcpy( dU[t], &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+ 			cudaSetDevice(theDevice[t]);
+			set_hot<<<numBlocks*2,32>>>( dU[t], counter ); 
+			counter++;
 		}
+		cudaDeviceSynchronize();
 
 		// calculate and print the gauge quality
+		float gff,A;
 		printf( "i:\t\tgff:\t\tdA:\n");
-		for( device=0; device<deviceCount; device++ )
-		{
-			gff[1][device]=0.0; 
-			A[1][device]  =0.0;
-		}
-		for( int t=0; t<Nt; t++ )
-		{
-// 			cout << t << ' ' << flush;
-			int tDw = (t > 0)?(t-1):(s.size[0]-1);
-			cudaSetDevice(theDevice[t]);
-			generateGaugeQuality<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt[theDevice[t]], dGff[theDevice[t]], dA[theDevice[t]] );
-			averageGaugeQuality<<<1,1>>>( dGff[theDevice[t]], dA[theDevice[t]] );
-			cudaMemcpy( &gff[0][theDevice[t]], dGff[theDevice[t]], sizeof(float), cudaMemcpyDeviceToHost );
-			cudaMemcpy( &A[0][theDevice[t]], dA[theDevice[t]],     sizeof(float), cudaMemcpyDeviceToHost );
-			gff[1][theDevice[t]]+=gff[0][theDevice[t]];
-			A[1][theDevice[t]]  +=A[0][theDevice[t]];
-		}
-		for( device=1; device<deviceCount; device++ )
-		{
-			gff[1][0] += gff[1][device];
-			A[1][0]   += A[1][device];
-		}
-		printf( "\n-\t\t%1.10f\t\t%e\n", gff[1][0]/(float)Nt, A[1][0]/(float)Nt );
+		generateGaugeQuality( dU, theDevice, deviceCount, dGff, dA, dNnt, gff, A );
+		printf( "-\t\t%1.10f\t\t%e\n", gff, A );
 		
 		Chronotimer kernelTimer;
 		kernelTimer.reset();
@@ -525,48 +582,35 @@ int main(int argc, char* argv[])
 		
 		for( int j = 0; j < orMaxIter; j++ )
 		{
+			// parity 0
 			for( int t=0; t<Nt; t++ )
 			{
-// 				cout << t << endl;
 				int tDw = (t > 0)?(t-1):(s.size[0]-1);
 				cudaSetDevice(theDevice[t]);
 				orStep<<<numBlocks,threadsPerBlock>>>(dU[t], dU[tDw], dNnt[theDevice[t]], 0, orParameter );
+			}
+			cudaDeviceSynchronize();
+			
+			// parity 1
+			for( int t=0; t<Nt; t++ )
+			{
+				int tDw = (t > 0)?(t-1):(s.size[0]-1);
+				cudaSetDevice(theDevice[t]);
 				orStep<<<numBlocks,threadsPerBlock>>>(dU[t], dU[tDw], dNnt[theDevice[t]], 1, orParameter );
 			}
+			cudaDeviceSynchronize();
 
 			// calculate and print the gauge quality
 			if( j % orCheckPrec == 0 )
 			{
-				for( device=0; device<deviceCount; device++ )
-				{
-					gff[1][device]=0.0; 
-					A[1][device]  =0.0;
-				}
-				for( int t=0; t<Nt; t++ )
-				{
-		// 			cout << t << ' ' << flush;
-					int tDw = (t > 0)?(t-1):(s.size[0]-1);
-					cudaSetDevice(theDevice[t]);
-					generateGaugeQuality<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt[theDevice[t]], dGff[theDevice[t]], dA[theDevice[t]] );
-					averageGaugeQuality<<<1,1>>>( dGff[theDevice[t]], dA[theDevice[t]] );
-					cudaMemcpy( &gff[0][theDevice[t]], dGff[theDevice[t]], sizeof(float), cudaMemcpyDeviceToHost );
-					cudaMemcpy( &A[0][theDevice[t]], dA[theDevice[t]],     sizeof(float), cudaMemcpyDeviceToHost );
-					gff[1][theDevice[t]]+=gff[0][theDevice[t]];
-					A[1][theDevice[t]]  +=A[0][theDevice[t]];
-				}
-				for( device=1; device<deviceCount; device++ )
-				{
-					gff[1][0] += gff[1][device];
-					A[1][0]   += A[1][device];
-				}
-				printf( "%d\t\t%1.10f\t\t%e\n", j, gff[1][0]/(float)Nt, A[1][0]/(float)Nt );
-				
-				if( A[1][0] < orPrecision ) break;
+				generateGaugeQuality( dU, theDevice, deviceCount, dGff, dA, dNnt, gff, A );
+				printf( "%d\t\t%1.10f\t\t%e\n", j, gff, A );
+				if( A < orPrecision ) break;
 			}
 
 			totalStepNumber++;
 		}
-		cudaThreadSynchronize();
+		cudaDeviceSynchronize();
 		kernelTimer.stop();
 		cout << "kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
 		totalKernelTime += kernelTimer.getTime();
@@ -574,8 +618,8 @@ int main(int argc, char* argv[])
 // 		cout << "Polyakov loop: " << polBefore << " - " << calculatePolyakovLoopAverage( U ) << endl;
 
 		// copy back all timeslices
-		for( int t=0; t<Nt; t++ )
-			cudaMemcpy( &U[t*timesliceArraySize], dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+// 		for( int t=0; t<Nt; t++ )
+// 			cudaMemcpy( &U[t*timesliceArraySize], dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 
 	}
 
