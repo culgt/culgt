@@ -25,7 +25,9 @@ public:
 	CUDA_HOST_DEVICE inline Link( Real* data, TheSite site, int mu );
 	CUDA_HOST_DEVICE inline virtual ~Link();
 	CUDA_HOST_DEVICE inline complex get(int i, int j);
+	CUDA_HOST_DEVICE inline float4 getFloat4(int i, int j);
 	CUDA_HOST_DEVICE inline void set(int i, int j, complex c);
+	CUDA_HOST_DEVICE inline void setFloat4(int i, int j, float4 f);
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline Link<Pattern, TheSite, T_Ndim, T_Nc>& operator+=( Link<Pattern, TheSite, T_Ndim, T_Nc> );
 
@@ -62,7 +64,18 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, 
 	this->data = pointer;
 }
 
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> float4 Link<Pattern, TheSite, T_Ndim, T_Nc>::getFloat4( int i, int j )
+{
+	float4 *fdata = (float4*)data;
+	return fdata[Pattern::getIndex( site, mu, i, j, 0 )/4];
+}
 
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::setFloat4( int i, int j, float4 f )
+{
+	float4 *fdata = (float4*)data;
+	fdata[Pattern::getIndex( site, mu, i, j, 0 )/4] = f;
+
+}
 
 /**
  * Returns the matrix element (i,j).

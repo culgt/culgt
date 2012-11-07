@@ -109,7 +109,7 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 			// load number
 			file.read( (char*)&temp, sizeof(Real) );
 			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
-			U[index] = temp;
+			if( index != 0 ) U[index] = temp;
 		}
 	}
 	else if( reinterpret == DOUBLE )
@@ -120,7 +120,7 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 			// load number as DOUBLE
 			file.read( (char*)&temp, sizeof(double) );
 			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
-			U[index] = (Real)temp; // cast to type Real
+			if( index != 0 ) U[index] = (Real)temp; // cast to type Real
 		}
 	}
 	else if( reinterpret == FLOAT )
@@ -131,7 +131,7 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 			// load number AS FLOAT
 			file.read( (char*)&temp, sizeof(float) );
 			int index = MemoryPattern::getIndexByUnique( FilePattern::getUniqueIndex(i, site.size) , site.size );
-			U[index] = (Real)temp; // cast to type Real
+			if( index != 0 ) U[index] = (Real)temp; // cast to type Real
 		}
 	}
 

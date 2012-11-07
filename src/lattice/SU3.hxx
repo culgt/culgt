@@ -59,6 +59,9 @@ public:
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> );
 //	template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> );
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLine( SU3<Type2> );
+	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4ToMat( SU3<Type2> ); // TODO uebelster HACK
+	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4FromMat( SU3<Type2> );// TODO uebelster HACK
+
 	CUDA_HOST_DEVICE inline complex det();
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline void identity();
@@ -272,6 +275,64 @@ template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutTh
 		{
 			mat.set(i,j,c.mat.get(i,j));
 		}
+	return *this;
+}
+
+
+/**
+ * TODO for test: assume type2==link, type==matrix
+ */
+template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutThirdLineFloat4ToMat( SU3<Type2> c )
+{
+	float4 f0,f1,f2;
+	f0 = c.mat.getFloat4( 0, 0 );
+	f1 = c.mat.getFloat4( 0, 2 );
+	f2 = c.mat.getFloat4( 1, 1 );
+
+	complex a( f0.x, f0.y );
+	mat.set( 0, 0, a);
+
+	a = complex( f0.z, f0.w );
+	mat.set( 0, 1, a);
+
+	a = complex( f1.x, f1.y );
+		mat.set( 0, 2, a);
+
+	a = complex( f1.z, f1.w );
+		mat.set( 1, 0, a);
+
+	a = complex( f2.x, f2.y );
+	mat.set( 1, 1, a);
+
+	a = complex( f2.z, f2.w );
+	mat.set( 1, 2, a);
+
+	return *this;
+}
+
+template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutThirdLineFloat4FromMat( SU3<Type2> c )
+{
+	float4 f0,f1,f2;
+
+	f0.x = c.mat.get(0,0).x;
+	f0.y = c.mat.get(0,0).y;
+	f0.z = c.mat.get(0,1).x;
+	f0.w = c.mat.get(0,1).y;
+
+	f1.x = c.mat.get(0,2).x;
+	f1.y = c.mat.get(0,2).y;
+	f1.z = c.mat.get(1,0).x;
+	f1.w = c.mat.get(1,0).y;
+
+	f2.x = c.mat.get(1,1).x;
+	f2.y = c.mat.get(1,1).y;
+	f2.z = c.mat.get(1,2).x;
+	f2.w = c.mat.get(1,2).y;
+
+
+	mat.setFloat4( 0, 0, f0 );
+	mat.setFloat4( 0, 2, f1 );
+	mat.setFloat4( 1, 1, f2 );
 	return *this;
 }
 
@@ -580,7 +641,6 @@ template<class Type> void SU3<Type>::print()
 	printf( "%f+i*%f\t %f+i*%f\t %f+i*%f\n", get(1,0).x, get(1,0).y, get(1,1).x, get(1,1).y, get(1,2).x, get(1,2).y );
 	printf( "%f+i*%f\t %f+i*%f\t %f+i*%f]\n", get(2,0).x, get(2,0).y, get(2,1).x, get(2,1).y, get(2,2).x, get(2,2).y );
 }
-
 
 
 //template<class Type> void SU3<Type>::rightSubgroupMult( lat_group_dim_t i, lat_group_dim_t j, Real q[4] )
