@@ -435,23 +435,25 @@ int main(int argc, char* argv[])
  		cout << device << '\t' << numbTimeSlices[device] << endl;
 	
 	// cudaStreams
-	cudaStream_t stdStream[deviceCount];
-	cudaStream_t cpyStream[deviceCount];
+	cudaStream_t streamStd[deviceCount];
+	cudaStream_t streamCpy_1[deviceCount];
+	cudaStream_t streamCpy_2[deviceCount];
 	for( device=0; device<deviceCount; device++ )
 	{
 		cudaSetDevice(device);
-		cudaStreamCreate(&stdStream[device]);
-		cudaStreamCreate(&cpyStream[device]);
+		cudaStreamCreate(&streamStd[device]);
+		cudaStreamCreate(&streamCpy_1[device]);
+		cudaStreamCreate(&streamCpy_2[device]);
 	}
 	
 	// cudaEvents
-	cudaEvent_t cpyD2H[deviceCount];
-	cudaEvent_t cpyH2D[deviceCount];
+	cudaEvent_t eventCpyD2H[deviceCount];
+	cudaEvent_t eventCpyH2D[deviceCount];
 	for( device=0; device<deviceCount; device++ )
 	{
 		cudaSetDevice(device);
-		cudaEventCreate(&cpyD2H[device]);
-		cudaEventCreate(&cpyH2D[device]);
+		cudaEventCreate(&eventCpyD2H[device]);
+		cudaEventCreate(&eventCpyH2D[device]);
 	}
 
 	Chronotimer allTimer;
@@ -620,30 +622,32 @@ int main(int argc, char* argv[])
 					
 					if( theDevice[t] != theDevice[tDw] )
 					{
-						// copy the halo: device_A -> host -> device_B
+						// copy the halo: theDevice[tDw] -> host
 						cudaSetDevice(theDevice[tDw]);
-						cudaMemcpyAsync( halo[theDevice[t]]+p_offset, dU[tDw]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, cpyStream[theDevice[tDw]] );
-						cudaEventRecord( cpyD2H[theDevice[tDw]], cpyStream[theDevice[tDw]] );
+						cudaMemcpyAsync( halo[theDevice[t]]+p_offset, dU[tDw]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy_1[theDevice[tDw]] );
+						cudaEventRecord( eventCpyD2H[theDevice[tDw]], streamCpy_1[theDevice[tDw]] );
 						
+						// copy the halo: host -> theDevice[t]
 						cudaSetDevice(theDevice[t]);
-						cudaEventSynchronize( cpyD2H[theDevice[tDw]] );
-						cudaMemcpyAsync( dHalo[theDevice[t]]+p_offset, halo[theDevice[t]]+p_offset, haloSize/12, cudaMemcpyHostToDevice, cpyStream[theDevice[t]] );
+						cudaEventSynchronize( eventCpyD2H[theDevice[tDw]] );
+						cudaMemcpyAsync( dHalo[theDevice[t]]+p_offset, halo[theDevice[t]]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy_2[theDevice[t]] );
 						
 						// now call kernel with dU[tDw] replaced by dHalo[theDevice[t]]
-						orStep<<<numBlocks,threadsPerBlock,0,cpyStream[theDevice[t]]>>>(dU[t], dHalo[theDevice[t]], dNnt[theDevice[t]], parity, orParameter );
+						orStep<<<numBlocks,threadsPerBlock,0,streamCpy_2[theDevice[t]]>>>( dU[t], dHalo[theDevice[t]], dNnt[theDevice[t]], parity, orParameter );
 						
-						// copy halo back: device_B -> host -> device_A
-						cudaMemcpyAsync( halo[theDevice[t]]+p_offset, dHalo[theDevice[t]]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, cpyStream[theDevice[t]] );
-						cudaEventRecord( cpyH2D[theDevice[t]], cpyStream[theDevice[t]] );
+						// copy halo back: theDevice[t] -> host
+						cudaMemcpyAsync( halo[theDevice[t]]+p_offset, dHalo[theDevice[t]]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy_2[theDevice[t]] );
+						cudaEventRecord( eventCpyD2H[theDevice[t]], streamCpy_2[theDevice[t]] );
 						
+						// copy halo back: host -> theDevice[tDw]
 						cudaSetDevice(theDevice[tDw]);
-						cudaEventSynchronize( cpyH2D[theDevice[t]] );
-						cudaMemcpyAsync( dU[tDw]+p_offset, halo[theDevice[t]]+p_offset, haloSize/12, cudaMemcpyHostToDevice, cpyStream[theDevice[tDw]] );
+						cudaEventSynchronize( eventCpyD2H[theDevice[t]] );
+						cudaMemcpyAsync( dU[tDw]+p_offset, halo[theDevice[t]]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy_2[theDevice[tDw]] );
 					}
 					else
 					{
 						cudaSetDevice(theDevice[t]);
-						orStep<<<numBlocks,threadsPerBlock,0,stdStream[theDevice[t]]>>>(dU[t], dU[tDw], dNnt[theDevice[t]], parity, orParameter );
+						orStep<<<numBlocks,threadsPerBlock,0,streamStd[theDevice[t]]>>>( dU[t], dU[tDw], dNnt[theDevice[t]], parity, orParameter );
 					}
 				}
 				cudaDeviceSynchronize();
