@@ -433,6 +433,34 @@ int main(int argc, char* argv[])
 	cout << "Device" << '\t' << "#slices" << endl;
  	for( device=0; device<deviceCount; device++ )
  		cout << device << '\t' << numbTimeSlices[device] << endl;
+    
+    // min. and max. timeslice of each device
+    int minT[deviceCount];
+    int maxT[deviceCount];
+    int midT[deviceCount];
+    
+    for( int t=0; t<Nt; t++ )
+    {
+        int tDw = (t > 0)?(t-1):(Nt-1);
+        int tUp = (t == Nt-1)?0:t+1;
+        
+        if( theDevice[t] != theDevice[tDw] )
+            minT[theDevice[t]] = t;
+        else if( theDevice[t] != theDevice[tUp] )
+            maxT[theDevice[t]] = t;
+    }
+    
+    for( device=0; device<deviceCount; device++ )
+    {
+        midT[device] = ( minT[device] + maxT[device] ) / 2;
+    }
+    
+    //test
+    cout << "device\tminT\tmaxT\tmidT" << endl;
+    for( device=0; device<deviceCount; device++ )
+    {
+        cout << device << '\t' << minT[device] << '\t' << maxT[device] << '\t' << midT[device] << endl;
+    }
 	
 	// cudaStreams
 	cudaStream_t streamStd[deviceCount];
@@ -449,11 +477,13 @@ int main(int argc, char* argv[])
 	// cudaEvents
 	cudaEvent_t eventCpyD2H[deviceCount];
 	cudaEvent_t eventCpyH2D[deviceCount];
+	cudaEvent_t hitFirstTimeslice[deviceCount];
 	for( device=0; device<deviceCount; device++ )
 	{
 		cudaSetDevice(device);
 		cudaEventCreate(&eventCpyD2H[device]);
 		cudaEventCreate(&eventCpyH2D[device]);
+		cudaEventCreate(&hitFirstTimeslice[device]);
 	}
 
 	Chronotimer allTimer;
@@ -634,6 +664,7 @@ int main(int argc, char* argv[])
 						
 						// now call kernel with dU[tDw] replaced by dHalo[theDevice[t]]
 						orStep<<<numBlocks,threadsPerBlock,0,streamCpy_2[theDevice[t]]>>>( dU[t], dHalo[theDevice[t]], dNnt[theDevice[t]], parity, orParameter );
+						cudaEventRecord( hitFirstTimeslice[theDevice[t]], streamCpy_2[theDevice[t]] );
 						
 						// copy halo back: theDevice[t] -> host
 						cudaMemcpyAsync( halo[theDevice[t]]+p_offset, dHalo[theDevice[t]]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy_2[theDevice[t]] );
@@ -647,6 +678,8 @@ int main(int argc, char* argv[])
 					else
 					{
 						cudaSetDevice(theDevice[t]);
+						if( deviceCount > 1 && t == midT[theDevice[t]] )
+							cudaEventSynchronize( hitFirstTimeslice[theDevice[t]] );
 						orStep<<<numBlocks,threadsPerBlock,0,streamStd[theDevice[t]]>>>( dU[t], dU[tDw], dNnt[theDevice[t]], parity, orParameter );
 					}
 				}
