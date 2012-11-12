@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <fstream>
+#include "../gaugefixing/GlobalConstants.hxx"
 
 using namespace std;
 
@@ -41,32 +42,32 @@ private:
 
 FileHeaderOnly::FileHeaderOnly()
 {
-	//TODO get the lattice constants from main
+//	//TODO get the lattice constants from main
 	const lat_dim_t Ndim = 4;
 	const short Nc = 3;
-	#ifdef _X_
-	const lat_coord_t Nx = _X_;
-	#else
-	#error "Define X (the lattice size in x-direction)"
-	#endif
-	#ifdef _Y_
-	const lat_coord_t Ny = _Y_;
-	#else
-	const lat_coord_t Ny = _X_;
-	bool warnY = true;
-	#endif
-	#ifdef _Z_
-	const lat_coord_t Nz = _Z_;
-	#else
-	const lat_coord_t Nz = _X_;
-	bool warnZ = true;
-	#endif
-	#ifdef _T_
-	const lat_coord_t Nt = _T_;
-	#else
-	#error "Define T (the lattice size in t-direction)"
-	#endif
-	//-----------------
+//	#ifdef _X_
+//	const lat_coord_t Nx = _X_;
+//	#else
+//	#error "Define X (the lattice size in x-direction)"
+//	#endif
+//	#ifdef _Y_
+//	const lat_coord_t Ny = _Y_;
+//	#else
+//	const lat_coord_t Ny = _X_;
+//	bool warnY = true;
+//	#endif
+//	#ifdef _Z_
+//	const lat_coord_t Nz = _Z_;
+//	#else
+//	const lat_coord_t Nz = _X_;
+//	bool warnZ = true;
+//	#endif
+//	#ifdef _T_
+//	const lat_coord_t Nt = _T_;
+//	#else
+//	#error "Define T (the lattice size in t-direction)"
+//	#endif
+//	//-----------------
 	
 #ifdef FILESP
 	arraySize=Ndim*Nc*Nc*2*Nx*Ny*Nz*Nt*sizeof(float);

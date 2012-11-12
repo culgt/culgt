@@ -40,13 +40,9 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 {
 	int parity = s.getLatticeIndex() / (s.getLatticeSize()/2);
 
-//	s.getLatticeIndexTimeslice()%(s.getLatticeSizeTimeslice()/2) + (s.getLatticeSizeTimeslice()/2)*( parity + 2 * (c + 2 * ( j + T_Nc *( i + T_Nc * mu ) ) ) )+s[0]*timesliceSize;
-
 	return s.getLatticeIndex()%(s.getLatticeSize()/2) + s.getLatticeSize()/2 * ( c + 2 * ( j + T_Nc *( i + T_Nc * (mu + T_Ndim * parity ) ) ) );
-//	return s.getLatticeIndex() + s.getLatticeSize()*( mu + T_Ndim * ( c + 2 * ( j + T_Nc * i ) ) );
-//	return s.getLatticeIndex() + s.getLatticeSize()*( c + 2 * ( j + T_Nc *( mu + T_Ndim * i ) ) );
-//	return s.getLatticeIndex() + s.getLatticeSize()*( mu + T_Ndim * ( i + T_Nc * ( j + T_Nc * c ) ) );
-//	return ( c + 2 * ( j + T_Nc *( i + T_Nc * ( mu + T_Ndim * ( s[3] + Nx * ( s[2] + Nx * ( s[1] + Nx * s[0] ) ) ) ) ) ) );
+//		return s.getLatticeIndex()%(s.getLatticeSize()/2) + s.getLatticeSize()/2 * ( c + 2 * ( j + T_Nc *( i + T_Nc * (mu + (T_Ndim+1) * parity ) ) ) );
+
 }
 
 /**

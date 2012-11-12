@@ -28,7 +28,7 @@
  * @param template Nd: Dimension of the lattice
  * @param template par
  */
-template<lat_dim_t Nd, bool par> class SiteCoord
+template<lat_dim_t Nd, ParityType par> class SiteCoord
 {
 public:
 	CUDA_HOST_DEVICE inline SiteCoord( const lat_coord_t size[Nd] );
@@ -51,7 +51,7 @@ public:
 
 
 
-template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::SiteCoord( const lat_coord_t size[Nd] )
+template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const lat_coord_t size[Nd] )
 {
 	for( int i = 0; i < Nd; i++ )
 	{
@@ -59,7 +59,7 @@ template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::SiteCoord( const lat_coord
 	}
 }
 
-template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::SiteCoord( const SiteCoord<Nd,par> &s )
+template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const SiteCoord<Nd,par> &s )
 {
 	for( int i = 0; i < Nd; i++ )
 	{
@@ -73,14 +73,14 @@ template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::SiteCoord( const SiteCoord
 //	// TODO Auto-generated destructor stub
 //}
 
-template<lat_dim_t Nd, bool par> lat_coord_t& SiteCoord<Nd,par>::operator[](lat_dim_t i)
+template<lat_dim_t Nd, ParityType par> lat_coord_t& SiteCoord<Nd,par>::operator[](lat_dim_t i)
 {
 	return site[i];
 }
 
-template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex() // TODO parity ordering
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex() // TODO parity ordering
 {
-	if( par )
+	if( par == FULL_SPLIT )
 	{
 		lat_index_t parity = 0;
 		for(  lat_dim_t i = 0; i < Nd; i++ )
@@ -104,7 +104,33 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex
 			return index / 2 + getLatticeSize()/2;
 		}
 	}
-	else
+	else if( par == TIMESLICE_SPLIT )
+	{
+		// TODO check this for correctness
+		lat_index_t parity = 0;
+		for(  lat_dim_t i = 1; i < Nd; i++ )
+		{
+			parity += site[i];
+		}
+
+		lat_index_t index = 0;
+		for( lat_dim_t i = 1; i < Nd; i++ )
+		{
+			index *= size[i];
+			index += site[i];
+		}
+
+		if( parity % 2 == 0 )
+		{
+			index /= 2;
+		}
+		else
+		{
+			index = index / 2 + getLatticeSizeTimeslice()/2;
+		}
+		return index + site[0] * getLatticeSizeTimeslice();
+	}
+	else // NO_SPLIT
 	{
 		lat_index_t index = 0;
 		for( lat_dim_t i = 0; i < Nd; i++ )
@@ -116,11 +142,11 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex
 	}
 }
 
-template<lat_dim_t Nd, bool par> void SiteCoord<Nd, par>::setLatticeIndex( lat_index_t latticeIndex )
+template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setLatticeIndex( lat_index_t latticeIndex )
 {
 	// TODO simplify this
 	bool curParity;
-	if( par )
+	if( par == FULL_SPLIT )
 	{
 		if( latticeIndex >= getLatticeSize() / 2 ) // odd parity
 		{
@@ -134,25 +160,65 @@ template<lat_dim_t Nd, bool par> void SiteCoord<Nd, par>::setLatticeIndex( lat_i
 			latticeIndex *= 2;
 			curParity = 0;
 		}
+		
+		lat_index_t parity = 0;
+		for( lat_dim_t i = Nd-1; i >= 0; i-- )
+		{
+			site[i] = latticeIndex % size[i];
+			parity += site[i];
+			latticeIndex /= size[i];
+		}
+		if( parity % 2 != curParity )
+			site[Nd-1]++;
 	}
-
-//	printf( "latticeIndex: %d\n" , latticeIndex );
-
-	lat_index_t parity = 0;
-	for( lat_dim_t i = Nd-1; i >= 0; i-- )
+	if( par == NO_SPLIT )
 	{
-		site[i] = latticeIndex % size[i];
-		parity += site[i];
-		latticeIndex /= size[i];
+		lat_index_t parity = 0;
+		for( lat_dim_t i = Nd-1; i >= 0; i-- )
+		{
+			site[i] = latticeIndex % size[i];
+			parity += site[i];
+			latticeIndex /= size[i];
+		}
+		
 	}
 
 
-	if( par && (parity % 2 != curParity) )
-		site[Nd-1]++;
+	// TODO test this!!!
+	if( par == TIMESLICE_SPLIT )
+	{
+		site[0] = latticeIndex / getLatticeSizeTimeslice();
+		lat_index_t tempIndex = latticeIndex % getLatticeSizeTimeslice(); // remove temporal index
+		if( tempIndex >= getLatticeSizeTimeslice() / 2 ) // odd parity
+		{
+			tempIndex -= getLatticeSizeTimeslice() / 2;
+			tempIndex *= 2;
+//			latticeIndex++;
+			curParity = 1;
+		}
+		else // even parity
+		{
+			tempIndex *= 2;
+			curParity = 0;
+		}
+
+		lat_index_t parity = 0;
+		for( lat_dim_t i = Nd-1; i >= 1; i-- )
+		{
+			site[i] = tempIndex % size[i];
+			parity += site[i];
+			tempIndex /= size[i];
+		}
+		if(parity % 2 != curParity )
+			site[Nd-1]++;
+
+	}
+
+
 }
 
 
-template<lat_dim_t Nd, bool par> void SiteCoord<Nd, par>::setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex )
+template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex )
 {
 	// TODO BUG! Compare to setLatticeIndex()!!!
 
@@ -174,7 +240,7 @@ template<lat_dim_t Nd, bool par> void SiteCoord<Nd, par>::setLatticeIndexFromPar
 	}
 }
 
-template<lat_dim_t Nd, bool par> void SiteCoord<Nd, par>::setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex )
+template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex )
 {
 	for( lat_dim_t i = Nd-1; i >= 0; i-- )
 	{
@@ -184,7 +250,7 @@ template<lat_dim_t Nd, bool par> void SiteCoord<Nd, par>::setLatticeIndexFromNon
 }
 
 
-template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeSize()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeSize()
 {
 	int tmp = 1;
 	for( lat_dim_t i = 0; i < Nd; i++ )
@@ -197,9 +263,36 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeSize(
 /**
  * Index within a timeslice
  */
-template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeIndexTimeslice()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeIndexTimeslice()
 {
-	if( par )
+	if( par == FULL_SPLIT )
+	{
+		// TODO this looks wrong for FULL_SPLIT. Looks more like what TIMESLICE_SPLIT wants to do (therefore I copy it)...
+//		assert(false);
+
+		lat_index_t parity = 0;
+		for(  lat_dim_t i = 1; i < Nd; i++ )
+		{
+			parity += site[i];
+		}
+
+		lat_index_t index = 0;
+		for( lat_dim_t i = 1; i < Nd; i++ )
+		{
+			index *= size[i];
+			index += site[i];
+		}
+
+		if( parity % 2 == 0 )
+		{
+			return index / 2;
+		}
+		else
+		{
+			return index / 2 + getLatticeSizeTimeslice()/2;
+		}
+	}
+	else if( par == TIMESLICE_SPLIT )
 	{
 		lat_index_t parity = 0;
 		for(  lat_dim_t i = 1; i < Nd; i++ )
@@ -223,7 +316,7 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex
 			return index / 2 + getLatticeSizeTimeslice()/2;
 		}
 	}
-	else
+	else // NO_SPLIT
 	{
 		lat_index_t index = 0;
 		for( lat_dim_t i = 1; i < Nd; i++ )
@@ -235,7 +328,7 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex
 	}
 }
 
-template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeSizeTimeslice()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeSizeTimeslice()
 {
 	int tmp = 1;
 	for( lat_dim_t i = 1; i < Nd; i++ )
@@ -248,7 +341,7 @@ template<lat_dim_t Nd, bool par> lat_index_t SiteCoord<Nd, par>::getLatticeSizeT
 /**
  * If you think this for-loop looks strange: This is a way the compiler can already index the array! -> The site[Ndim] array is not placed in (CUDA) memory
  */
-template<lat_dim_t Nd, bool par> void SiteCoord<Nd, par>::setNeighbour( lat_dim_t direction, lat_coord_t steps )
+template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setNeighbour( lat_dim_t direction, lat_coord_t steps )
 {
 	for( lat_dim_t i = 0; i < Nd; i++ )
 	{

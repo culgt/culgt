@@ -29,4 +29,7 @@ enum GaugeType {LANDAU, COULOMB, MAG, U1xU1};
 // enum for the two different stopping criteria: stop if max(precision)<\eps or average(precision)<\eps
 enum StoppingCrit {MAX, AVERAGE};
 
+// parity ordering in Site
+enum ParityType { NO_SPLIT, FULL_SPLIT, TIMESLICE_SPLIT };
+
 #endif /* LATTICE_TYPEDEFS_H_ */

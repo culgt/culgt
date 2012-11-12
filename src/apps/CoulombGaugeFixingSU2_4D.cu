@@ -42,11 +42,11 @@ const short Nc = 2;
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
-typedef StandardPattern<SiteCoord<Ndim,false>,Ndim,Nc> Standard;
-typedef GpuCoulombPattern< SiteCoord<Ndim,true>,Ndim,Nc> Gpu;
+typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
+typedef GpuCoulombPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 
 
-typedef Link<Gpu,SiteCoord<Ndim,true>,Ndim,Nc> TLink;
+typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 
 __device__ inline Real cuFabs( Real a )
@@ -56,16 +56,16 @@ __device__ inline Real cuFabs( Real a )
 
 void initNeighbourTable( lat_index_t* nnt )
 {
-	const lat_coord_t size[Ndim] = {Nx,Ny,Nz};
-	SiteIndex<3,true> s(size);
+	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+	SiteIndex<Ndim,FULL_SPLIT> s(size);
 	s.calculateNeighbourTable( nnt );
 }
 
 
-__device__ inline Quaternion<Real> sumOverStaples( Real* UtDw, Real* Ut, Real* UtUp, SiteIndex<3,true> *site, lat_dim_t mu )
+__device__ inline Quaternion<Real> sumOverStaples( Real* UtDw, Real* Ut, Real* UtUp, SiteIndex<3,FULL_SPLIT> *site, lat_dim_t mu )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim-1,true>,Ndim-1,Nc> GpuTimeslice_2;
-	typedef Link<GpuTimeslice_2,SiteIndex<Ndim-1,true>,Ndim-1,Nc> TLink3_2;
+	typedef GpuLandauPattern< SiteIndex<Ndim-1,FULL_SPLIT>,Ndim-1,Nc> GpuTimeslice_2;
+	typedef Link<GpuTimeslice_2,SiteIndex<Ndim-1,FULL_SPLIT>,Ndim-1,Nc> TLink3_2;
 
 	Quaternion<Real> A;
 	A.zero();
@@ -366,193 +366,194 @@ __device__ inline Quaternion<Real> sumOverStaples( Real* UtDw, Real* Ut, Real* U
 //	}
 //}
 //
-///**
-// * TODO does not work...
-// */
-//__global__ void orStepSingleThread( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
-//{
-//	typedef GpuLandauPattern< SiteIndex<Ndim-1,true>,Ndim-1,Nc> GpuTimeslice_2;
-//	typedef Link<GpuTimeslice_2,SiteIndex<Ndim-1,true>,Ndim-1,Nc> TLink3_2;
-//
-//	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
-//	SiteIndex<3,true> s(size);
-//	s.nn = nnt;
-//
-//
-//	int site = blockIdx.x * blockDim.x + threadIdx.x;
-//	if( parity == 1 ) site += s.getLatticeSize()/2;
-//
-//
-////	if( (mu!=0)&&(updown==1) )
-////	{
-////		s.setNeighbour(mu-1,0);
-////	}
-//
-//
-//	// make 8 quaternions local
-//	Quaternion<Real> locQuat[8];
-//
-//	for( int mu = 0; mu < 4; mu++ )
+/**
+ * TODO does not work...
+ */
+__global__ void orStepSingleThread( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
+{
+	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice_2;
+	typedef Link<GpuTimeslice_2,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink3_2;
+
+	SiteIndex<4,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE_TIMESLICE);
+	s.nn = nnt;
+
+
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+	if( parity == 1 ) site += s.getLatticeSize()/2;
+
+
+//	if( (mu!=0)&&(updown==1) )
 //	{
-//		s.setLatticeIndex( site );
-//		int index = mu*2;
-//
-//		TLink3_2 link( UtUp, s, mu );
-//		SU2<TLink3_2> globU( link );
-//
-//		Complex<Real> a = globU.get(0,0);
-//		locQuat[index][0] = a.x;
-//		locQuat[index][3] = a.y;
-//		a = globU.get(0,1);
-//		locQuat[index][2] = a.x;
-//		locQuat[index][1] = a.y;
-//	}
-//
-//	for( int mu = 1; mu < 4; mu++ )
-//	{
-//		s.setLatticeIndex( site );
 //		s.setNeighbour(mu-1,0);
-//		int index = mu*2+1;
-//
-//		TLink3_2 link( UtUp, s, mu );
-//		SU2<TLink3_2> globU( link );
-//
-//		Complex<Real> a = globU.get(0,0);
-//		locQuat[index][0] = a.x;
-//		locQuat[index][3] = a.y;
-//		a = globU.get(0,1);
-//		locQuat[index][2] = a.x;
-//		locQuat[index][1] = a.y;
 //	}
-//
-//	{
-//		s.setLatticeIndex( site );
-//		int index = 1;
-//		TLink3_2 link( UtDw, s, 0 );
-//		SU2<TLink3_2> globU( link );
-//
-//		Complex<Real> a = globU.get(0,0);
-//		locQuat[index][0] = a.x;
-//		locQuat[index][3] = a.y;
-//		a = globU.get(0,1);
-//		locQuat[index][2] = a.x;
-//		locQuat[index][1] = a.y;
-//	}
-//
-//
-//	Quaternion<Real> A;
-//	A[0] = 0;
-//	A[1] = 0;
-//	A[2] = 0;
-//	A[3] = 0;
-//
-//	for( int mu = 2; mu < 8; mu+=2 )
-//	{
-//		A[0] += locQuat[mu][0];
-//		A[1] -= locQuat[mu][1];
-//		A[2] -= locQuat[mu][2];
-//		A[3] -= locQuat[mu][3];
-//	}
-//	for( int mu = 3; mu < 8; mu+=2 )
-//	{
-//		A[0] += locQuat[mu][0];
-//		A[1] += locQuat[mu][1];
-//		A[2] += locQuat[mu][2];
-//		A[3] += locQuat[mu][3];
-//	}
-//
-//
-//
-////	if( id == 0 && mu == 0 && updown == 0 ) printf( "%f\n", globU.get(0,0).x );
-//
-//	// define the update algorithm
-//	Real ai_sq = A[1]*A[1]+A[2]*A[2]+A[3]*A[3];
-//	Real a0_sq = A[0]*A[0];
-//
-//	Real b=(orParameter*a0_sq+ai_sq)/(a0_sq+ai_sq);
-//	Real c=rsqrt(a0_sq+b*b*ai_sq);
-//
-//	A[0]*=c;
-//	A[1]*=b*c;
-//	A[2]*=b*c;
-//	A[3]*=b*c;
-//
-//
-//	for( int mu = 0; mu < 8; mu+=2 )
-//	{
-//		locQuat[mu].leftMult( A );
-//	}
-//	for( int mu = 1; mu < 8; mu+=2 )
-//	{
-//		A.hermitian();
-//		locQuat[mu].rightMult( A );
-//	}
-//
-////	globU.assignQuaternion(locU);
-//
-//	// reproject
+
+
+	// make 8 quaternions local
+	Quaternion<Real> locQuat[8];
+
+	// up
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		s.setLatticeIndex( site );
+		int index = mu*2;
+
+		TLink3_2 link( UtUp, s, mu );
+		SU2<TLink3_2> globU( link );
+
+		Complex<Real> a = globU.get(0,0);
+		locQuat[index][0] = a.x;
+		locQuat[index][3] = a.y;
+		a = globU.get(0,1);
+		locQuat[index][2] = a.x;
+		locQuat[index][1] = a.y;
+	}
+
+	//dw
+	for( int mu = 1; mu < 4; mu++ )
+	{
+		s.setLatticeIndex( site );
+		s.setNeighbour(mu,false);
+		int index = mu*2+1;
+
+		TLink3_2 link( UtUp, s, mu );
+		SU2<TLink3_2> globU( link );
+
+		Complex<Real> a = globU.get(0,0);
+		locQuat[index][0] = a.x;
+		locQuat[index][3] = a.y;
+		a = globU.get(0,1);
+		locQuat[index][2] = a.x;
+		locQuat[index][1] = a.y;
+	}
+
+	{
+		s.setLatticeIndex( site );
+		int index = 1;
+		TLink3_2 link( UtDw, s, 0 );
+		SU2<TLink3_2> globU( link );
+
+		Complex<Real> a = globU.get(0,0);
+		locQuat[index][0] = a.x;
+		locQuat[index][3] = a.y;
+		a = globU.get(0,1);
+		locQuat[index][2] = a.x;
+		locQuat[index][1] = a.y;
+	}
+
+
+	Quaternion<Real> A;
+	A[0] = 0;
+	A[1] = 0;
+	A[2] = 0;
+	A[3] = 0;
+
+	for( int mu = 2; mu < 8; mu+=2 )
+	{
+		A[0] += locQuat[mu][0];
+		A[1] -= locQuat[mu][1];
+		A[2] -= locQuat[mu][2];
+		A[3] -= locQuat[mu][3];
+	}
+	for( int mu = 3; mu < 8; mu+=2 )
+	{
+		A[0] += locQuat[mu][0];
+		A[1] += locQuat[mu][1];
+		A[2] += locQuat[mu][2];
+		A[3] += locQuat[mu][3];
+	}
+
+
+
+//	if( id == 0 && mu == 0 && updown == 0 ) printf( "%f\n", globU.get(0,0).x );
+
+	// define the update algorithm
+	Real ai_sq = A[1]*A[1]+A[2]*A[2]+A[3]*A[3];
+	Real a0_sq = A[0]*A[0];
+
+	Real b=(orParameter*a0_sq+ai_sq)/(a0_sq+ai_sq);
+	Real c=rsqrt(a0_sq+b*b*ai_sq);
+
+	A[0]*=c;
+	A[1]*=b*c;
+	A[2]*=b*c;
+	A[3]*=b*c;
+
+
+	for( int mu = 0; mu < 8; mu+=2 )
+	{
+		locQuat[mu].leftMult( A );
+	}
+	for( int mu = 1; mu < 8; mu+=2 )
+	{
+		A.hermitian();
+		locQuat[mu].rightMult( A );
+	}
+
+//	globU.assignQuaternion(locU);
+
+	// reproject
 //	for( int mu = 0; mu < 8; mu++ )
 //		locQuat[mu].projectSU2();
-//
-//
-//
-//	for( int mu = 0; mu < 4; mu++ )
-//	{
-//		s.setLatticeIndex( site );
-//		int index = mu*2;
-//
-//		TLink3_2 link( UtUp, s, mu );
-//		SU2<TLink3_2> globU( link );
-//
-//		Complex<Real> a;
-//		a.x = locQuat[index][0];
-//		a.y = locQuat[index][3];
-//		globU.set(0,0,a);
-//
-//		a.x = locQuat[index][2];
-//		a.y = locQuat[index][1];
-//		globU.set(0,1,a);
-//	}
-//
-//	for( int mu = 1; mu < 4; mu++ )
-//	{
-//		s.setLatticeIndex( site );
-//		s.setNeighbour(mu-1,0);
-//		int index = mu*2+1;
-//
-//		TLink3_2 link( UtUp, s, mu );
-//		SU2<TLink3_2> globU( link );
-//
-//		Complex<Real> a;
-//		a.x = locQuat[index][0];
-//		a.y = locQuat[index][3];
-//		globU.set(0,0,a);
-//
-//		a.x = locQuat[index][2];
-//		a.y = locQuat[index][1];
-//		globU.set(0,1,a);
-//	}
-//
-//	{
-//		s.setLatticeIndex( site );
-//		int index = 1;
-//		TLink3_2 link( UtDw, s, 0 );
-//		SU2<TLink3_2> globU( link );
-//
-//		Complex<Real> a;
-//		a.x = locQuat[index][0];
-//		a.y = locQuat[index][3];
-//		globU.set(0,0,a);
-//
-//		a.x = locQuat[index][2];
-//		a.y = locQuat[index][1];
-//		globU.set(0,1,a);
-//	}
-//
-//
-//}
-//
-//
+
+
+
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		s.setLatticeIndex( site );
+		int index = mu*2;
+
+		TLink3_2 link( UtUp, s, mu );
+		SU2<TLink3_2> globU( link );
+
+		Complex<Real> a;
+		a.x = locQuat[index][0];
+		a.y = locQuat[index][3];
+		globU.set(0,0,a);
+
+		a.x = locQuat[index][2];
+		a.y = locQuat[index][1];
+		globU.set(0,1,a);
+	}
+
+	for( int mu = 1; mu < 4; mu++ )
+	{
+		s.setLatticeIndex( site );
+		s.setNeighbour(mu,false);
+		int index = mu*2+1;
+
+		TLink3_2 link( UtUp, s, mu );
+		SU2<TLink3_2> globU( link );
+
+		Complex<Real> a;
+		a.x = locQuat[index][0];
+		a.y = locQuat[index][3];
+		globU.set(0,0,a);
+
+		a.x = locQuat[index][2];
+		a.y = locQuat[index][1];
+		globU.set(0,1,a);
+	}
+
+	{
+		s.setLatticeIndex( site );
+		int index = 1;
+		TLink3_2 link( UtDw, s, 0 );
+		SU2<TLink3_2> globU( link );
+
+		Complex<Real> a;
+		a.x = locQuat[index][0];
+		a.y = locQuat[index][3];
+		globU.set(0,0,a);
+
+		a.x = locQuat[index][2];
+		a.y = locQuat[index][1];
+		globU.set(0,1,a);
+	}
+
+
+}
+
+
 //__global__ void orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
 //{
 //	typedef GpuLandauPattern< SiteIndex<Ndim-1,true>,Ndim-1,Nc> GpuTimeslice_2;
@@ -952,15 +953,15 @@ int main(int argc, char* argv[])
 	Chronotimer allTimer;
 	allTimer.reset();
 
-	SiteCoord<4,true> s(HOST_CONSTANTS::SIZE);
+	SiteCoord<Ndim,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
 
 
 	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<Ndim,FULL_SPLIT> > lfHeaderOnly;
 	lfHeaderOnly.reinterpret = options.getReinterpret();
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<Ndim,FULL_SPLIT> > lfVogt;
 	lfVogt.reinterpret = options.getReinterpret();
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<Ndim,FULL_SPLIT> > lfPlain;
 	lfPlain.reinterpret = options.getReinterpret();
 
 
@@ -978,11 +979,11 @@ int main(int argc, char* argv[])
 	cudaMalloc( &dUdw, timesliceArraySize*sizeof(Real) ); // working copy of timeslice t-1
 
 	// host memory for the neighbour table
-	lat_index_t* nnt = (lat_index_t*)malloc( s.getLatticeSizeTimeslice()*(2*(Ndim-1))*sizeof(lat_index_t) );
+	lat_index_t* nnt = (lat_index_t*)malloc( s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof(lat_index_t) );
 
 	// device memory for the timeslice neighbour table
 	lat_index_t *dNnt;
-	cudaMalloc( &dNnt, s.getLatticeSizeTimeslice()*(2*(Ndim-1))*sizeof( lat_index_t ) );
+	cudaMalloc( &dNnt, s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof( lat_index_t ) );
 
 
 	double* dPlaquette;
@@ -993,15 +994,15 @@ int main(int argc, char* argv[])
 	// initialise the timeslice neighbour table
 	initNeighbourTable( nnt );
 	// copy neighbour table to device
-	cudaMemcpy( dNnt, nnt, s.getLatticeSizeTimeslice()*(2*(Ndim-1))*sizeof( lat_index_t ), cudaMemcpyHostToDevice );
+	cudaMemcpy( dNnt, nnt, s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof( lat_index_t ), cudaMemcpyHostToDevice );
 
 	int threadsPerBlock = 32*8; // 32 sites are updated within a block (8 threads are needed per site)
 	int numBlocks = s.getLatticeSizeTimeslice()/2/32; // // half of the lattice sites (a parity) are updated in a kernel call
 
 	allTimer.start();
 
-//	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
-	
+	CoulombKernelsSU2::initCacheConfig();
+
 	// instantiate GaugeFixingStats object
 //	lat_coord_t *devicePointerToSize;
 //	cudaError_t error = cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
@@ -1128,8 +1129,11 @@ int main(int argc, char* argv[])
 				// OVERRELAXATION
 				for( int i = 0; i < options.getOrMaxIter(); i++ )
 				{
-					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 0, options.getOrParameter() );
-					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 1, options.getOrParameter() );
+//					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 0, options.getOrParameter() );
+//					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 1, options.getOrParameter() );
+
+					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 0, options.getOrParameter() );
+					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 1, options.getOrParameter() );
 
 					if( i % options.getOrCheckPrecision() == 0 )
 					{

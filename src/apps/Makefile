@@ -2,7 +2,7 @@
 #DOUBLEPRECISION: to use double precission otherwise single precission
 
 coulomb:
-	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc CoulombGaugeFixingSU3_4D.cu -use_fast_math -o coulomb -D_T_=32 -D_X_=32 -DDOUBLEPRECISION -lboost_program_options
+	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc CoulombGaugeFixingSU3_4D.cu -use_fast_math -o coulomb -D_T_=32 -D_X_=32 -lboost_program_options
 
 landau:
 	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc LandauGaugeFixingSU3_4D.cu -use_fast_math -o landau_24x32_new6 -D_T_=32 -D_X_=24 -D_NSB_=16 -lboost_program_options

@@ -73,18 +73,18 @@ ReinterpretReal reinterpretReal;
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
-typedef GpuCoulombPattern<SiteCoord<Ndim,true>,Ndim,Nc> Gpu;
-typedef StandardPattern<SiteCoord<Ndim,false>,Ndim,Nc> Standard;
-typedef GpuLandauPattern< SiteCoord<Ndim-1,true>,Ndim-1,Nc> GpuTimeslice;
+typedef GpuCoulombPattern<SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
+typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
+typedef GpuLandauPattern< SiteCoord<Ndim-1,FULL_SPLIT>,Ndim-1,Nc> GpuTimeslice;
 
 
-typedef Link<Gpu,SiteCoord<Ndim,true>,Ndim,Nc> TLink;
-typedef Link<GpuTimeslice,SiteCoord<Ndim-1,true>,Ndim-1,Nc> TLink3;
+typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
+typedef Link<GpuTimeslice,SiteCoord<Ndim-1,FULL_SPLIT>,Ndim-1,Nc> TLink3;
 
 void initNeighbourTable( lat_index_t* nnt )
 {
 	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
-	SiteIndex<3,true> s(size);
+	SiteIndex<3,FULL_SPLIT> s(size);
 	s.calculateNeighbourTable( nnt );
 }
 
@@ -114,7 +114,7 @@ void initNeighbourTable( lat_index_t* nnt )
 __global__ void projectSU3( Real* U )
 {
 	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
-	SiteCoord<3,true> s(size);
+	SiteCoord<3,FULL_SPLIT> s(size);
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 
 	s.setLatticeIndex( site );
@@ -134,8 +134,8 @@ __global__ void projectSU3( Real* U )
 //	SiteCoord<3,true> s(size);
 //	int site = blockIdx.x * blockDim.x + threadIdx.x;
 //
-//	Matrix<complex,Nc> locMatSum;
-//	SU3<Matrix<complex,Nc> > Sum(locMatSum);
+//	Matrix<Complex<Real>,Nc> locMatSum;
+//	SU3<Matrix<Complex<Real>,Nc> > Sum(locMatSum);
 //
 //	Sum.zero();
 //
@@ -144,8 +144,8 @@ __global__ void projectSU3( Real* U )
 //	{
 //		s.setLatticeIndex( site );
 //
-//		Matrix<complex,Nc> locMat;
-//		SU3<Matrix<complex,Nc> > temp(locMat);
+//		Matrix<Complex<Real>,Nc> locMat;
+//		SU3<Matrix<Complex<Real>,Nc> > temp(locMat);
 //
 //		TLink3 linkUp( U, s, mu );
 //		SU3<TLink3> globUp( linkUp );
@@ -164,8 +164,8 @@ __global__ void projectSU3( Real* U )
 //
 //	Sum -= Sum.trace()/Real(3.);
 //
-//	Matrix<complex,Nc> locMatSumHerm;
-//	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
+//	Matrix<Complex<Real>,Nc> locMatSumHerm;
+//	SU3<Matrix<Complex<Real>,Nc> > SumHerm(locMatSumHerm);
 //	SumHerm = Sum;
 //	SumHerm.hermitian();
 //
@@ -187,8 +187,8 @@ __global__ void projectSU3( Real* U )
 //	Real result = 0;
 //
 //
-//	Matrix<complex,Nc> locTemp;
-//	SU3<Matrix<complex,Nc> > temp(locTemp);
+//	Matrix<Complex<Real>,Nc> locTemp;
+//	SU3<Matrix<Complex<Real>,Nc> > temp(locTemp);
 //	for( int mu = 1; mu < 4; mu++ )
 //	{
 //		TLink3 linkUp( U, s, mu );
@@ -205,11 +205,11 @@ __global__ void projectSU3( Real* U )
 
 __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim-1,true>,Ndim-1,Nc> GpuTimeslice_2;
-	typedef Link<GpuTimeslice_2,SiteIndex<Ndim-1,true>,Ndim-1,Nc> TLink3_2;
+	typedef GpuLandauPattern< SiteIndex<Ndim-1,FULL_SPLIT>,Ndim-1,Nc> GpuTimeslice_2;
+	typedef Link<GpuTimeslice_2,SiteIndex<Ndim-1,FULL_SPLIT>,Ndim-1,Nc> TLink3_2;
 
 	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
-	SiteIndex<3,true> s(size);
+	SiteIndex<3,FULL_SPLIT> s(size);
 	s.nn = nnt;
 
 	const bool updown = threadIdx.x / 128;
@@ -217,6 +217,10 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 	const short id = (threadIdx.x % 128) % 32;
 
 	int site = blockIdx.x * blockDim.x/8 + id;
+
+
+//	if( updown == 0 ) {
+
 	if( parity == 1 ) site += s.getLatticeSize()/2;
 
 	s.setLatticeIndex( site );
@@ -225,8 +229,13 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 		s.setNeighbour(mu-1,0);
 	}
 
-	Matrix<complex,Nc> locMat;
-	SU3<Matrix<complex,Nc> > locU(locMat);
+//	if( blockIdx.x * blockDim.x/8 == 0 && updown == 1 && parity == 0 && mu == 3)
+//	{
+//		printf( "ID: %d, site: %d, siteBySite: %d\n", id, site, s.getLatticeIndex() );
+//	}
+
+	Matrix<Complex<Real>,Nc> locMat;
+	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
 	TLink3_2 link( ((mu==0)&&(updown==1))?(UtDw):(UtUp), s, mu );
 
@@ -238,13 +247,15 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, OrUpdate, COULOMB> subgroupStep( &locU, overrelax, id, mu, updown );
+	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, COULOMB> subgroupStep( &locU, overrelax, id, mu, updown );
 
 	// do the subgroup iteration
-	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
+	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
 
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
+
+//	}
 }
 
 
@@ -252,14 +263,14 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 
 Real calculatePolyakovLoopAverage( Real *U )
 {
-	Matrix<complex,3> tempMat;
-	SU3<Matrix<complex,3> > temp( tempMat );
-	Matrix<complex,3> temp2Mat;
-	SU3<Matrix<complex,3> > temp2( temp2Mat );
+	Matrix<Complex<Real>,3> tempMat;
+	SU3<Matrix<Complex<Real>,3> > temp( tempMat );
+	Matrix<Complex<Real>,3> temp2Mat;
+	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
 
-	SiteCoord<Ndim,true> s( HOST_CONSTANTS::SIZE );
+	SiteCoord<Ndim,FULL_SPLIT> s( HOST_CONSTANTS::SIZE );
 
-	complex result(0,0);
+	Complex<Real> result(0,0);
 
 	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
 	{
@@ -351,14 +362,14 @@ int main(int argc, char* argv[])
 	Chronotimer allTimer;
 	allTimer.reset();
 
-	SiteCoord<4,true> s(HOST_CONSTANTS::SIZE);
+	SiteCoord<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
 
 	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly;
 	lfHeaderOnly.reinterpret = reinterpretReal;
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt;
 	lfVogt.reinterpret = reinterpretReal;
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain;
 	lfPlain.reinterpret = reinterpretReal;
 
 

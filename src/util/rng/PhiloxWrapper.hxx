@@ -54,7 +54,7 @@ private:
 	short localCounter;
 };
 
-PhiloxWrapper::PhiloxWrapper( int tid, int seed, int globalCounter )
+__device__ PhiloxWrapper::PhiloxWrapper( int tid, int seed, int globalCounter )
 {
 	k[0] = tid;
 	k[1] = seed;
@@ -66,11 +66,11 @@ PhiloxWrapper::PhiloxWrapper( int tid, int seed, int globalCounter )
 	localCounter = 0;
 }
 
-PhiloxWrapper::~PhiloxWrapper()
+__device__ PhiloxWrapper::~PhiloxWrapper()
 {
 }
 
-Real PhiloxWrapper::rand()
+__device__ Real PhiloxWrapper::rand()
 {
 #ifdef DOUBLEPRECISION
 	if( localCounter == 0 ) // we have another double available.

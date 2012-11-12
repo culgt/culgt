@@ -681,7 +681,7 @@ template<class Type> void SU3<Type>::print()
  * Performs an operation defined in the SubgroupOperationClass by calling its subgroup() function for 3 SU3 subgroups.
  * Check an example application, like the Coulomb-gaugefixing routine.
  */
-template<class Type> template<class SubgroupOperationClass> void SU3<Type>::perSubgroup( SubgroupOperationClass t )
+template<class Type> template<class SubgroupOperationClass> __device__ void SU3<Type>::perSubgroup( SubgroupOperationClass t )
 {
 	t.subgroup(0,1);
 	t.subgroup(0,2);

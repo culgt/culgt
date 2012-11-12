@@ -42,8 +42,7 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 	lat_array_index_t timesliceSize = s.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
 
 	int parity = s.getLatticeIndexTimeslice() / (s.getLatticeSizeTimeslice()/2);
-
-	return s.getLatticeIndexTimeslice()%(s.getLatticeSizeTimeslice()/2) + (s.getLatticeSizeTimeslice()/2)*( parity + 2 * (c + 2 * ( j + T_Nc *( i + T_Nc * mu ) ) ) )+s[0]*timesliceSize;
+	return s.getLatticeIndexTimeslice()%(s.getLatticeSizeTimeslice()/2) + (s.getLatticeSizeTimeslice()/2)*( c + 2 * ( j + T_Nc *( i + T_Nc * ( mu + T_Ndim * parity ) ) ) )+s[0]*timesliceSize;
 }
 
 //template< int T_Ndim, int T_Nc> int GpuCoulombPatternParity<Site, T_Ndim, T_Nc>::getIndex( int linkIndex, int i, int j, int c )
@@ -87,14 +86,13 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 //	printf( "latind %d\n", latticeIndex );
 
 
-	Site site( size ); // parity must not be split for unique index
-	site.setLatticeIndexFromNonParitySplitOrder( latticeIndex );
+	Site s( size ); // parity must not be split for unique index
+	s.setLatticeIndexFromNonParitySplitOrder( latticeIndex );
 
 
-	lat_array_index_t timesliceSize = site.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
-	int parity = site.getLatticeIndexTimeslice() / (site.getLatticeSizeTimeslice()/2);
-	return site.getLatticeIndexTimeslice()%(site.getLatticeSizeTimeslice()/2) + (site.getLatticeSizeTimeslice()/2)*( parity + 2 * (c + 2 * ( j + T_Nc *( i + T_Nc * mu ) ) ) )+site[0]*timesliceSize;
-
+	lat_array_index_t timesliceSize = s.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
+	int parity = s.getLatticeIndexTimeslice() / (s.getLatticeSizeTimeslice()/2);
+	return s.getLatticeIndexTimeslice()%(s.getLatticeSizeTimeslice()/2) + (s.getLatticeSizeTimeslice()/2)*( c + 2 * ( j + T_Nc *( i + T_Nc * ( mu + T_Ndim * parity ) ) ) )+s[0]*timesliceSize;
 
 //	lat_array_index_t timesliceSize = site.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
 //	lat_array_index_t latSize = site.getLatticeSizeTimeslice();
