@@ -18,6 +18,9 @@
  *  - takes care to use already calculated numbers.
  * 	- and increments the kernelCounter.
  *
+ * The static getNextCounter() function gives a global (runtime-wide) counter which can be given to the constructor.
+ * I don't want to do this implicitly to avoid mixing of host and device variables.
+ *
  *
  * TODO: get rid of the preprocessor statements: float/double has to be template argument (in all classes).
  */
@@ -39,6 +42,8 @@ public:
 	__device__ inline virtual ~PhiloxWrapper();
 	__device__ inline Real rand();
 
+	static __host__ int getNextCounter();
+
 private:
 	philox4x32_key_t k;
 	philox4x32_ctr_t c;
@@ -52,7 +57,11 @@ private:
 #endif
 	} u;
 	short localCounter;
+	static int globalCounter;
 };
+
+
+int PhiloxWrapper::globalCounter = 0;
 
 __device__ PhiloxWrapper::PhiloxWrapper( int tid, int seed, int globalCounter )
 {
@@ -101,6 +110,13 @@ __device__ Real PhiloxWrapper::rand()
 #endif
 }
 
+/**
+ * Use this to get a global (static) counter to initialize the kernel-specific PhiloxWrapper.
+ */
+__host__ int PhiloxWrapper::getNextCounter()
+{
+	return globalCounter++;
+}
 
 
 
