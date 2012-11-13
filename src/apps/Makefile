@@ -1,23 +1,58 @@
-#possible flags: -DDOUBLEPRECISION
-#DOUBLEPRECISION: to use double precission otherwise single precission
+################################################################################
+#
+# Makefile 
+# ========
+# examples:
+#
+# make (uses default values and default app.)
+# make APP=LandauGaugeFixingSU3_4D (compiles and links LandauGaugeFixingSU3_4D.cu)
+# make T=96 X=48 (lattice size)
+# make PREC=DP (use double precision)
+#
+################################################################################
 
-coulomb:
-	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc CoulombGaugeFixingSU3_4D.cu -use_fast_math -o coulomb -D_T_=32 -D_X_=32 -lboost_program_options
+# default values of lattice size and ThreadBlock size
+T=32
+X=32
+NSB=32
 
-landau:
-	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc LandauGaugeFixingSU3_4D.cu -use_fast_math -o landau_24x32_new6 -D_T_=32 -D_X_=24 -D_NSB_=16 -lboost_program_options
+# default app
+APP = CoulombGaugeFixingSU3_4D
 
-SRlandau:
-	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc SRLandauGaugeFixingSU3_4D.cu -use_fast_math -o SRlandau -D_T_=8 -D_X_=8 -lboost_program_options
+# double precision?
+ifeq ($(PREC),DP)
+DPREC = -DDOUBLEPRECISION
+endif
 
-MAG:
-	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc MAGaugeFixingSU3_4D.cu -use_fast_math -o MAG -D_T_=64 -D_X_=20 -lboost_program_options
+# define 
+CCDEFS = $(DPREC) -D_T_=$(T) -D_X_=$(X) -D_NSB_=$(NSB)
+CUDEFS = $(CCDEFS) -DCUDA
+# gcc compiler
+CC = gcc
+# nvcc compiler
+NVCC = nvcc
+# the objects to be compiled with NVCC
+CUOBJ = $(APP).o
+# libs for the linking process
+LIBS = -lboost_program_options
+# flags for the NVCC compiler
+CUFLAGS = --ptxas-options=-v -arch=sm_20 -use_fast_math
 
-MAG_U1xU1:
-	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc MA_U1xU1_GaugeFixingSU3_4D.cu -use_fast_math -o MAG_U1xU1 -D_T_=64 -D_X_=20 -DDOUBLEPRECISION -lboost_program_options
 
-multiGPU:
-	nvcc --ptxas-options=-v -arch=sm_20 ../util/timer/Chronotimer.cc TimeSliceLandauGaugeFixingSU3_4D.cu -use_fast_math -o multiGPU -D_T_=64 -D_X_=20 -lboost_program_options
+$(APP): $(CUOBJ) Chronotimer.o
+	$(NVCC) -o $@ $(CUOBJ) Chronotimer.o $(LIBS)
 
-clean:
-	rm coulomb landau SRlandau MAG
+%.o: %.cu
+	$(NVCC) -c $(CUFLAGS) $< $(CUDEFS) 
+
+%.o: %.cpp
+	$(CC) -c $< $(CCDEFS)
+
+Chronotimer.o: ../util/timer/Chronotimer.cc
+	$(CC) -c ../util/timer/Chronotimer.cc
+
+
+clean: 
+	rm *.o $(APP)
+
+
