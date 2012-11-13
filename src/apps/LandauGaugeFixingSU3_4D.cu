@@ -14,7 +14,8 @@
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
-#include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
+#include "../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
+//#include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
 #include "../lattice/access_pattern/GpuLandauPattern.hxx"
@@ -75,61 +76,61 @@ ReinterpretReal reinterpretReal;
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
-typedef StandardPattern<SiteCoord<Ndim,false>,Ndim,Nc> Standard;
-typedef GpuLandauPattern< SiteCoord<Ndim,true>,Ndim,Nc> Gpu;
+typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
+typedef GpuLandauPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 
 
-typedef Link<Gpu,SiteCoord<Ndim,true>,Ndim,Nc> TLink;
+typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 
-__device__ inline Real cuFabs( Real a )
-{
-	return (a>0)?(a):(-a);
-}
+//__device__ inline Real cuFabs( Real a )
+//{
+//	return (a>0)?(a):(-a);
+//}
 
 void initNeighbourTable( lat_index_t* nnt )
 {
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteIndex<4,true> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	s.calculateNeighbourTable( nnt );
 }
 
 
-__global__ void projectSU3( Real* U )
+//__global__ void projectSU3( Real* U )
+//{
+//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+//	SiteCoord<4,FULL_SPLIT> s(size);
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	s.setLatticeIndex( site );
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		TLink linkUp( U, s, mu );
+//		SU3<TLink> globUp( linkUp );
+//
+//
+//		Matrix<Complex<Real>,Nc> locMat;
+//		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
+//
+//		locU.assignWithoutThirdLine(globUp);
+//		locU.projectSU3withoutThirdRow();
+//
+//
+//		globUp.assignWithoutThirdLine(locU);
+//
+////		globUp.projectSU3withoutThirdRow();
+//	}
+//}
+
+
+__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
 {
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteCoord<4,true> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	s.setLatticeIndex( site );
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		TLink linkUp( U, s, mu );
-		SU3<TLink> globUp( linkUp );
-
-
-		Matrix<Complex<Real>,Nc> locMat;
-		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
-
-		locU.assignWithoutThirdLine(globUp);
-		locU.projectSU3withoutThirdRow();
-
-
-		globUp.assignWithoutThirdLine(locU);
-
-//		globUp.projectSU3withoutThirdRow();
-	}
-}
-
-
-__global__ void __launch_bounds__(128,8) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
-{
-	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
+	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteIndex<4,true> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	s.nn = nn;
 
 	const bool updown = threadIdx.x / NSB4;
@@ -159,160 +160,163 @@ __global__ void __launch_bounds__(128,8) orStep( Real* U, lat_index_t* nn, bool 
 	locU.reconstructThirdLine();
 
 	// define the update algorithm
-	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown, counter );
+//	OrUpdate overrelax( orParameter );
+//	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
+	MicroUpdate micro;
+	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, MicroUpdate, LANDAU> subgroupStep( &locU, micro, id, mu, updown );
 
 	// do the subgroup iteration
 	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
 
 	// copy link back
-	globU=locU; //TODO with or without 3rd line?
+//	globU=locU; //TODO with or without 3rd line?
+	globU.assignWithoutThirdLine(locU);
 	
 	// project back
 //	globU.projectSU3withoutThirdRow();
 }
 
-__global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
-{
-	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
+//__global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
+//{
+//	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+//	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
+//
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+//	SiteIndex<4,FULL_SPLIT> s(size);
+//	s.nn = nn;
+//
+//	Matrix<Complex<Real>,Nc> matP;
+//	SU3<Matrix<Complex<Real>,Nc> > P(matP);
+//
+//	Matrix<Complex<Real>,Nc> matTemp;
+//	SU3<Matrix<Complex<Real>,Nc> > temp(matTemp);
+//
+//
+//	double localPlaquette = 0;
+//
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		for( int nu = mu+1; nu < 4; nu++)
+//		{
+//			P.identity();
+//
+//			{
+//				s.setLatticeIndex( site );
+//
+//				TLinkIndex link( U, s, mu );
+//				SU3<TLinkIndex> globU( link );
+//
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//
+//				P *= temp;
+//			}
+//
+//			{
+//				s.setNeighbour( mu, true );
+//
+//				TLinkIndex link( U, s, nu );
+//				SU3<TLinkIndex> globU( link );
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//
+//				P *= temp;
+//			}
+//
+//			{
+//				s.setLatticeIndex( site );
+//				s.setNeighbour(nu, true );
+//
+//				TLinkIndex link( U, s, mu );
+//				SU3<TLinkIndex> globU( link );
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//				temp.hermitian();
+//
+//				P *= temp;
+//			}
+//
+//			{
+//				s.setLatticeIndex( site );
+//
+//				TLinkIndex link( U, s, nu );
+//				SU3<TLinkIndex> globU( link );
+//				temp.assignWithoutThirdLine( globU );
+//				temp.reconstructThirdLine();
+//				temp.hermitian();
+//
+//				P *= temp;
+//			}
+//
+//
+//
+//
+//
+//			localPlaquette += P.trace().x;
+//		}
+//	}
+//
+//	dPlaquette[site] = localPlaquette/6./3.;
+////	dPlaquette[site] = 1;
+////	dPlaquette[site] = 0;
+//}
 
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//__global__ void printPlaquette( double* dPlaquette )
+//{
+//	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
+//	SiteCoord<4,FULL_SPLIT> s(size);
+//
+//	double plaquette = 0;
+//	for( int i = 0; i < s.getLatticeSize(); i++ )
+//	{
+//		plaquette += dPlaquette[i];
+//	}
+//
+//	printf( "\t%E\n", plaquette/double(s.getLatticeSize()) );
+//
+//}
 
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteIndex<4,true> s(size);
-	s.nn = nn;
-
-	Matrix<Complex<Real>,Nc> matP;
-	SU3<Matrix<Complex<Real>,Nc> > P(matP);
-
-	Matrix<Complex<Real>,Nc> matTemp;
-	SU3<Matrix<Complex<Real>,Nc> > temp(matTemp);
-
-
-	double localPlaquette = 0;
-
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		for( int nu = mu+1; nu < 4; nu++)
-		{
-			P.identity();
-
-			{
-				s.setLatticeIndex( site );
-
-				TLinkIndex link( U, s, mu );
-				SU3<TLinkIndex> globU( link );
-
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-
-				P *= temp;
-			}
-
-			{
-				s.setNeighbour( mu, true );
-
-				TLinkIndex link( U, s, nu );
-				SU3<TLinkIndex> globU( link );
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-
-				P *= temp;
-			}
-
-			{
-				s.setLatticeIndex( site );
-				s.setNeighbour(nu, true );
-
-				TLinkIndex link( U, s, mu );
-				SU3<TLinkIndex> globU( link );
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-				temp.hermitian();
-
-				P *= temp;
-			}
-
-			{
-				s.setLatticeIndex( site );
-
-				TLinkIndex link( U, s, nu );
-				SU3<TLinkIndex> globU( link );
-				temp.assignWithoutThirdLine( globU );
-				temp.reconstructThirdLine();
-				temp.hermitian();
-
-				P *= temp;
-			}
-
-
-
-
-
-			localPlaquette += P.trace().x;
-		}
-	}
-
-	dPlaquette[site] = localPlaquette/6./3.;
-//	dPlaquette[site] = 1;
-//	dPlaquette[site] = 0;
-}
-
-__global__ void printPlaquette( double* dPlaquette )
-{
-	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
-	SiteCoord<4,true> s(size);
-
-	double plaquette = 0;
-	for( int i = 0; i < s.getLatticeSize(); i++ )
-	{
-		plaquette += dPlaquette[i];
-	}
-
-	printf( "\t%E\n", plaquette/double(s.getLatticeSize()) );
-
-}
-
-Real calculatePolyakovLoopAverage( Real *U )
-{
-	Matrix<Complex<Real>,3> tempMat;
-	SU3<Matrix<Complex<Real>,3> > temp( tempMat );
-	Matrix<Complex<Real>,3> temp2Mat;
-	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
-
-	SiteCoord<Ndim,true> s( HOST_CONSTANTS::SIZE );
-
-	Complex<Real> result(0,0);
-
-	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
-	{
-		for( s[2] = 0; s[2] < s.size[2]; s[2]++ )
-		{
-			for( s[3] = 0; s[3] < s.size[3]; s[3]++ )
-			{
-				temp.identity();
-				temp2.zero();
-
-				for( s[0] = 0; s[0] < s.size[0]; s[0]++ )
-				{
-
-					TLink link( U, s, 0 );
-					SU3<TLink> globU( link );
-
-					temp2 = temp2 + temp*globU;
-
-					temp = temp2;
-					temp2.zero();
-				}
-				result += temp.trace();
-			}
-		}
-	}
-
-	return sqrt(result.x*result.x+result.y*result.y) / (Real)(s.getLatticeSizeTimeslice()*Nc);
-}
+//Real calculatePolyakovLoopAverage( Real *U )
+//{
+//	Matrix<Complex<Real>,3> tempMat;
+//	SU3<Matrix<Complex<Real>,3> > temp( tempMat );
+//	Matrix<Complex<Real>,3> temp2Mat;
+//	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
+//
+//	SiteCoord<Ndim,FULL_SPLIT> s( HOST_CONSTANTS::SIZE );
+//
+//	Complex<Real> result(0,0);
+//
+//	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
+//	{
+//		for( s[2] = 0; s[2] < s.size[2]; s[2]++ )
+//		{
+//			for( s[3] = 0; s[3] < s.size[3]; s[3]++ )
+//			{
+//				temp.identity();
+//				temp2.zero();
+//
+//				for( s[0] = 0; s[0] < s.size[0]; s[0]++ )
+//				{
+//
+//					TLink link( U, s, 0 );
+//					SU3<TLink> globU( link );
+//
+//					temp2 = temp2 + temp*globU;
+//
+//					temp = temp2;
+//					temp2.zero();
+//				}
+//				result += temp.trace();
+//			}
+//		}
+//	}
+//
+//	return sqrt(result.x*result.x+result.y*result.y) / (Real)(s.getLatticeSizeTimeslice()*Nc);
+//}
 
 
 
@@ -377,13 +381,13 @@ int main(int argc, char* argv[])
 	Chronotimer allTimer;
 	allTimer.reset();
 
-	SiteCoord<4,true> s(HOST_CONSTANTS::SIZE);
+	SiteCoord<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
 
 
 	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly;
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt;
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain;
 
 
 	// allocate Memory
@@ -495,7 +499,7 @@ int main(int argc, char* argv[])
 			// check the current gauge quality
 			if( j % orCheckPrec == 0 )
 			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
+//				projectSU3<<<numBlocks*2,32>>>( dU );
 				gaugeStats.generateGaugeQuality();
 				printf( "%d\t\t%1.10f\t\t%e\n", j, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 				logfile << j << '\t' << gaugeStats.getCurrentGff() << '\t' << gaugeStats.getCurrentA() << endl;
