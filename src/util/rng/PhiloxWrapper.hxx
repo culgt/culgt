@@ -33,16 +33,19 @@
 #include "../../external/Random123/philox.h"
 #include "../../external/Random123/u01.h"
 
+#include <cuda.h>
+
 #include <stdio.h>
 
 class PhiloxWrapper
 {
 public:
-	__device__ inline PhiloxWrapper( int tid, int seed, int globalCounter );
+	__device__ inline PhiloxWrapper( int tid, int seed, unsigned int globalCounter );
 	__device__ inline virtual ~PhiloxWrapper();
 	__device__ inline Real rand();
 
-	static __host__ int getNextCounter();
+	static __host__ unsigned int getNextCounter();
+	static __host__ unsigned int getCurrentCounter();
 
 private:
 	philox4x32_key_t k;
@@ -57,13 +60,14 @@ private:
 #endif
 	} u;
 	short localCounter;
-	static int globalCounter;
+//	int localCounter;
+	static unsigned int globalCounter;
 };
 
 
-int PhiloxWrapper::globalCounter = 0;
+unsigned int PhiloxWrapper::globalCounter = 0;
 
-__device__ PhiloxWrapper::PhiloxWrapper( int tid, int seed, int globalCounter )
+__device__ PhiloxWrapper::PhiloxWrapper( int tid, int seed, unsigned int globalCounter )
 {
 	k[0] = tid;
 	k[1] = seed;
@@ -113,12 +117,15 @@ __device__ Real PhiloxWrapper::rand()
 /**
  * Use this to get a global (static) counter to initialize the kernel-specific PhiloxWrapper.
  */
-__host__ int PhiloxWrapper::getNextCounter()
+__host__ unsigned int PhiloxWrapper::getNextCounter()
 {
 	return globalCounter++;
 }
 
-
+__host__ unsigned int PhiloxWrapper::getCurrentCounter()
+{
+	return globalCounter;
+}
 
 
 
