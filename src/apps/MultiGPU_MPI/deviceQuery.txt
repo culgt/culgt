@@ -1,0 +1,6 @@
+/home/msk/NVIDIA_GPU_Computing_SDK/C/bin/linux/release/deviceQuery Starting...
+
+ CUDA Device Query (Runtime API) version (CUDART static linking)
+
+cudaGetDeviceCount returned 10
+-> invalid device ordinal
