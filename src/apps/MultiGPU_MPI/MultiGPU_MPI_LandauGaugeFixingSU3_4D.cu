@@ -22,8 +22,6 @@
 #include "../../lattice/Link.hxx"
 #include "../../lattice/SU3.hxx"
 #include "../../lattice/Matrix.hxx"
-// #include "../../lattice/LinkFile.hxx"
-#include "../../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../../lattice/gaugefixing/GlobalConstants.hxx"
 #include "../../util/rng/PhiloxWrapper.hxx"
 #include "MultiGPU_MPI_LandauGaugeFixingSU3_4D.h"
@@ -36,9 +34,8 @@ const short Nc = 3;
 // lattice setup
 const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
 const lat_coord_t sizeTimeslice[Ndim] = {1,Nx,Ny,Nz};
-#ifdef CUDA
 __constant__ lat_coord_t dSize[Ndim] = {Nt,Nx,Ny,Nz};
-#endif
+
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 

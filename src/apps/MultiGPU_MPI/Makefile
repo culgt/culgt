@@ -19,7 +19,7 @@ PROG = MultiGPU_MPI_LandauGaugeFixingSU3_4D
 
 # the lattice size and ThreadBlock size
 CCDEFS = -D_T_=$(T) -D_X_=$(X) -D_NSB_=$(NSB)
-CUDEFS = $(CCDEFS) -DCUDA
+CUDEFS = $(CCDEFS)
 # mpi compiler
 MPICC = mpicxx
 # nvcc compiler

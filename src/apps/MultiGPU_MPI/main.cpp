@@ -21,6 +21,7 @@
 #include "../../lattice/Link.hxx"
 #include "../../lattice/SU3.hxx"
 #include "../../lattice/Matrix.hxx"
+#include "../../lattice/LinkFile.hxx"
 #include "../../util/timer/Chronotimer.h"
 #include "../../lattice/filetypes/FileHeaderOnly.hxx"
 #include "../../lattice/filetypes/FilePlain.hxx"
@@ -423,15 +424,13 @@ int main(int argc, char* argv[])
 				
 				// halo exchange back step 3
 				cudaMemcpyAsync( dU[tmax-1]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
-				cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished TODO move down?
 				for( int t=tm5; t<tmax; t++ )
 				{
 					_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
 				}		
-				
+				cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 				
 				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
-// 				cudaDeviceSynchronize();
 			}
 
 

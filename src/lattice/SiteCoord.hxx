@@ -16,7 +16,6 @@
 #ifndef SITECOORD_HXX_
 #define SITECOORD_HXX_
 
-#include "../util/log/Logger.hxx"
 #include "../util/cuda/cuda_host_device.h"
 #include "../util/datatype/lattice_typedefs.h"
 
