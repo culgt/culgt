@@ -12,7 +12,7 @@
 #include "malloc.h"
 #endif
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStatsV2.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
 #include "../lattice/gaugefixing/simulated_annealing/SaUpdate.hxx"
@@ -25,7 +25,6 @@
 #include "../lattice/SU3.hxx"
 #include "../lattice/Matrix.hxx"
 #include "../lattice/LinkFile.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
 #include "../lattice/filetypes/FileVogt.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
@@ -39,6 +38,7 @@
 #include "program_options/ProgramOptions.hxx"
 #include "../lattice/gaugefixing/GlobalConstants.hxx"
 #include "../util/cuda/CudaError.hxx"
+#include "../lattice/gaugefixing/CoulombKernelsSU3.hxx"
 
 using namespace std;
 
@@ -94,27 +94,6 @@ void initNeighbourTable( lat_index_t* nnt )
 }
 
 
-//__device__ inline Real cuFabs( Real a )
-//{
-//	return (a>0)?(a):(-a);
-//}
-
-//__global__ void printGaugeQuality( Real* dGff, Real* dA )
-//{
-//	const lat_coord_t size[Ndim-1] = {Nx,Ny,Nz};
-//	SiteCoord<3,true> s(size);
-//
-//	Real gff = 0;
-//	Real temp = 0;
-//	for( int i = 0; i < s.getLatticeSize(); i++ )
-//	{
-//		gff+= dGff[i];
-//		if( cuFabs(dA[i]) > temp ) temp = cuFabs(dA[i]);
-//	}
-//
-//	printf( "gff: %E\t\tdA: %E\n", gff/Real(s.getLatticeSize())/3./3., temp );
-//
-//}
 
 __global__ void projectSU3( Real* U )
 {
@@ -130,6 +109,85 @@ __global__ void projectSU3( Real* U )
 		SU3<TLink3> globUp( linkUp );
 
 		globUp.projectSU3();
+	}
+}
+
+__global__ void projectSU3DP( Real* U )
+{
+	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+	SiteCoord<4,FULL_SPLIT> s(size);
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+
+	s.setLatticeIndex( site );
+
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		TLink3 linkUp( U, s, mu );
+		SU3<TLink3> globUp( linkUp );
+
+		Matrix<complex,Nc> locMat;
+		SU3<Matrix<complex,Nc> > temp(locMat);
+
+		temp.assignWithoutThirdLine( globUp );
+
+		Matrix<Complex<double>,Nc > doubleMat;
+
+		for( int i = 0; i < 2; i++ )
+			for(int j = 0; j < 3; j++ )
+			{
+				Complex<double> a;
+				a.x = (double)temp.get( i, j ).x;
+				a.y = (double)temp.get( i, j ).y;
+				doubleMat.set( i,j, a);
+			}
+		double abs_u = 0, abs_v = 0;
+		Complex<double> sp(0.,0.);
+
+		// normalize first row
+		for( lat_group_dim_t i = 0; i < 3; i++ )
+		{
+			abs_u += doubleMat.get( 0, i ).abs_squared();
+		}
+
+		abs_u = sqrt(abs_u);
+
+		for( lat_group_dim_t i = 0; i < 3; i++ )
+		{
+			doubleMat.set( 0, i, doubleMat.get(0,i)/abs_u );
+		}
+
+		// orthogonalize second row
+		for( lat_group_dim_t i = 0; i < 3; i++ )
+		{
+			sp += doubleMat.get( 1,i ) * doubleMat.get( 0, i ).conj();
+		}
+		for( lat_group_dim_t i = 0; i < 3; i++ )
+		{
+			doubleMat.set( 1, i, doubleMat.get(1,i) - doubleMat.get( 0, i)*sp );
+		}
+
+		// normalize second row
+		for( lat_group_dim_t i = 0; i < 3; i++ )
+		{
+			abs_v += doubleMat.get( 1, i ).abs_squared();
+		}
+		abs_v = sqrt(abs_v);
+		for( lat_group_dim_t i = 0; i < 3; i++ )
+		{
+			doubleMat.set( 1, i, doubleMat.get(1,i)/abs_v );
+		}
+
+
+		for( int i = 0; i < 2; i++ )
+			for(int j = 0; j < 3; j++ )
+			{
+				Complex<Real> a;
+				a.x = (Real)doubleMat.get( i, j ).x;
+				a.y = (Real)doubleMat.get( i, j ).y;
+				temp.set( i,j, a);
+			}
+
+		globUp.assignWithoutThirdLine( temp );
 	}
 }
 
@@ -206,197 +264,6 @@ __global__ void projectSU3( Real* U )
 //	dGff[site] = result;
 //}
 
-__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter )
-{
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
-
-	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice_2;
-	typedef Link<GpuTimeslice_2,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink3_2;
-
-	lat_coord_t size[4] = {1,Nx,Ny,Nz};
-	SiteIndex<4,FULL_SPLIT> s( size ); // If i give DEVICE_CONSTANTS::SIZE_TIMESLICE instead, register spilling is much higher! Why?
-	s.nn = nnt;
-
-	const bool updown = threadIdx.x / 128;
-	const short mu = (threadIdx.x % 128) / 32;
-	const short id = (threadIdx.x % 128) % 32;
-
-	int site = blockIdx.x * blockDim.x/8 + id;
-
-
-//	if( updown == 0 ) {
-
-	if( parity == 1 ) site += s.getLatticeSize()/2;
-
-	s.setLatticeIndex( site );
-	if( (mu!=0)&&(updown==1) )
-	{
-		s.setNeighbour(mu,0);
-	}
-
-//	if( blockIdx.x * blockDim.x/8 == 0 && updown == 1 && parity == 0 && mu == 3)
-//	{
-//		printf( "ID: %d, site: %d, siteBySite: %d\n", id, site, s.getLatticeIndex() );
-//	}
-
-	Matrix<Complex<Real>,Nc> locMat;
-	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
-
-	TLink3_2 link( ((mu==0)&&(updown==1))?(UtDw):(UtUp), s, mu );
-
-	SU3<TLink3_2> globU( link );
-
-	// make link local
-	locU.assignWithoutThirdLine(globU);
-	locU.reconstructThirdLine();
-
-	// define the update algorithm
-//	OrUpdate overrelax( orParameter );
-//	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, COULOMB> subgroupStep( &locU, overrelax, id, mu, updown );
-
-	SaUpdate sa( temperature, &rng );
-	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, SaUpdate, COULOMB> subgroupStep( &locU, sa, id, mu, updown );
-
-	// do the subgroup iteration
-	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
-//
-//	subgroupStep.subgroup(0,1);
-//	locU.projectSU3();
-//	subgroupStep.subgroup(0,2);
-//	locU.projectSU3();
-//	subgroupStep.subgroup(1,2);
-//	locU.projectSU3();
-
-
-	// copy link back
-	globU.assignWithoutThirdLine(locU);
-}
-
-__global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
-{
-	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice_2;
-	typedef Link<GpuTimeslice_2,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink3_2;
-
-	lat_coord_t size[4] = {1,Nx,Ny,Nz};
-	SiteIndex<4,FULL_SPLIT> s( size ); // If i give DEVICE_CONSTANTS::SIZE_TIMESLICE instead, register spilling is much higher! Why?
-	s.nn = nnt;
-
-	const bool updown = threadIdx.x / 128;
-	const short mu = (threadIdx.x % 128) / 32;
-	const short id = (threadIdx.x % 128) % 32;
-
-	int site = blockIdx.x * blockDim.x/8 + id;
-
-
-//	if( updown == 0 ) {
-
-	if( parity == 1 ) site += s.getLatticeSize()/2;
-
-	s.setLatticeIndex( site );
-	if( (mu!=0)&&(updown==1) )
-	{
-		s.setNeighbour(mu,0);
-	}
-
-//	if( blockIdx.x * blockDim.x/8 == 0 && updown == 1 && parity == 0 && mu == 3)
-//	{
-//		printf( "ID: %d, site: %d, siteBySite: %d\n", id, site, s.getLatticeIndex() );
-//	}
-
-	Matrix<Complex<Real>,Nc> locMat;
-	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
-
-	TLink3_2 link( ((mu==0)&&(updown==1))?(UtDw):(UtUp), s, mu );
-
-	SU3<TLink3_2> globU( link );
-
-	// make link local
-	locU.assignWithoutThirdLine(globU);
-	locU.reconstructThirdLine();
-
-	// define the update algorithm
-	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, COULOMB> subgroupStep( &locU, overrelax, id, mu, updown );
-
-	// do the subgroup iteration
-	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
-
-//	locU.projectSU3withoutThirdRow();
-
-	// copy link back
-	globU.assignWithoutThirdLine(locU);
-
-//	}
-}
-
-__global__ void __launch_bounds__(256,4) microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity )
-{
-	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice_2;
-	typedef Link<GpuTimeslice_2,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink3_2;
-
-	lat_coord_t size[4] = {1,Nx,Ny,Nz};
-	SiteIndex<4,FULL_SPLIT> s( size ); // If i give DEVICE_CONSTANTS::SIZE_TIMESLICE instead, register spilling is much higher! Why?
-	s.nn = nnt;
-
-	const bool updown = threadIdx.x / 128;
-	const short mu = (threadIdx.x % 128) / 32;
-	const short id = (threadIdx.x % 128) % 32;
-
-	int site = blockIdx.x * blockDim.x/8 + id;
-
-
-//	if( updown == 0 ) {
-
-	if( parity == 1 ) site += s.getLatticeSize()/2;
-
-	s.setLatticeIndex( site );
-	if( (mu!=0)&&(updown==1) )
-	{
-		s.setNeighbour(mu,0);
-	}
-
-//	if( blockIdx.x * blockDim.x/8 == 0 && updown == 1 && parity == 0 && mu == 3)
-//	{
-//		printf( "ID: %d, site: %d, siteBySite: %d\n", id, site, s.getLatticeIndex() );
-//	}
-
-	Matrix<Complex<Real>,Nc> locMat;
-	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
-
-	TLink3_2 link( ((mu==0)&&(updown==1))?(UtDw):(UtUp), s, mu );
-
-	SU3<TLink3_2> globU( link );
-
-	// make link local
-	locU.assignWithoutThirdLine(globU);
-	locU.reconstructThirdLine();
-
-//	if( locU.det().x > 1.1 || locU.det().x < .9 )
-//	{
-//		printf( "U.det: %f; id=%d; mu=%d; updown=%d; site=%d;\n", locU.det().x, id, mu, updown, blockIdx.x * blockDim.x/8 + (threadIdx.x % NSB4) % NSB);
-//	}
-
-	// define the update algorithm
-	MicroUpdate micro;
-	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, MicroUpdate, COULOMB> subgroupStep( &locU, micro, id, mu, updown );
-
-	// do the subgroup iteration
-	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
-
-//	subgroupStep.subgroup(0,1);
-////	locU.projectSU3();
-//	subgroupStep.subgroup(0,2);
-////	locU.projectSU3();
-//	subgroupStep.subgroup(1,2);
-////	locU.projectSU3();
-
-//	locU.projectSU3withoutThirdRow();
-
-	// copy link back
-	globU.assignWithoutThirdLine(locU);
-
-//	}
-}
 
 
 Real calculatePolyakovLoopAverage( Real *U )
@@ -445,56 +312,13 @@ Real calculatePolyakovLoopAverage( Real *U )
 
 int main(int argc, char* argv[])
 {
+	CoulombKernelsSU3::initCacheConfig();
+
+
 	// read configuration from file or command line
 	ProgramOptions options;
 	int returncode = options.init( argc, argv );
 	if( returncode != 0 ) return returncode;
-
-
-	// read parameters (command line or given config file)
-//	options_desc.add_options()
-//		("help", "produce help message")
-//		("nconf,m", boost::program_options::value<int>(&nconf)->default_value(1), "how many files to gaugefix")
-//		("ormaxiter", boost::program_options::value<int>(&orMaxIter)->default_value(1000), "Max. number of OR iterations")
-//		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
-//		("sasteps", boost::program_options::value<int>(&saSteps)->default_value(1000), "number of SA steps")
-//		("samin", boost::program_options::value<float>(&saMin)->default_value(.01), "min. SA temperature")
-//		("samax", boost::program_options::value<float>(&saMax)->default_value(.4), "max. SA temperature")
-//		("orparameter", boost::program_options::value<float>(&orParameter)->default_value(1.7), "OR parameter")
-//		("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
-//		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
-//		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
-//		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
-//		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it (default _Coulomb)")
-//		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
-//		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
-//		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
-//		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
-//		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
-//		("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpretReal)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = convert input as float and cast to Real, DOUBLE = ...)")
-//
-//		("norandomtrafo", boost::program_options::value<bool>(&noRandomTrafo)->default_value(false), "no random gauge trafo" )
-//		;
-//
-//	boost::program_options::positional_options_description options_p;
-//	options_p.add("config-file", -1);
-//
-//	boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
-//			options(options_desc).positional(options_p).run(), options_vm);
-//	boost::program_options::notify(options_vm);
-//
-//	ifstream cfg( configFile.c_str() );
-//	boost::program_options::store(boost::program_options::parse_config_file( cfg, options_desc), options_vm);
-//	boost::program_options::notify(options_vm);
-//
-//	if (options_vm.count("help")) {
-//		cout << "Usage: " << argv[0] << " [options] [config-file]" << endl;
-//		cout << options_desc << "\n";
-//		return 1;
-//	}
-
-
-
 
 
 	cudaDeviceProp deviceProp;
@@ -554,11 +378,7 @@ int main(int argc, char* argv[])
 
 	allTimer.start();
 
-	cudaFuncSetCacheConfig( orStep, cudaFuncCachePreferL1 );
-
-//	lat_coord_t *pointerToSize;
-//	cudaGetSymbolAddress( (void**)&pointerToSize, "dSize" );
-	GaugeFixingStats<Ndim,Nc,COULOMB,AVERAGE> gaugeStats( dUtUp, HOST_CONSTANTS::SIZE_TIMESLICE );
+	GaugeFixingStats<Ndim,Nc,CoulombKernelsSU3,AVERAGE> gaugeStats( dUtUp, HOST_CONSTANTS::SIZE_TIMESLICE );
 
 	double totalKernelTime = 0;
 	long totalStepNumber = 0;
@@ -622,18 +442,52 @@ int main(int argc, char* argv[])
 			float temperature = options.getSaMax();
 			float tempStep = (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps();
 
-								projectSU3<<<numBlocks*2,32>>>( dUtUp );
-								projectSU3<<<numBlocks*2,32>>>( dUtDw );
-			for( int i = 0; i < options.getOrMaxIter(); i++ )
+			for( int i = 0; i < options.getSaSteps(); i++ )
 			{
-				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, options.getOrParameter() );
-				orStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, options.getOrParameter() );
+
+
+				CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, temperature, PhiloxWrapper::getNextCounter() );
+				CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, temperature, PhiloxWrapper::getNextCounter() );
+
+				for( int mic = 0; mic < options.getSaMicroupdates(); mic++ )
+				{
+					CoulombKernelsSU3::microStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0 );
+					CoulombKernelsSU3::microStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1 );
+				}
+
 
 				if( i % options.getOrCheckPrecision() == 0 )
 				{
+					projectSU3<<<numBlocks*2,32>>>( dUtUp );
+					projectSU3<<<numBlocks*2,32>>>( dUtDw );
+
+
+					gaugeStats.generateGaugeQuality();
+					CudaError::getLastError( "generateGaugeQuality error" );
+					printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+				}
+				temperature -= tempStep;
+			}
+
+//			projectSU3DP<<<numBlocks*2,32>>>( dUtUp );
+//			projectSU3DP<<<numBlocks*2,32>>>( dUtDw );
+
+			for( int i = 0; i < options.getOrMaxIter(); i++ )
+			{
+
+				CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, options.getOrParameter() );
+				CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, options.getOrParameter() );
+
+//				if( i < 5000 && i % 5 == 0 )
+//				{
 //					projectSU3<<<numBlocks*2,32>>>( dUtUp );
 //					projectSU3<<<numBlocks*2,32>>>( dUtDw );
+//				}
 
+				if( i % options.getOrCheckPrecision() == 0 )
+				{
+					projectSU3<<<numBlocks*2,32>>>( dUtUp );
+					projectSU3<<<numBlocks*2,32>>>( dUtDw );
 					gaugeStats.generateGaugeQuality();
 					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
@@ -643,43 +497,6 @@ int main(int argc, char* argv[])
 				totalStepNumber++;
 			}
 
-			for( int i = 0; i < options.getSaSteps(); i++ )
-			{
-
-
-//				saStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, temperature, PhiloxWrapper::getNextCounter() );
-//				saStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, temperature, PhiloxWrapper::getNextCounter() );
-
-//				saStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0, temperature, 1 );
-//				saStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1, temperature, 2 );
-
-//				CudaError::getLastError( "SaStep error" );
-//
-//				cudaThreadSynchronize();
-//
-//				CudaError::getLastError( "SaStep error" );
-
-				for( int mic = 0; mic < options.getSaMicroupdates(); mic++ )
-				{
-					microStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 0 );
-					microStep<<<numBlocks,threadsPerBlock>>>(dUtUp, dUtDw, dNnt, 1 );
-				}
-
-//				if( i % 5 == 0 )
-//				{
-//					projectSU3<<<numBlocks*2,32>>>( dUtUp );
-//					projectSU3<<<numBlocks*2,32>>>( dUtDw );
-//				}
-
-				if( i % options.getOrCheckPrecision() == 0 )
-				{
-					gaugeStats.generateGaugeQuality();
-					CudaError::getLastError( "generateGaugeQuality error" );
-					printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
-				}
-				temperature -= tempStep;
-			}
-
 			cudaThreadSynchronize();
 			kernelTimer.stop();
 			cout << "kernel time for timeslice: " << kernelTimer.getTime() << " s"<< endl;
@@ -687,6 +504,8 @@ int main(int argc, char* argv[])
 			// copy back TODO: copying back timeslice t is not necessary (only in the end)
 			cudaMemcpy( &U[t*timesliceArraySize], dUtUp, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 			cudaMemcpy( &U[tDw*timesliceArraySize], dUtDw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+
+//			exit(-1);
 		}
 
 

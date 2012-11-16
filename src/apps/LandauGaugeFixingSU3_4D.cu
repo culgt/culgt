@@ -96,32 +96,32 @@ void initNeighbourTable( lat_index_t* nnt )
 }
 
 
-//__global__ void projectSU3( Real* U )
-//{
-//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-//	SiteCoord<4,FULL_SPLIT> s(size);
-//	int site = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	s.setLatticeIndex( site );
-//
-//	for( int mu = 0; mu < 4; mu++ )
-//	{
-//		TLink linkUp( U, s, mu );
-//		SU3<TLink> globUp( linkUp );
-//
-//
-//		Matrix<Complex<Real>,Nc> locMat;
-//		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
-//
-//		locU.assignWithoutThirdLine(globUp);
-//		locU.projectSU3withoutThirdRow();
-//
-//
-//		globUp.assignWithoutThirdLine(locU);
-//
-////		globUp.projectSU3withoutThirdRow();
-//	}
-//}
+__global__ void projectSU3( Real* U )
+{
+	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+	SiteCoord<4,FULL_SPLIT> s(size);
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+
+	s.setLatticeIndex( site );
+
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		TLink linkUp( U, s, mu );
+		SU3<TLink> globUp( linkUp );
+
+
+		Matrix<Complex<Real>,Nc> locMat;
+		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
+
+		locU.assignWithoutThirdLine(globUp);
+		locU.projectSU3withoutThirdRow();
+
+
+		globUp.assignWithoutThirdLine(locU);
+
+//		globUp.projectSU3withoutThirdRow();
+	}
+}
 
 
 __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
@@ -160,10 +160,10 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 	locU.reconstructThirdLine();
 
 	// define the update algorithm
-//	OrUpdate overrelax( orParameter );
-//	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
-	MicroUpdate micro;
-	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, MicroUpdate, LANDAU> subgroupStep( &locU, micro, id, mu, updown );
+	OrUpdate overrelax( orParameter );
+	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
+//	MicroUpdate micro;
+//	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, MicroUpdate, LANDAU> subgroupStep( &locU, micro, id, mu, updown );
 
 	// do the subgroup iteration
 	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
@@ -176,108 +176,137 @@ __global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool 
 //	globU.projectSU3withoutThirdRow();
 }
 
-//__global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
-//{
-//	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
-//	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
-//
-//	int site = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-//	SiteIndex<4,FULL_SPLIT> s(size);
-//	s.nn = nn;
-//
-//	Matrix<Complex<Real>,Nc> matP;
-//	SU3<Matrix<Complex<Real>,Nc> > P(matP);
-//
-//	Matrix<Complex<Real>,Nc> matTemp;
-//	SU3<Matrix<Complex<Real>,Nc> > temp(matTemp);
-//
-//
-//	double localPlaquette = 0;
-//
-//
-//	for( int mu = 0; mu < 4; mu++ )
-//	{
-//		for( int nu = mu+1; nu < 4; nu++)
-//		{
-//			P.identity();
-//
-//			{
-//				s.setLatticeIndex( site );
-//
-//				TLinkIndex link( U, s, mu );
-//				SU3<TLinkIndex> globU( link );
-//
-//				temp.assignWithoutThirdLine( globU );
-//				temp.reconstructThirdLine();
-//
-//				P *= temp;
-//			}
-//
-//			{
-//				s.setNeighbour( mu, true );
-//
-//				TLinkIndex link( U, s, nu );
-//				SU3<TLinkIndex> globU( link );
-//				temp.assignWithoutThirdLine( globU );
-//				temp.reconstructThirdLine();
-//
-//				P *= temp;
-//			}
-//
-//			{
-//				s.setLatticeIndex( site );
-//				s.setNeighbour(nu, true );
-//
-//				TLinkIndex link( U, s, mu );
-//				SU3<TLinkIndex> globU( link );
-//				temp.assignWithoutThirdLine( globU );
-//				temp.reconstructThirdLine();
-//				temp.hermitian();
-//
-//				P *= temp;
-//			}
-//
-//			{
-//				s.setLatticeIndex( site );
-//
-//				TLinkIndex link( U, s, nu );
-//				SU3<TLinkIndex> globU( link );
-//				temp.assignWithoutThirdLine( globU );
-//				temp.reconstructThirdLine();
-//				temp.hermitian();
-//
-//				P *= temp;
-//			}
-//
-//
-//
-//
-//
-//			localPlaquette += P.trace().x;
-//		}
-//	}
-//
-//	dPlaquette[site] = localPlaquette/6./3.;
-////	dPlaquette[site] = 1;
-////	dPlaquette[site] = 0;
-//}
+// TODO Hack, because cuda5.0 has a bug and the native *= operator does not work
+__device__ Matrix<Complex<Real>,3>& mult( Matrix<Complex<Real>,3>& c, Matrix<Complex<Real>,3>& a, Matrix<Complex<Real>,3>& b )
+{
+	for(int i = 0; i < 3; i++ )
+	{
+		for( int j = 0; j < 3; j++ )
+		{
+			c.mat[i*3+j] = 0;
+			for( int k = 0; k < 3; k++ )
+			{
+				c.mat[i*3+j] += a.mat[i*3+k] * b.mat[k*3+j];
+			}
+		}
+	}
+	return c;
+}
 
-//__global__ void printPlaquette( double* dPlaquette )
-//{
-//	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
-//	SiteCoord<4,FULL_SPLIT> s(size);
-//
-//	double plaquette = 0;
-//	for( int i = 0; i < s.getLatticeSize(); i++ )
-//	{
-//		plaquette += dPlaquette[i];
-//	}
-//
-//	printf( "\t%E\n", plaquette/double(s.getLatticeSize()) );
-//
-//}
+__global__ void calculatePlaquette( Real *U, lat_index_t* nn, double *dPlaquette )
+{
+	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
+
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+
+	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+	SiteIndex<4,FULL_SPLIT> s(size);
+	s.nn = nn;
+
+	Matrix<Complex<Real>,Nc> matP;
+//	SU3<Matrix<Complex<Real>,Nc> > P(matP);
+
+	Matrix<Complex<Real>,Nc> matTemp;
+	SU3<Matrix<Complex<Real>,Nc> > temp(matTemp);
+
+	Matrix<Complex<Real>,Nc> matTemp2;
+
+
+	double localPlaquette = 0;
+
+
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		for( int nu = mu+1; nu < 4; nu++)
+		{
+			for( int i = 0; i < 3; i++ )
+				for( int j =0; j < 3; j++ )
+				{
+					if( i == j ) matP.set( i,j,Complex<Real>(1.0,.0) );
+					else matP.set( i,j,Complex<Real>(.0,.0) );
+				}
+
+			{
+				s.setLatticeIndex( site );
+
+				TLinkIndex link( U, s, mu );
+				SU3<TLinkIndex> globU( link );
+
+				temp.assignWithoutThirdLine( globU );
+				temp.reconstructThirdLine();
+
+				mult(matTemp2, matP, temp.mat );
+				matP = matTemp2;
+//				matTemp2 = matP * matTemp;
+			}
+
+			{
+				s.setNeighbour( mu, true );
+
+				TLinkIndex link( U, s, nu );
+				SU3<TLinkIndex> globU( link );
+				temp.assignWithoutThirdLine( globU );
+				temp.reconstructThirdLine();
+
+				mult(matTemp2,matP, temp.mat );
+				matP = matTemp2;
+			}
+
+			{
+				s.setLatticeIndex( site );
+				s.setNeighbour(nu, true );
+
+				TLinkIndex link( U, s, mu );
+				SU3<TLinkIndex> globU( link );
+				temp.assignWithoutThirdLine( globU );
+				temp.reconstructThirdLine();
+				temp.hermitian();
+
+				mult(matTemp2,matP, temp.mat );
+				matP = matTemp2;
+			}
+
+			{
+				s.setLatticeIndex( site );
+
+				TLinkIndex link( U, s, nu );
+				SU3<TLinkIndex> globU( link );
+				temp.assignWithoutThirdLine( globU );
+				temp.reconstructThirdLine();
+				temp.hermitian();
+
+				mult(matTemp2,matP, temp.mat );
+				matP = matTemp2;
+			}
+
+
+
+
+
+			localPlaquette += matP.trace().x;
+		}
+	}
+
+	dPlaquette[site] = localPlaquette/6./3.;
+//	dPlaquette[site] = 1;
+//	dPlaquette[site] = 0;
+}
+
+__global__ void printPlaquette( double* dPlaquette )
+{
+	const lat_coord_t size[Ndim] = {Nx,Ny,Nz,Nt};
+	SiteCoord<4,FULL_SPLIT> s(size);
+
+	double plaquette = 0;
+	for( int i = 0; i < s.getLatticeSize(); i++ )
+	{
+		plaquette += dPlaquette[i];
+	}
+
+	printf( "\t%E\n", plaquette/double(s.getLatticeSize()) );
+
+}
 
 //Real calculatePolyakovLoopAverage( Real *U )
 //{
@@ -499,10 +528,13 @@ int main(int argc, char* argv[])
 			// check the current gauge quality
 			if( j % orCheckPrec == 0 )
 			{
-//				projectSU3<<<numBlocks*2,32>>>( dU );
+				projectSU3<<<numBlocks*2,32>>>( dU );
 				gaugeStats.generateGaugeQuality();
-				printf( "%d\t\t%1.10f\t\t%e\n", j, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+				printf( "%d\t\t%1.10f\t\t%e\t", j, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 				logfile << j << '\t' << gaugeStats.getCurrentGff() << '\t' << gaugeStats.getCurrentA() << endl;
+
+				calculatePlaquette<<<s.getLatticeSize()/32,32>>>(dU, dNn, dPlaquette );
+				printPlaquette<<<1,1>>>( dPlaquette );
 
 				if( gaugeStats.getCurrentA() < orPrecision ) break;
 				if( !( gaugeStats.getCurrentA() > 0 ) ) break; //check for NaN

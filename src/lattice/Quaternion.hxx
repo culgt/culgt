@@ -22,6 +22,7 @@
 #include "../util/cuda/cuda_host_device.h"
 #include "../util/datatype/Complex.hxx"
 #include "../util/datatype/lattice_typedefs.h"
+#include <assert.h>
 
 template<class T> class Quaternion
 {
@@ -86,6 +87,8 @@ template<class T> Complex<T> Quaternion<T>::get( int i, int j )
 			return Complex<T>( quat[0], quat[3] );
 		case 1:
 			return Complex<T>( quat[2], quat[1] );
+		default:
+			break;
 		}
 	case 1:
 		switch( j )
@@ -94,9 +97,14 @@ template<class T> Complex<T> Quaternion<T>::get( int i, int j )
 			return Complex<T>( -quat[2], quat[1] );
 		case 1:
 			return Complex<T>( quat[0], -quat[3] );
+		default:
+			break;
 		}
+	default:
+		assert(false);
+		return Complex<T>(0,0);
 	}
-	return Complex<T>(0,0);
+
 }
 
 /**
@@ -129,6 +137,7 @@ template<class T> void Quaternion<T>::set( int i, int j, Complex<T> c )
 		case 1:
 			quat[0] = c.x;
 			quat[3] = -c.y;
+			break;
 		}
 	}
 }
@@ -185,6 +194,7 @@ template<class T> Complex<T> Quaternion<T>::trace()
 template<class T> void Quaternion<T>::projectSU2()
 {
 	T det = rsqrt( reDet() );
+//	T det = 1./sqrt( reDet() );
 	quat[0] *= det;
 	quat[1] *= det;
 	quat[2] *= det;

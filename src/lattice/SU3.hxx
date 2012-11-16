@@ -59,8 +59,8 @@ public:
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> );
 //	template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> );
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLine( SU3<Type2> );
-	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4ToMat( SU3<Type2> ); // TODO uebelster HACK
-	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4FromMat( SU3<Type2> );// TODO uebelster HACK
+//	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4ToMat( SU3<Type2> ); // TODO uebelster HACK
+//	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4FromMat( SU3<Type2> );// TODO uebelster HACK
 
 	CUDA_HOST_DEVICE inline complex det();
 	CUDA_HOST_DEVICE inline complex trace();
@@ -282,59 +282,59 @@ template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutTh
 /**
  * TODO for test: assume type2==link, type==matrix
  */
-template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutThirdLineFloat4ToMat( SU3<Type2> c )
-{
-	float4 f0,f1,f2;
-	f0 = c.mat.getFloat4( 0, 0 );
-	f1 = c.mat.getFloat4( 0, 2 );
-	f2 = c.mat.getFloat4( 1, 1 );
-
-	complex a( f0.x, f0.y );
-	mat.set( 0, 0, a);
-
-	a = complex( f0.z, f0.w );
-	mat.set( 0, 1, a);
-
-	a = complex( f1.x, f1.y );
-		mat.set( 0, 2, a);
-
-	a = complex( f1.z, f1.w );
-		mat.set( 1, 0, a);
-
-	a = complex( f2.x, f2.y );
-	mat.set( 1, 1, a);
-
-	a = complex( f2.z, f2.w );
-	mat.set( 1, 2, a);
-
-	return *this;
-}
-
-template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutThirdLineFloat4FromMat( SU3<Type2> c )
-{
-	float4 f0,f1,f2;
-
-	f0.x = c.mat.get(0,0).x;
-	f0.y = c.mat.get(0,0).y;
-	f0.z = c.mat.get(0,1).x;
-	f0.w = c.mat.get(0,1).y;
-
-	f1.x = c.mat.get(0,2).x;
-	f1.y = c.mat.get(0,2).y;
-	f1.z = c.mat.get(1,0).x;
-	f1.w = c.mat.get(1,0).y;
-
-	f2.x = c.mat.get(1,1).x;
-	f2.y = c.mat.get(1,1).y;
-	f2.z = c.mat.get(1,2).x;
-	f2.w = c.mat.get(1,2).y;
-
-
-	mat.setFloat4( 0, 0, f0 );
-	mat.setFloat4( 0, 2, f1 );
-	mat.setFloat4( 1, 1, f2 );
-	return *this;
-}
+//template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutThirdLineFloat4ToMat( SU3<Type2> c )
+//{
+//	float4 f0,f1,f2;
+//	f0 = c.mat.getFloat4( 0, 0 );
+//	f1 = c.mat.getFloat4( 0, 2 );
+//	f2 = c.mat.getFloat4( 1, 1 );
+//
+//	complex a( f0.x, f0.y );
+//	mat.set( 0, 0, a);
+//
+//	a = complex( f0.z, f0.w );
+//	mat.set( 0, 1, a);
+//
+//	a = complex( f1.x, f1.y );
+//		mat.set( 0, 2, a);
+//
+//	a = complex( f1.z, f1.w );
+//		mat.set( 1, 0, a);
+//
+//	a = complex( f2.x, f2.y );
+//	mat.set( 1, 1, a);
+//
+//	a = complex( f2.z, f2.w );
+//	mat.set( 1, 2, a);
+//
+//	return *this;
+//}
+//
+//template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutThirdLineFloat4FromMat( SU3<Type2> c )
+//{
+//	float4 f0,f1,f2;
+//
+//	f0.x = c.mat.get(0,0).x;
+//	f0.y = c.mat.get(0,0).y;
+//	f0.z = c.mat.get(0,1).x;
+//	f0.w = c.mat.get(0,1).y;
+//
+//	f1.x = c.mat.get(0,2).x;
+//	f1.y = c.mat.get(0,2).y;
+//	f1.z = c.mat.get(1,0).x;
+//	f1.w = c.mat.get(1,0).y;
+//
+//	f2.x = c.mat.get(1,1).x;
+//	f2.y = c.mat.get(1,1).y;
+//	f2.z = c.mat.get(1,2).x;
+//	f2.w = c.mat.get(1,2).y;
+//
+//
+//	mat.setFloat4( 0, 0, f0 );
+//	mat.setFloat4( 0, 2, f1 );
+//	mat.setFloat4( 1, 1, f2 );
+//	return *this;
+//}
 
 /**
  * Multiplication of SU3 matrices.
@@ -584,16 +584,46 @@ template<class Type> void SU3<Type>::projectSU3withoutThirdRow()
 }
 
 /**
- * Reconstructs the third line of the 3x3 matrix from the first two rows. This is needed wenn we load only the first two rows
+ * Reconstructs the third line of the 3x3 matrix from the first two rows. This is needed when we load only the first two rows
  * from memory to save memory bandwidth in CUDA applications.
  */
 template<class Type> void SU3<Type>::reconstructThirdLine()
 {
-	set( 2, 0, get(0,1).conj() * get(1,2).conj() - get(0,2).conj() * get(1,1).conj() );
+//	Complex<Real> a00 = get(0,0);
+//	Complex<Real> a01 = get(0,1);
+//	Complex<Real> a02 = get(0,2);
+//	Complex<Real> a10 = get(1,0);
+//	Complex<Real> a11 = get(1,1);
+//	Complex<Real> a12 = get(1,2);
+//
+//	set( 2, 0, Complex<Real>( a01.x*a12.x-a01.y*a12.y - a11.x*a02.x+a11.y*a02.y, -a01.x*a12.y-a01.y*a12.x + a11.x*a02.y+a11.y*a02.x ) );
+//	set( 2, 1, Complex<Real>( a02.x*a10.x-a02.y*a10.y - a12.x*a00.x+a12.y*a00.y, -a02.x*a10.y-a02.y*a10.x + a12.x*a00.y+a12.y*a00.x ) );
+//	set( 2, 2, Complex<Real>( a00.x*a11.x-a00.y*a11.y - a01.x*a10.x+a01.y*a10.y, -a00.x*a11.y-a00.y*a11.x + a01.x*a10.y+a01.y*a10.x ) );
 
-	set( 2, 1, get(0,2).conj() * get(1,0).conj() - get(0,0).conj() * get(1,2).conj() );
 
-	set( 2, 2, get(0,0).conj() * get(1,1).conj() - get(0,1).conj() * get(1,0).conj() );
+
+
+	Complex<Real> a = get(0,1).conj() * get(1,2).conj() - get(0,2).conj() * get(1,1).conj();
+	Complex<Real> b = get(0,2).conj() * get(1,0).conj() - get(0,0).conj() * get(1,2).conj();
+	Complex<Real> c = get(0,0).conj() * get(1,1).conj() - get(0,1).conj() * get(1,0).conj();
+
+	Real norm = a.abs_squared() + b.abs_squared() + c.abs_squared();
+	norm = 1./sqrt( norm );
+
+	set( 2, 0, a*norm );
+	set( 2, 1, b*norm );
+	set( 2, 2, c*norm );
+
+
+//	Complex<Real> a = get(0,1).conj() * get(1,2).conj() - get(0,2).conj() * get(1,1).conj();
+//	Complex<Real> b = get(0,2).conj() * get(1,0).conj() - get(0,0).conj() * get(1,2).conj();
+//	Complex<Real> c = get(0,0).conj() * get(1,1).conj() - get(0,1).conj() * get(1,0).conj();
+//
+//	set( 2, 0, a);
+//
+//	set( 2, 1, b);
+//
+//	set( 2, 2, c );
 }
 
 /**
@@ -625,7 +655,6 @@ template<class Type> void SU3<Type>::leftSubgroupMult( lat_group_dim_t i, lat_gr
 	{
 		Complex<Real> IK = q->get( 0, 0 ) * get(i,k);
 		IK += q->get( 0, 1 ) * get(j,k);
-
 
 		Complex<Real> JK = q->get( 1, 0 ) * get(i,k);
 		JK += q->get(1,1) * get(j,k);
@@ -683,9 +712,13 @@ template<class Type> void SU3<Type>::print()
  */
 template<class Type> template<class SubgroupOperationClass> __device__ void SU3<Type>::perSubgroup( SubgroupOperationClass t )
 {
-	t.subgroup(0,1);
+//	t.subgroup(0,1);
+//	t.subgroup(0,2);
+//	t.subgroup(1,2);
+
 	t.subgroup(0,2);
 	t.subgroup(1,2);
+	t.subgroup(0,1);
 }
 //#endif
 

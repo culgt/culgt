@@ -25,9 +25,9 @@ public:
 	CUDA_HOST_DEVICE inline Link( Real* data, TheSite site, int mu );
 	CUDA_HOST_DEVICE inline virtual ~Link();
 	CUDA_HOST_DEVICE inline complex get(int i, int j);
-	CUDA_HOST_DEVICE inline float4 getFloat4(int i, int j);
+//	CUDA_HOST_DEVICE inline float4 getFloat4(int i, int j);
 	CUDA_HOST_DEVICE inline void set(int i, int j, complex c);
-	CUDA_HOST_DEVICE inline void setFloat4(int i, int j, float4 f);
+//	CUDA_HOST_DEVICE inline void setFloat4(int i, int j, float4 f);
 	CUDA_HOST_DEVICE inline complex trace();
 	CUDA_HOST_DEVICE inline Link<Pattern, TheSite, T_Ndim, T_Nc>& operator+=( Link<Pattern, TheSite, T_Ndim, T_Nc> );
 
@@ -64,18 +64,18 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, 
 	this->data = pointer;
 }
 
-template<class Pattern, class TheSite, int T_Ndim, int T_Nc> float4 Link<Pattern, TheSite, T_Ndim, T_Nc>::getFloat4( int i, int j )
-{
-	float4 *fdata = (float4*)data;
-	return fdata[Pattern::getIndex( site, mu, i, j, 0 )/4];
-}
-
-template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::setFloat4( int i, int j, float4 f )
-{
-	float4 *fdata = (float4*)data;
-	fdata[Pattern::getIndex( site, mu, i, j, 0 )/4] = f;
-
-}
+//template<class Pattern, class TheSite, int T_Ndim, int T_Nc> float4 Link<Pattern, TheSite, T_Ndim, T_Nc>::getFloat4( int i, int j )
+//{
+//	float4 *fdata = (float4*)data;
+//	return fdata[Pattern::getIndex( site, mu, i, j, 0 )/4];
+//}
+//
+//template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::setFloat4( int i, int j, float4 f )
+//{
+//	float4 *fdata = (float4*)data;
+//	fdata[Pattern::getIndex( site, mu, i, j, 0 )/4] = f;
+//
+//}
 
 /**
  * Returns the matrix element (i,j).
@@ -83,9 +83,9 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, 
  * @parameter col index j
  * @return element (i,j)
  */
-template<class Pattern, class TheSite, int T_Ndim, int T_Nc> complex Link<Pattern, TheSite, T_Ndim, T_Nc>::get( int i, int j )
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> Complex<Real> Link<Pattern, TheSite, T_Ndim, T_Nc>::get( int i, int j )
 {
-	return complex( data[Pattern::getIndex( site, mu, i, j, 0 )], data[Pattern::getIndex( site, mu, i, j, 1 )] );
+	return Complex<Real>( data[Pattern::getIndex( site, mu, i, j, 0 )], data[Pattern::getIndex( site, mu, i, j, 1 )] );
 
 }
 
@@ -95,7 +95,7 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> complex Link<Patter
  * @parameter col index j
  * @parameter element to set
  */
-template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::set( int i, int j, complex c )
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::set( int i, int j, Complex<Real> c )
 {
 	data[Pattern::getIndex( site, mu, i, j, 0 )] = c.x;
 	data[Pattern::getIndex( site, mu, i, j, 1 )] = c.y;
