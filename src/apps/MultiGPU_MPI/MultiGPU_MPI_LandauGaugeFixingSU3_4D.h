@@ -1,32 +1,21 @@
 // wrapper functions for kernel calls etc.
 
-#ifndef CUDA_WRAPPER_H_
-#define CUDA_WRAPPER_H_
+#ifndef MULTIGPU_MPI_LANDAUGAUGEFIXINGSU3_4D_H_
+#define MULTIGPU_MPI_LANDAUGAUGEFIXINGSU3_4D_H_
 
-enum _cudaMemcpyKind {
-	_cudaMemcpyHostToHost,
-	_cudaMemcpyHostToDevice,
-	_cudaMemcpyDeviceToHost,
-	_cudaMemcpyDeviceToDevice,
-	_cudaMemcpyDefault
-};
-
+// initialize the device per process
 void initDevice( const int device );
 
-// void _cudaMalloc( void** devPtr, size_t size );
-// 
-// void _cudaHostAlloc( void ** pHost, size_t size, unsigned int flags );
-// 
-// void _cudaMemcpy( void* dst, const void* src, size_t count, enum _cudaMemcpyKind kind );
-// 
-// void _cudaMemcpyAsync( void * dst, const void* src, size_t count, enum _cudaMemcpyKind kind, int stream = 0 );
-
+// set hot gauge field: kernel wrapper
 void _set_hot( Real* U, int counter);
 
+// gauge quality per site: kernel wrapper
 void _generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t* nnt, double *dGff, double *dA );
 
+// average over the gauge qualities per site: kernel wrapper
 void _averageGaugeQuality( double* dGff, double* dA );
 
-void _orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter  );
+// the overrelaxation step: kernel wrapper
+void _orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter, cudaStream_t stream=0  );
 
-#endif /* CUDA_WRAPPER_H_ */
+#endif /* MULTIGPU_MPI_LANDAUGAUGEFIXINGSU3_4D_H_ */

@@ -36,7 +36,7 @@ CUOBJ = $(APP).o
 # libs for the linking process
 LIBS = -lboost_program_options
 # flags for the NVCC compiler
-CUFLAGS = --ptxas-options=-v -arch=sm_20 -use_fast_math
+CUFLAGS = --ptxas-options=-v -arch=sm_20 -use_fast_math -Xptxas -dlcm=cg
 
 
 $(APP): $(CUOBJ) Chronotimer.o
@@ -53,6 +53,6 @@ Chronotimer.o: ../util/timer/Chronotimer.cc
 
 
 clean: 
-	rm *.o $(APP)
+	rm -f *.o $(APP)
 
 

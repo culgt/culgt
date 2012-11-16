@@ -1,7 +1,7 @@
 /*
- * test_gaugefixing.cpp
+ * MultiGPU_MPI_LandauGaugeFixingSU3_4D.h
  *
- *  Created on: Oct 26, 2012
+ *  Created on: Nov. 16, 2012
  *      Author: vogt&schroeck
  */
 
@@ -24,17 +24,8 @@
 #include "../../lattice/Matrix.hxx"
 // #include "../../lattice/LinkFile.hxx"
 #include "../../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
-// #include "../../util/timer/Chronotimer.h"
-// #include "../../lattice/filetypes/FileHeaderOnly.hxx"
-// #include "../../lattice/filetypes/FilePlain.hxx"
-// #include "../../lattice/filetypes/FileVogt.hxx"
-// #include "../../lattice/filetypes/filetype_typedefs.h"
-// #include <boost/program_options/parsers.hpp>
-// #include <boost/program_options/variables_map.hpp>
-// #include <boost/program_options/options_description.hpp>
 #include "../../lattice/gaugefixing/GlobalConstants.hxx"
 #include "../../util/rng/PhiloxWrapper.hxx"
-
 #include "MultiGPU_MPI_LandauGaugeFixingSU3_4D.h"
 
 using namespace std;
@@ -54,11 +45,11 @@ const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
 __global__ void __launch_bounds__(8*NSB,128/NSB) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter  )
 {
-	typedef GpuLandauPatternParity< SiteIndex<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> TLinkIndex;
+	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteIndex<4,TIMESLICE_SPLIT> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	s.nn = nnt;
 
 	const bool updown = threadIdx.x / NSB4;
@@ -72,7 +63,6 @@ __global__ void __launch_bounds__(8*NSB,128/NSB) orStep( Real* UtUp, Real* UtDw,
 
 	Real* U;
 	
-	//TODO make nicer:
 	if( updown==1 )
 	{
 		if( mu!=0 )
@@ -92,6 +82,7 @@ __global__ void __launch_bounds__(8*NSB,128/NSB) orStep( Real* UtUp, Real* UtDw,
 	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 	TLinkIndex link( U, s, mu );
 	SU3<TLinkIndex> globU( link );
+	
 	// make link local
 	locU.assignWithoutThirdLine(globU);
 	locU.reconstructThirdLine();
@@ -103,9 +94,6 @@ __global__ void __launch_bounds__(8*NSB,128/NSB) orStep( Real* UtUp, Real* UtDw,
 	// do the subgroup iteration
 	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
 
-	// project back
-// 	globU.projectSU3withoutThirdRow();
-	
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
 	//globU=locU; //TODO with or without 3rd line?
@@ -114,11 +102,11 @@ __global__ void __launch_bounds__(8*NSB,128/NSB) orStep( Real* UtUp, Real* UtDw,
 
 __global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t* nnt, double *dGff, double *dA )
 {
-	typedef GpuLandauPatternParity< SiteIndex<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> TLinkIndex;
+	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteIndex<4,TIMESLICE_SPLIT> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	s.nn = nnt;
 	
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
@@ -198,63 +186,14 @@ __global__ void averageGaugeQuality( double* dGff, double* dA )
 	dA[0]   = A/double(Nx*Ny*Nz)/3.;
 }
 
-// void generateGaugeQuality( Real** dU, int* theDevice, int deviceCount, Real**halo, Real** dHalo, double** dGff, double** dA, lat_index_t** dNnt, double &_gff, double &_A )
-// {
-// 	SiteCoord<4,TIMESLICE_SPLIT> s(size);
-// 	
-// 	// host memory (two fields to collect the results)
-// 	static double gff[2][32], A[2][32];
-// 	
-// 	for( int device=0; device<deviceCount; device++ )
-// 	{
-// 		gff[1][device]=0.0; 
-// 		A[1][device]  =0.0;
-// 	}
-// 	for( int t=0; t<Nt; t++ )
-// 	{
-// 		int tDw = (t > 0)?(t-1):(s.size[0]-1);
-// 		// do we have to copy the halo?
-// 		if( theDevice[t] != theDevice[tDw] )
-// 		{
-// 			// copy the halo device -> host -> device
-// 			cudaSetDevice(theDevice[tDw]);
-// 			cudaMemcpy( halo[theDevice[t]], dU[tDw], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-// 			cudaDeviceSynchronize();
-// 			cudaSetDevice(theDevice[t]);
-// 			cudaMemcpy( dHalo[theDevice[t]], halo[theDevice[t]], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-// 			cudaDeviceSynchronize();
-// 			// now call kernel with dU[tDw] -> dHalo[theDevice[t]]
-// 			generateGaugeQualityPerSite<<<Nx*Nx*Nx/32,32>>>( dU[t], dHalo[theDevice[t]], dNnt[theDevice[t]], dGff[theDevice[t]], dA[theDevice[t]] );
-// 		}
-// 		else
-// 		{
-// 			cudaSetDevice(theDevice[t]);
-// 			generateGaugeQualityPerSite<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt[theDevice[t]], dGff[theDevice[t]], dA[theDevice[t]] );
-// 		}
-// 		averageGaugeQuality<<<1,1>>>( dGff[theDevice[t]], dA[theDevice[t]] );
-// 		cudaMemcpy( &gff[0][theDevice[t]], dGff[theDevice[t]], sizeof(double), cudaMemcpyDeviceToHost );
-// 		cudaMemcpy( &A[0][theDevice[t]], dA[theDevice[t]],     sizeof(double), cudaMemcpyDeviceToHost );
-// 		gff[1][theDevice[t]]+=gff[0][theDevice[t]];
-// 		A[1][theDevice[t]]  +=A[0][theDevice[t]];
-// 	}
-// 	cudaDeviceSynchronize();
-// 	
-// 	for( int device=1; device<deviceCount; device++ )
-// 	{
-// 		gff[1][0] += gff[1][device];
-// 		A[1][0]   += A[1][device];
-// 	}
-// 	_gff = gff[1][0]/(double)Nt;
-// 	_A = A[1][0]/(double)Nt;
-// }
 
 __global__ void set_hot( Real* U, int counter)
 {
-	typedef GpuLandauPatternParity< SiteIndex<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> TLinkIndex;
+	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteIndex<4,TIMESLICE_SPLIT> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 	s.setLatticeIndex( site );
 	
@@ -290,7 +229,7 @@ __global__ void set_hot( Real* U, int counter)
 // __global__ void projectSU3( Real* U )
 // {
 // 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-// 	SiteCoord<4,TIMESLICE_SPLIT> s(size);
+// 	SiteCoord<4,FULL_SPLIT> s(size);
 // 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 // 
 // 	s.setLatticeIndex( site );
@@ -311,50 +250,21 @@ __global__ void set_hot( Real* U, int counter)
 // }
 
 
-//---------------- cuda wrapper function etc. ---------------------
+//---------------- kernel wrapper functions etc. ---------------------
 
 void initDevice( const int device )
 {
-	cudaSetDevice(device+1);
+	cudaSetDevice(device);
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, device+1);
-	printf("\nDevice %d: \"%s\"\n", device+1, deviceProp.name);
+	cudaGetDeviceProperties(&deviceProp, device);
+	printf("\nDevice %d: \"%s\"\n", device, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 }
 
-// void _cudaMalloc( void** devPtr, size_t size )
-// {
-// 	 cudaError_t cuerr;
-// 	 cuerr = cudaMalloc( devPtr, size );
-// // 	 cout << cudaGetErrorString( cuerr ) << endl;
-// }
-// 
-// void _cudaHostAlloc( void ** pHost, size_t size, unsigned int flags )
-// {
-// 	 cudaError_t cuerr;
-// 	 cuerr = cudaHostAlloc( pHost, size, flags );
-// // 	 cout << cudaGetErrorString( cuerr ) << endl;
-// }
-// 
-// void _cudaMemcpy( void* dst, const void* src, size_t count, enum _cudaMemcpyKind kind )
-// {
-// 	cudaError_t cuerr;
-// 	cuerr = cudaMemcpy( dst, src, count, (cudaMemcpyKind) kind );
-// // 	cout << cudaGetErrorString( cuerr ) << endl;
-// }
-// 
-// //TODO last argument should be of type cudaStream_t 
-// void _cudaMemcpyAsync( void * dst, const void* src, size_t count, enum _cudaMemcpyKind kind, int stream )
-// {
-// 	cudaError_t cuerr;
-// 	cuerr = cudaMemcpyAsync( dst, src, count, (cudaMemcpyKind) kind, (cudaStream_t) stream );
-// // 	cout << cudaGetErrorString( cuerr ) << endl;
-// }
-
 void _set_hot( Real* U, int counter)
 {
-	int threadsPerBlock = 32*8; // 32 sites are updated within a block (8 threads are needed per site)
-	int numBlocks = Nx*Ny*Nz/2/32; // // half of the lattice sites (a parity) are updated in a kernel call
+	int threadsPerBlock = 32*8;
+	int numBlocks = Nx*Ny*Nz/2/32;
 
 	set_hot<<<numBlocks*2,32>>>( U, counter ); 
 }
@@ -369,12 +279,12 @@ void _averageGaugeQuality( double* dGff, double* dA )
 	averageGaugeQuality<<<1,1>>>( dGff, dA );
 }
 
-void _orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter  )
+void _orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter, cudaStream_t stream  )
 {
-	int threadsPerBlock = 32*8; // 32 sites are updated within a block (8 threads are needed per site)
-	int numBlocks = Nx*Ny*Nz/2/32; // // half of the lattice sites (a parity) are updated in a kernel call
+	int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
+	int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
 
-	orStep<<<numBlocks,threadsPerBlock>>>( UtUp, UtDw, nnt, parity, orParameter );
+	orStep<<<numBlocks,threadsPerBlock,0,stream>>>( UtUp, UtDw, nnt, parity, orParameter );
 }
 
 //--------------------------------------------------------------

@@ -31,7 +31,7 @@ CUOBJ = Chronotimer.o $(PROG).o
 # libs for the linking process
 LIBS = -lboost_program_options -L/usr/local/cuda/lib64 -lcudart 
 # flags for the NVCC compiler
-CUFLAGS = --ptxas-options=-v -arch=sm_20 -use_fast_math
+CUFLAGS = --ptxas-options=-v -arch=sm_20 -use_fast_math -Xptxas -dlcm=cg
 # cuda include path
 INC = -I/usr/local/cuda/include/
 
@@ -49,4 +49,4 @@ Chronotimer.o: ../../util/timer/Chronotimer.cc
 	$(NVCC) -c ../../util/timer/Chronotimer.cc
 
 clean: 
-	rm *.o
+	rm -f *.o $(PROG)
