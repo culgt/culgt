@@ -36,6 +36,7 @@
 //#include <boost/program_options/variables_map.hpp>
 //#include <boost/program_options/options_description.hpp>
 #include "program_options/ProgramOptions.hxx"
+#include "program_options/FileIterator.hxx"
 #include "../lattice/gaugefixing/GlobalConstants.hxx"
 #include "../util/cuda/CudaError.hxx"
 #include "../lattice/gaugefixing/CoulombKernelsSU3.hxx"
@@ -384,27 +385,28 @@ int main(int argc, char* argv[])
 	long totalStepNumber = 0;
 
 
-	for( int i = options.getFStartnumber(); i < options.getFStartnumber()+options.getNconf(); i++ )
+	FileIterator fi( options );
+	for( fi.reset(); fi.hasNext(); fi.next() )
 	{
-		stringstream filename(stringstream::out);
-		filename << options.getFBasename() << setw( options.getFNumberformat() ) << setfill( '0' ) << i << options.getFEnding();
+//	for( int i = options.getFStartnumber(); i < options.getFStartnumber()+options.getNconf(); i++ )
+//	{
+//		stringstream filename(stringstream::out);
+//		filename << options.getFBasename() << setw( options.getFNumberformat() ) << setfill( '0' ) << i << options.getFEnding();
 //		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-		cout << "loading " << filename.str() << " as " << options.getFType() << endl;
-
-		cout << filename.str() << endl;
+		cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl; // TODO why is FileType printed as a number (not as text according to filetype_typedefs.h)
 
 		bool loadOk;
 
 		switch(  options.getFType() )
 		{
 		case VOGT:
-			loadOk = lfVogt.load( s, filename.str(), U );
+			loadOk = lfVogt.load( s, fi.getFilename(), U );
 			break;
 		case PLAIN:
-			loadOk = lfPlain.load( s, filename.str(), U );
+			loadOk = lfPlain.load( s, fi.getFilename(), U );
 			break;
 		case HEADERONLY:
-			loadOk = lfHeaderOnly.load( s, filename.str(), U );
+			loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
 			break;
 		default:
 			cout << "Filetype not set to a known value. Exiting";

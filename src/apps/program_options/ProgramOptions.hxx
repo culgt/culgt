@@ -12,6 +12,8 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
 
+#include "../../lattice/filetypes/filetype_typedefs.h"
+
 #include <fstream>
 #include <string>
 
@@ -22,6 +24,10 @@ class ProgramOptions
 public:
 	ProgramOptions();
 	int init( int argc, char* argv[] );
+
+	int getDeviceNumber() const {
+		return deviceNumber;
+	}
 
 	string getFBasename() const {
 		return fBasename;
@@ -39,8 +45,16 @@ public:
 		return fStartnumber;
 	}
 
+	int getFStepnumber() const {
+		return fStepnumber;
+	}
+
 	FileType getFType() const {
 		return fType;
+	}
+
+	string getFOutputAppendix() const {
+		return fOutputAppendix;
 	}
 
 	int getGaugeCopies() const {
@@ -109,12 +123,16 @@ private:
 	// variables
 	string configFile;
 
+	int deviceNumber;
+
 	FileType fType;
 	string fBasename;
 	string fEnding;
 	int fNumberformat;
 	int fStartnumber;
+	int fStepnumber;
 	int nconf;
+	string fOutputAppendix;
 
 	ReinterpretReal reinterpret;
 
@@ -149,12 +167,16 @@ int ProgramOptions::init( int argc, char* argv[] )
 
 			("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
 
+			("devicenumber,D", boost::program_options::value<int>(&deviceNumber)->default_value(0), "number of the CUDA device")
+
 			("ftype", boost::program_options::value<FileType>(&fType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 			("fbasename", boost::program_options::value<string>(&fBasename), "file basename (part before numbering starts)")
 			("fending", boost::program_options::value<string>(&fEnding)->default_value(".vogt"), "file ending to append to basename (default: .vogt)")
 			("fnumberformat", boost::program_options::value<int>(&fNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 			("fstartnumber", boost::program_options::value<int>(&fStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
+			("fstepnumber", boost::program_options::value<int>(&fStepnumber)->default_value(1), "load every <fstepnumber>-th file")
 			("nconf,m", boost::program_options::value<int>(&nconf)->default_value(1), "how many files to gaugefix")
+			("fappendix", boost::program_options::value<string>(&fOutputAppendix)->default_value("gaugefixed_"), "appendix to be inserted beween (input-)filename and number")
 
 			("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpret)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = read input as float and cast to Real, DOUBLE = ...)")
 
