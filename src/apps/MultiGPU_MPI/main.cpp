@@ -159,13 +159,13 @@ int main(int argc, char* argv[])
 
 
 	//TODO get rid of:
-	int deviceCount;
-	deviceCount = ( deviceCount<numbDevices ? deviceCount : numbDevices );
-	int device;
-	int theDevice[Nt];
-	int minT[deviceCount];
-	int maxT[deviceCount];
-	int midT[deviceCount];
+// 	int deviceCount;
+// 	deviceCount = ( deviceCount<numbDevices ? deviceCount : numbDevices );
+// 	int device;
+// 	int theDevice[Nt];
+// 	int minT[deviceCount];
+// 	int maxT[deviceCount];
+// 	int midT[deviceCount];
 
 	initDevice( rank );
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
@@ -175,14 +175,58 @@ int main(int argc, char* argv[])
 	int tmin = rank*Nt/nprocs;
 	int tmax = (rank+1)*Nt/nprocs;
 	int numbSlices = tmax-tmin;
-	int tm1 = tmin + numbSlices/6;
-	int tm2 = tm1  + numbSlices/6;
-	int tm3 = tm2  + numbSlices/6;
-	int tm4 = tm3  + numbSlices/6;
-	int tm5 = tm4  + numbSlices/6;
+	
+	// 6 intervals for async. mem. copies
+	int tPart_beg[6];
+	int tPart_end[6];
+	
+	// init.
+	for( int l=0; l<6; l++ )
+	{
+		tPart_beg[l] = tmin+1;
+		tPart_end[l] = tmin+1;
+	}
+	
+
+	
+	for( int t=1; t<numbSlices; t++ )
+	{
+		for( int l=0; l<6; l++ )
+		{
+			if( l == (t-1)%6 )
+			{
+				tPart_end[l] += 1;
+			}
+			if( l > (t-1)%6 )
+			{
+				tPart_beg[l] += 1;
+				tPart_end[l] += 1;
+			}
+		}
+	}
+		
+	
+	
+// 	int tm5 = tmax - numbSlices/6;
+// 	int tm4 = tm5  - numbSlices/6;
+// 	int tm3 = tm4  - numbSlices/6;
+// 	int tm2 = tm3  - numbSlices/6;
+// 	int tm1 = tm2  - numbSlices/6;
+	
+// 	int tm1 = tmin + numbSlices/6;
+// 	int tm2 = tm1  + numbSlices/6;
+// 	int tm3 = tm2  + numbSlices/6;
+// 	int tm4 = tm3  + numbSlices/6;
+// 	int tm5 = tm4  + numbSlices/6;
 	
 	printf("Process %d: numbSlices %d\n", rank, numbSlices );
- 	printf("Process %d: tmin = %d, tm1 = %d, tm2 = %d, tm3 = %d, tm4 = %d, tm5 = %d, tmax = %d\n", rank, tmin, tm1, tm2, tm3,tm4,  tm5, tmax);
+	
+	for( int l=0; l<6; l++ )
+	{
+		printf("Process %d: tPart_beg[%d] = %d, tPart_end[%d] = %d\n", rank, l, tPart_beg[l], l, tPart_end[l] );
+	}
+	
+//  	printf("Process %d: tmin = %d, tm1 = %d, tm2 = %d, tm3 = %d, tm4 = %d, tm5 = %d, tmax = %d\n", rank, tmin, tm1, tm2, tm3,tm4,  tm5, tmax);
 	
 // 	MPI_Finalize();
 // 	return 0;
@@ -374,108 +418,119 @@ int main(int argc, char* argv[])
 		{
 			for( int parity=0; parity<2; parity++ )
 			{
-				int p_offset = parity?timesliceArraySize/2:0;
-				
-				// halo exchange forward step 1
-				cudaMemcpyAsync( haloOut[rank]+p_offset, dU[tmax-1]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
-				for( int t=tmin+1; t<tm1; t++ )
+				if( nprocs > 1 )
 				{
-					_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+					int p_offset = parity?timesliceArraySize/2:0;
+					
+					// halo exchange forward step 1
+					cudaMemcpyAsync( haloOut[rank]+p_offset, dU[tmax-1]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
+					for( int t = tPart_beg[2]; t < tPart_end[2]; t++ )
+					{
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+					}
+					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
+					
+					// halo exchange forward step 2
+					MPI_CHECK( MPI_Irecv( haloIn[rank]+p_offset,  timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );	
+					MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
+					for( int t = tPart_beg[0]; t < tPart_end[0]; t++ )
+					{
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+					}
+					MPI_CHECK( MPI_Wait( &request1, &status ) );
+					MPI_CHECK( MPI_Wait( &request2, &status ) );
+					
+					// halo exchange forward step 3
+					cudaMemcpyAsync( dHalo[rank]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
+					for( int t = tPart_beg[3]; t < tPart_end[3]; t++ )
+					{
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+					}
+					
+					// now call kernel wrapper for tmin with dU[t-1] replaced by dHalo[rank]
+					_orStep( dU[tmin], dHalo[rank], dNnt[rank], parity, orParameter, streamCpy );
+					
+					// halo exchange back step 1
+					cudaMemcpyAsync( haloOut[rank]+p_offset, dHalo[rank]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
+					for( int t = tPart_beg[4]; t < tPart_end[4]; t++ )
+					{
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+					}
+					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
+					
+					// halo exchange back step 2
+					MPI_CHECK( MPI_Irecv( haloIn[rank]+p_offset,  timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request2) );	
+					MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request1) );
+					for( int t = tPart_beg[1]; t < tPart_end[1]; t++ )
+					{
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+					}
+					MPI_CHECK( MPI_Wait( &request1, &status ) );
+					MPI_CHECK( MPI_Wait( &request2, &status ) );
+					
+					// halo exchange back step 3
+					cudaMemcpyAsync( dU[tmax-1]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
+					for( int t = tPart_beg[5]; t < tPart_end[5]; t++ )
+					{
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+					}		
+					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
+					
+					MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 				}
-				cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
-				
-				// halo exchange forward step 2
-				MPI_CHECK( MPI_Irecv( haloIn[rank]+p_offset,  timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );	
-				MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
-				for( int t=tm1; t<tm2; t++ )
+				else // nproc == 1
 				{
-					_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
-				}
-				MPI_CHECK( MPI_Wait( &request1, &status ) );
-				MPI_CHECK( MPI_Wait( &request2, &status ) );
-				
-				// halo exchange forward step 3
-				cudaMemcpyAsync( dHalo[rank]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
-				for( int t=tm2; t<tm3; t++ )
-				{
-					_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
-				}
-				
-				// now call kernel wrapper for tmin with dU[t-1] replaced by dHalo[rank]
-				_orStep( dU[tmin], dHalo[rank], dNnt[rank], parity, orParameter, streamCpy );
-				
-				// halo exchange back step 1
-				cudaMemcpyAsync( haloOut[rank]+p_offset, dHalo[rank]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
-				for( int t=tm3; t<tm4; t++ )
-				{
-					_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
-				}
-				cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
-				
-				// halo exchange back step 2
-				MPI_CHECK( MPI_Irecv( haloIn[rank]+p_offset,  timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request2) );	
-				MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request1) );
-				for( int t=tm4; t<tm5; t++ )
-				{
-					_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
-				}
-				MPI_CHECK( MPI_Wait( &request1, &status ) );
-				MPI_CHECK( MPI_Wait( &request2, &status ) );
-				
-				// halo exchange back step 3
-				cudaMemcpyAsync( dU[tmax-1]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
-				for( int t=tm5; t<tmax; t++ )
-				{
-					_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
-				}		
-				cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
-				
-				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
-			}
+					for( int t=tmin; t<tmax; t++ )
+					{
+						int tDw = ( t > 0 )?( t - 1 ):( Nt - 1 );
+						_orStep( dU[t], dU[tDw], dNnt[rank], parity, orParameter, streamStd );
+					}
+				} // end if nproc > 1
+			} // end for parity
 
 
 
 
 			// calculate and print the gauge quality
-			if( j % orCheckPrec == 0 )
-			{
-				gff[1]=0.0; 
-				A[1]  =0.0;
-			
-				//exchange halos
-				cudaMemcpy( haloOut[rank], dU[tmax-1], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-				cudaDeviceSynchronize();
-				MPI_CHECK( MPI_Irecv( haloIn[rank],  timesliceArraySize, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );		
-				MPI_CHECK( MPI_Isend( haloOut[rank], timesliceArraySize, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
-				MPI_CHECK( MPI_Wait( &request1, &status ) );
-				MPI_CHECK( MPI_Wait( &request2, &status ) );
-				cudaMemcpy( dHalo[rank], haloIn[rank], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-				
-				// call kernel wrapper for all t
-				for( int t=tmin; t<tmax; t++ )
-				{
-					if( t == tmin )
-						_generateGaugeQualityPerSite( dU[tmin], dHalo[rank], dNnt[rank], dGff[rank], dA[rank] );
-					else
-						_generateGaugeQualityPerSite( dU[t], dU[t-1], dNnt[rank], dGff[rank], dA[rank] );
-					
-					_averageGaugeQuality( dGff[rank], dA[rank] );
-					cudaMemcpy( &gff[0], dGff[rank], sizeof(double), cudaMemcpyDeviceToHost );
-					cudaMemcpy( &A[0], dA[rank],     sizeof(double), cudaMemcpyDeviceToHost );
-					gff[1]+=gff[0];
-					A[1]  +=A[0];
-				}
-				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
-				
-				MPI_CHECK( MPI_Reduce( &gff[1], &gffRes, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
-				MPI_CHECK( MPI_Reduce( &A[1],   &ARes,   1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
-				
-				gffRes /= (double)Nt;
-				ARes   /= (double)Nt;
-				
-				if( isMaster ) printf( "%d\t\t%1.10f\t\t%e\n", j, gffRes, ARes );
-				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
-			}
+// 			if( j % orCheckPrec == 0 )
+// 			{
+// 				gff[1]=0.0; 
+// 				A[1]  =0.0;
+// 			
+// 				//exchange halos
+// 				cudaMemcpy( haloOut[rank], dU[tmax-1], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+// 				cudaDeviceSynchronize();
+// 				MPI_CHECK( MPI_Irecv( haloIn[rank],  timesliceArraySize, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );		
+// 				MPI_CHECK( MPI_Isend( haloOut[rank], timesliceArraySize, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
+// 				MPI_CHECK( MPI_Wait( &request1, &status ) );
+// 				MPI_CHECK( MPI_Wait( &request2, &status ) );
+// 				cudaMemcpy( dHalo[rank], haloIn[rank], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+// 				
+// 				// call kernel wrapper for all t
+// 				for( int t=tmin; t<tmax; t++ )
+// 				{
+// 					if( t == tmin )
+// 						_generateGaugeQualityPerSite( dU[tmin], dHalo[rank], dNnt[rank], dGff[rank], dA[rank] );
+// 					else
+// 						_generateGaugeQualityPerSite( dU[t], dU[t-1], dNnt[rank], dGff[rank], dA[rank] );
+// 					
+// 					_averageGaugeQuality( dGff[rank], dA[rank] );
+// 					cudaMemcpy( &gff[0], dGff[rank], sizeof(double), cudaMemcpyDeviceToHost );
+// 					cudaMemcpy( &A[0], dA[rank],     sizeof(double), cudaMemcpyDeviceToHost );
+// 					gff[1]+=gff[0];
+// 					A[1]  +=A[0];
+// 				}
+// 				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+// 				
+// 				MPI_CHECK( MPI_Reduce( &gff[1], &gffRes, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
+// 				MPI_CHECK( MPI_Reduce( &A[1],   &ARes,   1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
+// 				
+// 				gffRes /= (double)Nt;
+// 				ARes   /= (double)Nt;
+// 				
+// 				if( isMaster ) printf( "%d\t\t%1.10f\t\t%e\n", j, gffRes, ARes );
+// 				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+// 			}
 
 			totalStepNumber++;
 		}
