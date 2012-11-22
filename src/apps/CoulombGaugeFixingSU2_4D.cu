@@ -22,7 +22,6 @@
 #include "../lattice/Matrix.hxx"
 #include "../lattice/SU2.hxx"
 #include "../lattice/LinkFile.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
 #include "../lattice/filetypes/FileHeaderOnly.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
@@ -49,10 +48,10 @@ typedef GpuCoulombPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 
-__device__ inline Real cuFabs( Real a )
-{
-	return (a>0)?(a):(-a);
-}
+//__device__ inline Real cuFabs( Real a )
+//{
+//	return (a>0)?(a):(-a);
+//}
 
 void initNeighbourTable( lat_index_t* nnt )
 {
@@ -947,6 +946,8 @@ int main(int argc, char* argv[])
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties(&deviceProp, 0);
 
+	cudaDeviceReset();
+
 	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
@@ -970,8 +971,8 @@ int main(int argc, char* argv[])
 	Real* U = (Real*)malloc( arraySize*sizeof(Real) );
 
 	// device memory for configuration
-	Real* dU; // to store the whole configuration (and the best copy)
-	cudaMalloc( &dU, arraySize*sizeof(Real) );
+//	Real* dU; // to store the whole configuration (and the best copy)
+//	cudaMalloc( &dU, arraySize*sizeof(Real) );
 
 	Real* dUup;
 	cudaMalloc( &dUup, timesliceArraySize*sizeof(Real) ); // working copy of current timeslice t
@@ -1008,7 +1009,7 @@ int main(int argc, char* argv[])
 //	cudaError_t error = cudaGetSymbolAddress( (void**)&devicePointerToSize, "dSize" );
 
 //	GaugeFixingStats<Ndim-1,Nc,COULOMB,AVERAGE> gaugeStats( dUup, &HOST_CONSTANTS::SIZE[1] );
-	GaugeFixingStats<Ndim-1,Nc,CoulombKernelsSU2,AVERAGE> gaugeStats( dUup, &HOST_CONSTANTS::SIZE[1] );
+	GaugeFixingStats<Ndim,Nc,CoulombKernelsSU2,AVERAGE> gaugeStats( dUup, HOST_CONSTANTS::SIZE_TIMESLICE );
 
 //	cout << "get symbol adress error:" << cudaGetErrorString( error ) << endl;
 
@@ -1053,7 +1054,7 @@ int main(int argc, char* argv[])
 //		Real polBefore = calculatePolyakovLoopAverage( U );
 
 		// copying configuration ...
-		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
+//		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
 		// calculate and print the gauge quality
 		printf( "i:\t\tgff:\t\tdA:\n");
@@ -1091,8 +1092,10 @@ int main(int argc, char* argv[])
 
 			int tDw = (t==0)?s.size[0]-1:t-1;
 
-			cudaMemcpy( dUup, &dU[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
-			cudaMemcpy( dUdw, &dU[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
+			cudaMemcpy( dUup, &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+			cudaMemcpy( dUdw, &U[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+//			cudaMemcpy( dUup, &dU[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
+//			cudaMemcpy( dUdw, &dU[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
 
 			for( int copy = 0; copy < options.getGaugeCopies(); copy++ )
 			{
@@ -1129,11 +1132,11 @@ int main(int argc, char* argv[])
 				// OVERRELAXATION
 				for( int i = 0; i < options.getOrMaxIter(); i++ )
 				{
-//					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 0, options.getOrParameter() );
-//					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 1, options.getOrParameter() );
+					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 0, options.getOrParameter() );
+					CoulombKernelsSU2::orStep(numBlocks,threadsPerBlock, dUup, dUdw, dNnt, 1, options.getOrParameter() );
 
-					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 0, options.getOrParameter() );
-					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 1, options.getOrParameter() );
+//					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 0, options.getOrParameter() );
+//					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 1, options.getOrParameter() );
 
 					if( i % options.getOrCheckPrecision() == 0 )
 					{
@@ -1151,8 +1154,12 @@ int main(int argc, char* argv[])
 				{
 					cout << "FOUND BETTER COPY" << endl;
 					bestGff = gaugeStats.getCurrentGff();
-					cudaMemcpy( &dU[t*timesliceArraySize], dUup, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
-					cudaMemcpy( &dU[tDw*timesliceArraySize], dUdw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
+//					cudaMemcpy( &dU[t*timesliceArraySize], dUup, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
+//					cudaMemcpy( &dU[tDw*timesliceArraySize], dUdw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToDevice );
+					CoulombKernelsSU2::restoreSecondLine( s.getLatticeSizeTimeslice()/32,32, dUup, dNnt );
+					CoulombKernelsSU2::restoreSecondLine( s.getLatticeSizeTimeslice()/32,32, dUdw, dNnt );
+					cudaMemcpy( &U[t*timesliceArraySize], dUup, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+					cudaMemcpy( &U[tDw*timesliceArraySize], dUdw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 				}
 				else
 				{
@@ -1160,14 +1167,15 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			// RESTORE SECOND LINE BEFORE STORING
-			CoulombKernelsSU2::restoreSecondLine( s.getLatticeSizeTimeslice()/32,32, &dU[t*timesliceArraySize], dNnt );
+//			 RESTORE SECOND LINE BEFORE STORING
+//			TODO restore t-1
+//			CoulombKernelsSU2::restoreSecondLine( s.getLatticeSizeTimeslice()/32,32, &dU[t*timesliceArraySize], dNnt );
 		}
 		cudaThreadSynchronize();
 		kernelTimer.stop();
 		cout << "kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
 		totalKernelTime += kernelTimer.getTime();
-		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+//		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 
 //		cout << "Polyakov loop: " << polBefore << " - " << calculatePolyakovLoopAverage( U ) << endl;
 
