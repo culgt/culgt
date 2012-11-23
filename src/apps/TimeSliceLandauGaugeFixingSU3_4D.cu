@@ -497,12 +497,21 @@ int main(int argc, char* argv[])
 		
 		for( int j = 0; j < orMaxIter; j++ )
 		{
+
+			// restore pattern of standard Landau ordering for comparison of gff values in each step.
+			bool par = false;
 			for( int t=0; t<Nt; t++ )
 			{
-// 				cout << t << endl;
 				int tDw = (t > 0)?(t-1):(s.size[0]-1);
-				orStep<<<numBlocks,threadsPerBlock>>>(dU[t], dU[tDw], dNnt, 0, orParameter );
-				orStep<<<numBlocks,threadsPerBlock>>>(dU[t], dU[tDw], dNnt, 1, orParameter );
+				orStep<<<numBlocks,threadsPerBlock>>>(dU[t], dU[tDw], dNnt, par, orParameter );
+				par = !par;
+			}
+			par = true;
+			for( int t=0; t<Nt; t++ )
+			{
+				int tDw = (t > 0)?(t-1):(s.size[0]-1);
+				orStep<<<numBlocks,threadsPerBlock>>>(dU[t], dU[tDw], dNnt, par, orParameter );
+				par = !par;
 			}
 
 			// calculate and print the gauge quality
@@ -512,6 +521,7 @@ int main(int argc, char* argv[])
 				A[1]  =0.0;
 				for( int t=0; t<Nt; t++ )
 				{
+					projectSU3<<<numBlocks*2,32>>>( dU[t] );
 // 					cout << t << ' ' << flush;
 					int tDw = (t > 0)?(t-1):(s.size[0]-1);
 					generateGaugeQuality<<<Nx*Nx*Nx/32,32>>>( dU[t], dU[tDw], dNnt, dGff, dA );
