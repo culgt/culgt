@@ -12,7 +12,7 @@
 #include "malloc.h"
 #endif
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
+// #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
@@ -23,7 +23,7 @@
 #include "../lattice/SU3.hxx"
 #include "../lattice/Matrix.hxx"
 #include "../lattice/LinkFile.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
+// #include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../util/timer/Chronotimer.h"
 #include "../lattice/filetypes/FileHeaderOnly.hxx"
 #include "../lattice/filetypes/FilePlain.hxx"
@@ -76,15 +76,15 @@ __constant__ lat_coord_t dSize[Ndim] = {Nt,Nx,Ny,Nz};
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
-typedef GpuCoulombPattern<SiteCoord<Ndim,true>,Ndim,Nc> Gpu;
-typedef StandardPattern<SiteCoord<Ndim,false>,Ndim,Nc> Standard;
+typedef GpuCoulombPattern<SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
+typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
 
-typedef Link<Gpu,SiteCoord<Ndim,true>,Ndim,Nc> TLink;
+typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 void initNeighbourTable( lat_index_t* nnt )
 {
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteIndex<4,true> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	s.calculateNeighbourTable( nnt );
 }
 
@@ -98,7 +98,7 @@ void initNeighbourTable( lat_index_t* nnt )
 __global__ void projectSU3( Real* U )
 {
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteCoord<4,true> s(size);
+	SiteCoord<4,FULL_SPLIT> s(size);
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 
 	s.setLatticeIndex( site );
@@ -123,13 +123,13 @@ __global__ void projectSU3( Real* U )
 }
 
 
-__global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter, int counter=0  )
+__global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter   )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
+	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteIndex<4,true> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	s.nn = nnt;
 
 	const bool updown = threadIdx.x / 128;
@@ -169,7 +169,7 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 
 	// define the update algorithm
 	OrUpdate overrelax( orParameter );
-	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown, counter );
+	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, OrUpdate, LANDAU> subgroupStep( &locU, overrelax, id, mu, updown );
 
 	// do the subgroup iteration
 	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
@@ -185,11 +185,11 @@ __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_ind
 
 __global__ void generateGaugeQuality( Real* UtUp, Real* UtDw, lat_index_t* nnt, double *dGff, double *dA )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
+	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteIndex<4,true> s(size);
+	SiteIndex<4,FULL_SPLIT> s(size);
 	s.nn = nnt;
 	
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
@@ -279,7 +279,7 @@ __global__ void averageGaugeQuality( double* dGff, double* dA )
 // 	Matrix<Complex<Real>,3> temp2Mat;
 // 	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
 // 
-// 	SiteCoord<Ndim,true> s( size );
+// 	SiteCoord<Ndim,FULL_SPLIT> s( size );
 // 
 // 	Complex<Real> result(0,0);
 // 
@@ -381,12 +381,12 @@ int main(int argc, char* argv[])
 	Chronotimer allTimer;
 	allTimer.reset();
 
-	SiteCoord<4,true> s(size);
+	SiteCoord<4,FULL_SPLIT> s(size);
 
 	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly;
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt;
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain;
 
 
 	// allocate Memory

@@ -14,7 +14,7 @@
 #include "malloc.h"
 #endif
 #include "../../lattice/access_pattern/StandardPattern.hxx"
-#include "../../lattice/access_pattern/GpuCoulombPattern.hxx"
+#include "../../lattice/access_pattern/GpuCoulombPatternParity.hxx"
 #include "../../lattice/access_pattern/GpuLandauPatternParity.hxx"
 #include "../../lattice/SiteCoord.hxx"
 #include "../../lattice/SiteIndex.hxx"
@@ -31,6 +31,9 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
 #include "../../lattice/gaugefixing/GlobalConstants.hxx"
+// #include "../../lattice/gaugefixing/LandauKernelsSU3.hxx"
+#include "../program_options/ProgramOptions.hxx"
+#include "../program_options/FileIterator.hxx"
 #include "MultiGPU_MPI_LandauGaugeFixingSU3_4D.h"
 
 
@@ -46,34 +49,6 @@ const lat_dim_t Ndim = 4;
 const short Nc = 3;
 
 
-// boost program options setup
-boost::program_options::variables_map options_vm;
-boost::program_options::options_description options_desc("Allowed options");
-
-// parameters from command line or config file
-int nconf;
-int numbDevices;
-long seed; // TODO check datatype
-int orMaxIter;
-int orCheckPrec;
-float orParameter;
-float orPrecision;
-int saSteps;
-float saMin;
-float saMax;
-int gaugeCopies;
-string fileEnding;
-string postFixLabel;
-string fileBasename;
-int fileStartnumber;
-int fileStepsize;
-int fileNumberformat;
-string configFile;
-bool noRandomTrafo;
-FileType fileType;
-ReinterpretReal reinterpretReal;
-
-
 // lattice setup
 const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
 const lat_coord_t sizeTimeslice[Ndim] = {1,Nx,Ny,Nz};
@@ -81,7 +56,7 @@ const lat_coord_t sizeTimeslice[Ndim] = {1,Nx,Ny,Nz};
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
-typedef GpuCoulombPattern<SiteCoord<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> Gpu;
+typedef GpuCoulombPatternParity<SiteCoord<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> Gpu;
 typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
 
 void initNeighbourTable( lat_index_t* nnt )
@@ -95,6 +70,11 @@ void initNeighbourTable( lat_index_t* nnt )
 
 int main(int argc, char* argv[])
 {
+	// read configuration from file or command line
+	ProgramOptions options;
+	int returncode = options.init( argc, argv );
+	if( returncode != 0 ) return returncode;
+	
 	// initialize MPI communication
 	int nprocs, rank, namelen;
   char processor_name[MPI_MAX_PROCESSOR_NAME];
@@ -113,59 +93,15 @@ int main(int argc, char* argv[])
 	int rRank = ( rank + 1 ) % nprocs;
 	bool isMaster = ( rank == 0 ? true : false );
 	
-
-	// read parameters (command line or given config file)
-	options_desc.add_options()
-		("help", "produce help message")
-		("numbdevices", boost::program_options::value<int>(&numbDevices)->default_value(1), "how many CUDA devices to use")
-		("nconf,m", boost::program_options::value<int>(&nconf)->default_value(1), "how many files to gaugefix")
-		("ormaxiter", boost::program_options::value<int>(&orMaxIter)->default_value(1000), "Max. number of OR iterations")
-		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
-		("sasteps", boost::program_options::value<int>(&saSteps)->default_value(1000), "number of SA steps")
-		("samin", boost::program_options::value<float>(&saMin)->default_value(.01), "min. SA temperature")
-		("samax", boost::program_options::value<float>(&saMax)->default_value(.4), "max. SA temperature")
-		("orparameter", boost::program_options::value<float>(&orParameter)->default_value(1.7), "OR parameter")
-		("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
-		("orcheckprecision", boost::program_options::value<int>(&orCheckPrec)->default_value(100), "how often to check the gauge precision")
-		("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
-		("ending", boost::program_options::value<string>(&fileEnding)->default_value(".vogt"), "file ending to append to basename")
-		("postfixlabel", boost::program_options::value<string>(&postFixLabel)->default_value("_Landau"), "label to append to basename after fixing the gauge and before storing it")
-		("basename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
-		("startnumber", boost::program_options::value<int>(&fileStartnumber)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
-		("stepsize", boost::program_options::value<int>(&fileStepsize)->default_value(1), "file numbering startnumber, startnumber+stepsize,...")
-		("numberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(1), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
-		("filetype", boost::program_options::value<FileType>(&fileType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
-		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
-		("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpretReal)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = convert input as float and cast to Real, DOUBLE = ...)")
-		("norandomtrafo", boost::program_options::value<bool>(&noRandomTrafo)->default_value(false), "no random gauge trafo" )
-		;
-
-	boost::program_options::positional_options_description options_p;
-	options_p.add("config-file", -1);
-
-	boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
-			options(options_desc).positional(options_p).run(), options_vm);
-	boost::program_options::notify(options_vm);
-
-	ifstream cfg( configFile.c_str() );
-	boost::program_options::store(boost::program_options::parse_config_file( cfg, options_desc), options_vm);
-	boost::program_options::notify(options_vm);
-
-	if (options_vm.count("help")) {
-		cout << "Usage: " << argv[0] << " [options] [config-file]" << endl;
-		cout << options_desc << "\n";
-		return 1;
-	}
-
-
-	//TODO get rid of:
-// 	int deviceCount;
-// 	deviceCount = ( deviceCount<numbDevices ? deviceCount : numbDevices );
-// 	int device;
-// 	int theDevice[Nt];
-// 	int minT[deviceCount];
-// 	int maxT[deviceCount];
-// 	int midT[deviceCount];
+	// array to distribute the timeslices to the devices
+	int theProcess[Nt];
+	for( int k=0; k<nprocs; k++ )
+		for( int t = k*Nt/nprocs; t < (k+1)*Nt/nprocs; t++ )
+			theProcess[t] = k;
+		
+// 	for( int t=0; t<Nt; t++ )
+// 		if( isMaster) cout << t << ' ' << theProcess[t] << endl;
+		
 
 	initDevice( rank );
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
@@ -207,18 +143,6 @@ int main(int argc, char* argv[])
 		
 	
 	
-// 	int tm5 = tmax - numbSlices/6;
-// 	int tm4 = tm5  - numbSlices/6;
-// 	int tm3 = tm4  - numbSlices/6;
-// 	int tm2 = tm3  - numbSlices/6;
-// 	int tm1 = tm2  - numbSlices/6;
-	
-// 	int tm1 = tmin + numbSlices/6;
-// 	int tm2 = tm1  + numbSlices/6;
-// 	int tm3 = tm2  + numbSlices/6;
-// 	int tm4 = tm3  + numbSlices/6;
-// 	int tm5 = tm4  + numbSlices/6;
-	
 	printf("Process %d: numbSlices %d\n", rank, numbSlices );
 	
 	for( int l=0; l<6; l++ )
@@ -250,17 +174,20 @@ int main(int argc, char* argv[])
 	Chronotimer allTimer;
 	if( isMaster ) allTimer.reset();
 
-	SiteCoord<4,TIMESLICE_SPLIT> s(size);
+	SiteCoord<4,TIMESLICE_SPLIT> s(HOST_CONSTANTS::SIZE);
 	
 	// TODO maybe we should choose the filetype on compile time
-// 	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,true> > lfHeaderOnly;
-// 	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,true> > lfVogt;
-// 	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,true> > lfPlain;
-
-
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,TIMESLICE_SPLIT> > lfHeaderOnly;
+	lfHeaderOnly.reinterpret = options.getReinterpret();
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,TIMESLICE_SPLIT> > lfVogt;
+	lfVogt.reinterpret = options.getReinterpret();
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,TIMESLICE_SPLIT> > lfPlain;
+	lfPlain.reinterpret = options.getReinterpret();
+	
 	// allocate Memory
 	// host memory for configuration
-// 	Real* U = (Real*)malloc( arraySize*sizeof(Real) );
+	Real* U;
+	if( isMaster ) U = (Real*)malloc( arraySize*sizeof(Real) );
 
 	// device memory for all timeslices
 	Real* dU[Nt];
@@ -269,7 +196,7 @@ int main(int argc, char* argv[])
 		cudaMalloc( &dU[t], timesliceArraySize*sizeof(Real) );
 	}
 	
-	// halo exchange size (only mu=0 and row 1 and 2 of SU(3))
+	// halo exchange size
 	size_t haloSize = timesliceArraySize*sizeof(Real);
 		
 	// page-locked host memory for halo timeslices (two per thread)
@@ -309,57 +236,72 @@ int main(int argc, char* argv[])
 	float totalKernelTime = 0;
 	long totalStepNumber = 0;
 
-	for( int i = fileStartnumber; i < fileStartnumber+nconf; i++ )
+	FileIterator fi( options );
+	for( fi.reset(); fi.hasNext(); fi.next() )
 	{
-// 		stringstream filename(stringstream::out);
-// 		filename << fileBasename << setw( fileNumberformat ) << setfill( '0' ) << i << fileEnding;
-// //		filename << "/home/vogt/configs/STUDIENARBEIT/N32/config_n32t32beta570_sp" << setw( 4 ) << setfill( '0' ) << i << ".vogt";
-// 		cout << "loading " << filename.str() << " as " << fileType << endl;
-// 		cout << filename.str() << endl;
-// 		bool loadOk;
-// 
-// 		switch( fileType )
-// 		{
-// 		case VOGT:
-// 			loadOk = lfVogt.load( s, filename.str(), U );
-// 			break;
-// 		case PLAIN:
-// 			loadOk = lfPlain.load( s, filename.str(), U );
-// 			break;
-// 		case HEADERONLY:
-// 			loadOk = lfHeaderOnly.load( s, filename.str(), U );
-// 			break;
-// 		default:
-// 			cout << "Filetype not set to a known value. Exiting";
-// 			exit(1);
-// 		}
-// 
-// 		if( !loadOk )
-// 		{
-// 			cout << "Error while loading. Trying next file." << endl;
-// 			break;
-// 		}
-// 		else
-// 		{
-// 			cout << "File loaded." << endl;
-// 		}
-// 		// copying all timeslices to devices
-// 		for( int t=0; t<Nt; t++ )
-// 		{
-// 			cudaSetDevice(rank);
-// 			cudaMemcpy( dU[t], &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-// 		}		
-		
-		
-		// don't load file, fill with random numbers - then projectSU3
-		if( isMaster ) cout << "\nWe fill dU with random SU(3) matrices.\n" << endl;
-		int unsigned counter = 0;//time(NULL);
-		
-		for( int t=tmin; t<tmax; t++ )
+		// load file
+		if( isMaster )
 		{
- 			_set_hot( dU[t], counter ); 
-			counter++;
+			cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl;
+			bool loadOk;
+			switch( options.getFType() )
+			{
+			case VOGT:
+				lfVogt.reinterpret = options.getReinterpret();
+				loadOk = lfVogt.load( s, fi.getFilename(), U );
+				break;
+			case PLAIN:
+				lfPlain.reinterpret = options.getReinterpret();
+				loadOk = lfPlain.load( s, fi.getFilename(), U );
+				break;
+			case HEADERONLY:
+				lfHeaderOnly.reinterpret = options.getReinterpret();
+				loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
+				break;
+			default:
+				cout << "Filetype not set to a known value. Exiting";
+				exit(1);
+			}
+
+			if( !loadOk )
+			{
+				cout << "Error while loading. Trying next file." << endl;
+				break;
+			}
+			else
+			{
+				cout << "File loaded." << endl;
+			}
 		}
+		
+		// send (parts of) config. to all processes and transfer to devices
+		for( int t=0; t<Nt; t++ )
+		{
+			if( isMaster && theProcess[t] == 0 )
+			{
+				cudaMemcpy( dU[t], &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+			}
+			else if( theProcess[t] == rank )
+			{
+				MPI_CHECK( MPI_Recv( haloIn[rank],  timesliceArraySize, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &status ) );
+				cudaMemcpy( dU[t], haloIn[rank], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+			}
+			else if( isMaster )
+			{
+				MPI_CHECK( MPI_Send( &U[t*timesliceArraySize], timesliceArraySize, MPI_FLOAT, theProcess[t], 0, MPI_COMM_WORLD ) );
+			}
+			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+		}
+		
+// 		// don't load file, fill with random numbers - then projectSU3
+// 		if( isMaster ) cout << "\nWe fill dU with random SU(3) matrices.\n" << endl;
+// 		int unsigned counter = 0;//time(NULL);
+// 		
+// 		for( int t=tmin; t<tmax; t++ )
+// 		{
+//  			_set_hot( dU[t], counter ); 
+// 			counter++;
+// 		}
 		MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 		
 		
@@ -414,7 +356,7 @@ int main(int argc, char* argv[])
 		if( isMaster ) kernelTimer.start();
 		
 		// iterate the algorithm
-		for( int j = 0; j < orMaxIter; j++ )
+		for( int i = 0; i < options.getOrMaxIter(); i++ )
 		{
 			for( int parity=0; parity<2; parity++ )
 			{
@@ -426,7 +368,7 @@ int main(int argc, char* argv[])
 					cudaMemcpyAsync( haloOut[rank]+p_offset, dU[tmax-1]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
 					for( int t = tPart_beg[2]; t < tPart_end[2]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
 					}
 					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 					
@@ -435,7 +377,7 @@ int main(int argc, char* argv[])
 					MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
 					for( int t = tPart_beg[0]; t < tPart_end[0]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
 					}
 					MPI_CHECK( MPI_Wait( &request1, &status ) );
 					MPI_CHECK( MPI_Wait( &request2, &status ) );
@@ -444,17 +386,17 @@ int main(int argc, char* argv[])
 					cudaMemcpyAsync( dHalo[rank]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
 					for( int t = tPart_beg[3]; t < tPart_end[3]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
 					}
 					
 					// now call kernel wrapper for tmin with dU[t-1] replaced by dHalo[rank]
-					_orStep( dU[tmin], dHalo[rank], dNnt[rank], parity, orParameter, streamCpy );
+					_orStep( dU[tmin], dHalo[rank], dNnt[rank], parity, options.getOrParameter(), streamCpy );
 					
 					// halo exchange back step 1
 					cudaMemcpyAsync( haloOut[rank]+p_offset, dHalo[rank]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
 					for( int t = tPart_beg[4]; t < tPart_end[4]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
 					}
 					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 					
@@ -463,7 +405,7 @@ int main(int argc, char* argv[])
 					MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request1) );
 					for( int t = tPart_beg[1]; t < tPart_end[1]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
 					}
 					MPI_CHECK( MPI_Wait( &request1, &status ) );
 					MPI_CHECK( MPI_Wait( &request2, &status ) );
@@ -472,7 +414,7 @@ int main(int argc, char* argv[])
 					cudaMemcpyAsync( dU[tmax-1]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
 					for( int t = tPart_beg[5]; t < tPart_end[5]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, orParameter, streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
 					}		
 					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 					
@@ -483,7 +425,7 @@ int main(int argc, char* argv[])
 					for( int t=tmin; t<tmax; t++ )
 					{
 						int tDw = ( t > 0 )?( t - 1 ):( Nt - 1 );
-						_orStep( dU[t], dU[tDw], dNnt[rank], parity, orParameter, streamStd );
+						_orStep( dU[t], dU[tDw], dNnt[rank], parity, options.getOrParameter(), streamStd );
 					}
 				} // end if nproc > 1
 			} // end for parity
@@ -492,45 +434,45 @@ int main(int argc, char* argv[])
 
 
 			// calculate and print the gauge quality
-// 			if( j % orCheckPrec == 0 )
-// 			{
-// 				gff[1]=0.0; 
-// 				A[1]  =0.0;
-// 			
-// 				//exchange halos
-// 				cudaMemcpy( haloOut[rank], dU[tmax-1], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-// 				cudaDeviceSynchronize();
-// 				MPI_CHECK( MPI_Irecv( haloIn[rank],  timesliceArraySize, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );		
-// 				MPI_CHECK( MPI_Isend( haloOut[rank], timesliceArraySize, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
-// 				MPI_CHECK( MPI_Wait( &request1, &status ) );
-// 				MPI_CHECK( MPI_Wait( &request2, &status ) );
-// 				cudaMemcpy( dHalo[rank], haloIn[rank], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-// 				
-// 				// call kernel wrapper for all t
-// 				for( int t=tmin; t<tmax; t++ )
-// 				{
-// 					if( t == tmin )
-// 						_generateGaugeQualityPerSite( dU[tmin], dHalo[rank], dNnt[rank], dGff[rank], dA[rank] );
-// 					else
-// 						_generateGaugeQualityPerSite( dU[t], dU[t-1], dNnt[rank], dGff[rank], dA[rank] );
-// 					
-// 					_averageGaugeQuality( dGff[rank], dA[rank] );
-// 					cudaMemcpy( &gff[0], dGff[rank], sizeof(double), cudaMemcpyDeviceToHost );
-// 					cudaMemcpy( &A[0], dA[rank],     sizeof(double), cudaMemcpyDeviceToHost );
-// 					gff[1]+=gff[0];
-// 					A[1]  +=A[0];
-// 				}
-// 				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
-// 				
-// 				MPI_CHECK( MPI_Reduce( &gff[1], &gffRes, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
-// 				MPI_CHECK( MPI_Reduce( &A[1],   &ARes,   1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
-// 				
-// 				gffRes /= (double)Nt;
-// 				ARes   /= (double)Nt;
-// 				
-// 				if( isMaster ) printf( "%d\t\t%1.10f\t\t%e\n", j, gffRes, ARes );
-// 				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
-// 			}
+			if( i % options.getOrCheckPrecision() == 0 )
+			{
+				gff[1]=0.0; 
+				A[1]  =0.0;
+			
+				//exchange halos
+				cudaMemcpy( haloOut[rank], dU[tmax-1], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+				cudaDeviceSynchronize();
+				MPI_CHECK( MPI_Irecv( haloIn[rank],  timesliceArraySize, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );		
+				MPI_CHECK( MPI_Isend( haloOut[rank], timesliceArraySize, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
+				MPI_CHECK( MPI_Wait( &request1, &status ) );
+				MPI_CHECK( MPI_Wait( &request2, &status ) );
+				cudaMemcpy( dHalo[rank], haloIn[rank], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+				
+				// call kernel wrapper for all t
+				for( int t=tmin; t<tmax; t++ )
+				{
+					if( t == tmin )
+						_generateGaugeQualityPerSite( dU[tmin], dHalo[rank], dNnt[rank], dGff[rank], dA[rank] );
+					else
+						_generateGaugeQualityPerSite( dU[t], dU[t-1], dNnt[rank], dGff[rank], dA[rank] );
+					
+					_averageGaugeQuality( dGff[rank], dA[rank] );
+					cudaMemcpy( &gff[0], dGff[rank], sizeof(double), cudaMemcpyDeviceToHost );
+					cudaMemcpy( &A[0], dA[rank],     sizeof(double), cudaMemcpyDeviceToHost );
+					gff[1]+=gff[0];
+					A[1]  +=A[0];
+				}
+				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+				
+				MPI_CHECK( MPI_Reduce( &gff[1], &gffRes, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
+				MPI_CHECK( MPI_Reduce( &A[1],   &ARes,   1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
+				
+				gffRes /= (double)Nt;
+				ARes   /= (double)Nt;
+				
+				if( isMaster ) printf( "%d\t\t%1.10f\t\t%e\n", i, gffRes, ARes );
+				MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+			}
 
 			totalStepNumber++;
 		}
@@ -543,7 +485,27 @@ int main(int argc, char* argv[])
 		// copy back all timeslices
 // 		for( int t=0; t<Nt; t++ )
 // 			cudaMemcpy( &U[t*timesliceArraySize], dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-
+// 		// copy back
+// 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+// 		
+// 		//saving file
+// 		cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
+// 
+// 		switch( options.getFType() )
+// 		{
+// 		case VOGT:
+// 			loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
+// 			break;
+// 		case PLAIN:
+// 			loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
+// 			break;
+// 		case HEADERONLY:
+// 			loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
+// 			break;
+// 		default:
+// 			cout << "Filetype not set to a known value. Exiting";
+// 			exit(1);
+// 		}
 	}
 
 	if( isMaster ) allTimer.stop();
