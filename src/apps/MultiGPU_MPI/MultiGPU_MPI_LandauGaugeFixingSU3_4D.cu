@@ -251,10 +251,10 @@ __global__ void set_hot( Real* U, int counter)
 
 void initDevice( const int device )
 {
-	cudaSetDevice(device);
+	cudaSetDevice(device+1);
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, device);
-	printf("\nDevice %d: \"%s\"\n", device, deviceProp.name);
+	cudaGetDeviceProperties(&deviceProp, device+1);
+	printf("\nDevice %d: \"%s\"\n", device+1, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 }
 

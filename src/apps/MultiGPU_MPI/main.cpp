@@ -240,10 +240,10 @@ int main(int argc, char* argv[])
 	for( fi.reset(); fi.hasNext(); fi.next() )
 	{
 		// load file
+		bool loadOk;
 		if( isMaster )
 		{
 			cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl;
-			bool loadOk;
 			switch( options.getFType() )
 			{
 			case VOGT:
@@ -358,17 +358,17 @@ int main(int argc, char* argv[])
 		// iterate the algorithm
 		for( int i = 0; i < options.getOrMaxIter(); i++ )
 		{
-			for( int parity=0; parity<2; parity++ )
+			for( int evenodd=0; evenodd<2; evenodd++ )
 			{
 				if( nprocs > 1 )
 				{
-					int p_offset = parity?timesliceArraySize/2:0;
+					int p_offset = evenodd?timesliceArraySize/2:0;
 					
 					// halo exchange forward step 1
 					cudaMemcpyAsync( haloOut[rank]+p_offset, dU[tmax-1]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
 					for( int t = tPart_beg[2]; t < tPart_end[2]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2), options.getOrParameter(), streamStd );
 					}
 					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 					
@@ -377,7 +377,7 @@ int main(int argc, char* argv[])
 					MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
 					for( int t = tPart_beg[0]; t < tPart_end[0]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2), options.getOrParameter(), streamStd );
 					}
 					MPI_CHECK( MPI_Wait( &request1, &status ) );
 					MPI_CHECK( MPI_Wait( &request2, &status ) );
@@ -386,17 +386,17 @@ int main(int argc, char* argv[])
 					cudaMemcpyAsync( dHalo[rank]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
 					for( int t = tPart_beg[3]; t < tPart_end[3]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2), options.getOrParameter(), streamStd );
 					}
 					
 					// now call kernel wrapper for tmin with dU[t-1] replaced by dHalo[rank]
-					_orStep( dU[tmin], dHalo[rank], dNnt[rank], parity, options.getOrParameter(), streamCpy );
+					_orStep( dU[tmin], dHalo[rank], dNnt[rank], evenodd ^ (tmin%2), options.getOrParameter(), streamCpy );
 					
 					// halo exchange back step 1
 					cudaMemcpyAsync( haloOut[rank]+p_offset, dHalo[rank]+p_offset, haloSize/12, cudaMemcpyDeviceToHost, streamCpy );
 					for( int t = tPart_beg[4]; t < tPart_end[4]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2), options.getOrParameter(), streamStd );
 					}
 					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 					
@@ -405,7 +405,7 @@ int main(int argc, char* argv[])
 					MPI_CHECK( MPI_Isend( haloOut[rank]+p_offset, timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request1) );
 					for( int t = tPart_beg[1]; t < tPart_end[1]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2), options.getOrParameter(), streamStd );
 					}
 					MPI_CHECK( MPI_Wait( &request1, &status ) );
 					MPI_CHECK( MPI_Wait( &request2, &status ) );
@@ -414,7 +414,7 @@ int main(int argc, char* argv[])
 					cudaMemcpyAsync( dU[tmax-1]+p_offset, haloIn[rank]+p_offset, haloSize/12, cudaMemcpyHostToDevice, streamCpy );
 					for( int t = tPart_beg[5]; t < tPart_end[5]; t++ )
 					{
-						_orStep( dU[t], dU[t-1], dNnt[rank], parity, options.getOrParameter(), streamStd );
+						_orStep( dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2), options.getOrParameter(), streamStd );
 					}		
 					cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 					
@@ -425,10 +425,10 @@ int main(int argc, char* argv[])
 					for( int t=tmin; t<tmax; t++ )
 					{
 						int tDw = ( t > 0 )?( t - 1 ):( Nt - 1 );
-						_orStep( dU[t], dU[tDw], dNnt[rank], parity, options.getOrParameter(), streamStd );
+						_orStep( dU[t], dU[tDw], dNnt[rank], evenodd ^ (t%2), options.getOrParameter(), streamStd );
 					}
 				} // end if nproc > 1
-			} // end for parity
+			} // end for evenodd
 
 
 
@@ -482,31 +482,47 @@ int main(int argc, char* argv[])
 		totalKernelTime += kernelTimer.getTime();
 		
 
-		// copy back all timeslices
-// 		for( int t=0; t<Nt; t++ )
-// 			cudaMemcpy( &U[t*timesliceArraySize], dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-// 		// copy back
-// 		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-// 		
-// 		//saving file
-// 		cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
-// 
-// 		switch( options.getFType() )
-// 		{
-// 		case VOGT:
-// 			loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
-// 			break;
-// 		case PLAIN:
-// 			loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
-// 			break;
-// 		case HEADERONLY:
-// 			loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
-// 			break;
-// 		default:
-// 			cout << "Filetype not set to a known value. Exiting";
-// 			exit(1);
-// 		}
-	}
+		
+		// send back all timeslices to master
+		for( int t=0; t<Nt; t++ )
+		{
+			if( isMaster && theProcess[t] == 0 )
+			{
+				cudaMemcpy( &U[t*timesliceArraySize], dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+			}
+			else if( theProcess[t] == rank )
+			{
+				MPI_CHECK( MPI_Send( haloIn[rank],  timesliceArraySize, MPI_FLOAT, 0, 0, MPI_COMM_WORLD ) );
+				cudaMemcpy( haloIn[rank], dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+			}
+			else if( isMaster )
+			{
+				MPI_CHECK( MPI_Recv( &U[t*timesliceArraySize], timesliceArraySize, MPI_FLOAT, theProcess[t], 0, MPI_COMM_WORLD, &status ) );
+			}
+			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+		}
+		
+		//saving file
+		if( isMaster )
+		{
+			cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
+			switch( options.getFType() )
+			{
+			case VOGT:
+				loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
+				break;
+			case PLAIN:
+				loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
+				break;
+			case HEADERONLY:
+				loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
+				break;
+			default:
+				cout << "Filetype not set to a known value. Exiting";
+				exit(1);
+			}
+		}
+	} // end fileIterator
 
 	if( isMaster ) allTimer.stop();
 	if( isMaster ) cout << "total time: " << allTimer.getTime() << " s" << endl;
