@@ -563,7 +563,7 @@ int main(int argc, char* argv[])
 		totalKernelTime += kernelTimer.getTime();
 
 		// copy back
-		cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+		cudaMemcpy( U, dU, arraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 		
 		//saving file
 		cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
