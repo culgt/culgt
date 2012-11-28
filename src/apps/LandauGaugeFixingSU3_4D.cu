@@ -526,7 +526,7 @@ int main(int argc, char* argv[])
 			}
 
 
-			if( i % options.getOrCheckPrecision() == 0 )
+			if( i % options.getCheckPrecision() == 0 )
 			{
 				projectSU3<<<numBlocks*2,32>>>( dU );
 
@@ -545,13 +545,13 @@ int main(int argc, char* argv[])
 			LandauKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 0, options.getOrParameter() );
 			LandauKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 1, options.getOrParameter() );
 
-			if( i % options.getOrCheckPrecision() == 0 )
+			if( i % options.getCheckPrecision() == 0 )
 			{
 				projectSU3<<<numBlocks*2,32>>>( dU );
 				gaugeStats.generateGaugeQuality();
 				printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
-				if( gaugeStats.getCurrentA() < options.getOrPrecision() ) break;
+				if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
 			}
 
 			totalStepNumber++;

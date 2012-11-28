@@ -69,8 +69,8 @@ public:
 		return noRandomTrafo;
 	}
 
-	int getOrCheckPrecision() const {
-		return orCheckPrecision;
+	int getCheckPrecision() const {
+		return checkPrecision;
 	}
 
 	int getOrMaxIter() const {
@@ -81,8 +81,16 @@ public:
 		return orParameter;
 	}
 
-	float getOrPrecision() const {
-		return orPrecision;
+	int getSrMaxIter() const {
+		return srMaxIter;
+	}
+
+	float getSrParameter() const {
+		return srParameter;
+	}
+
+	float getPrecision() const {
+		return precision;
 	}
 
 	ReinterpretReal getReinterpret() const {
@@ -149,8 +157,13 @@ private:
 
 	int orMaxIter;
 	float orParameter;
-	float orPrecision;
-	int orCheckPrecision;
+
+	int srMaxIter;
+	float srParameter;
+
+
+	float precision;
+	int checkPrecision;
 
 
 
@@ -193,8 +206,12 @@ int ProgramOptions::init( int argc, char* argv[] )
 
 			("ormaxiter", boost::program_options::value<int>(&orMaxIter)->default_value(1000), "Max. number of OR iterations")
 			("orparameter", boost::program_options::value<float>(&orParameter)->default_value(1.7), "OR parameter")
-			("orprecision", boost::program_options::value<float>(&orPrecision)->default_value(1E-7), "OR precision (dmuAmu)")
-			("orcheckprecision", boost::program_options::value<int>(&orCheckPrecision)->default_value(100), "how often to check the gauge precision")
+
+			("srmaxiter", boost::program_options::value<int>(&srMaxIter)->default_value(1000), "Max. number of SR iterations")
+			("srparameter", boost::program_options::value<float>(&srParameter)->default_value(1.7), "SR parameter")
+
+			("precision", boost::program_options::value<float>(&precision)->default_value(1E-7), "OR precision (dmuAmu)")
+			("checkprecision", boost::program_options::value<int>(&checkPrecision)->default_value(100), "how often to check the gauge precision")
 			;
 
 	boost::program_options::positional_options_description options_p;

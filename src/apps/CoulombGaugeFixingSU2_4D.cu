@@ -1121,7 +1121,7 @@ int main(int argc, char* argv[])
 						CoulombKernelsSU2::microStep(numBlocks,threadsPerBlock,dUup, dUdw, dNnt, 1 );
 					}
 
-					if( i % options.getOrCheckPrecision() == 0 )
+					if( i % options.getCheckPrecision() == 0 )
 					{
 						gaugeStats.generateGaugeQuality();
 						printf( "%f\t\t%1.10f\t\t%e\n", temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
@@ -1138,12 +1138,12 @@ int main(int argc, char* argv[])
 //					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 0, options.getOrParameter() );
 //					orStepSingleThread<<<numBlocks,32>>>( dUup, dUdw, dNnt, 1, options.getOrParameter() );
 
-					if( i % options.getOrCheckPrecision() == 0 )
+					if( i % options.getCheckPrecision() == 0 )
 					{
 						gaugeStats.generateGaugeQuality();
 						printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
-						if( gaugeStats.getCurrentA() < options.getOrPrecision() ) break;
+						if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
 					}
 
 					totalStepNumber++;
