@@ -352,11 +352,11 @@ int main(int argc, char* argv[])
 			temperature -= tempStep;
 		}
 
-		for( int i = 0; i < options.getOrMaxIter(); i++ )
+		for( int i = 0; i < options.getSrMaxIter(); i++ )
 		{
 
-			MAGKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 0, options.getOrParameter() );
-			MAGKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 1, options.getOrParameter() );
+			MAGKernelsSU3::srStep(numBlocks,threadsPerBlock,dU, dNn, 0, options.getSrParameter(), PhiloxWrapper::getNextCounter() );
+			MAGKernelsSU3::srStep(numBlocks,threadsPerBlock,dU, dNn, 1, options.getSrParameter(), PhiloxWrapper::getNextCounter() );
 
 			if( i % options.getCheckPrecision() == 0 )
 			{
@@ -366,15 +366,13 @@ int main(int argc, char* argv[])
 
 				if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
 			}
-
-			totalStepNumber++;
 		}
 
-		for( int i = 0; i < options.getSrMaxIter(); i++ )
+		for( int i = 0; i < options.getOrMaxIter(); i++ )
 		{
 
-			MAGKernelsSU3::srStep(numBlocks,threadsPerBlock,dU, dNn, 0, options.getSrParameter(), PhiloxWrapper::getNextCounter() );
-			MAGKernelsSU3::srStep(numBlocks,threadsPerBlock,dU, dNn, 1, options.getSrParameter(), PhiloxWrapper::getNextCounter() );
+			MAGKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 0, options.getOrParameter() );
+			MAGKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 1, options.getOrParameter() );
 
 			if( i % options.getCheckPrecision() == 0 )
 			{
