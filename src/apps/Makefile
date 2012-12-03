@@ -43,7 +43,10 @@ CUOBJ = $(APP).o
 LIBS = -lboost_program_options
 # flags for the NVCC compiler
 CUFLAGS = --ptxas-options=-v -arch=sm_20 -use_fast_math -Xptxas -dlcm=cg
+# flags for the CC compiler
+CCFLAGS = -O3
 
+CUFLAGS += $(CCFLAGS)
 
 $(APP): $(CUOBJ) Chronotimer.o
 	$(NVCC) -o $@ $(CUOBJ) Chronotimer.o $(LIBS)
