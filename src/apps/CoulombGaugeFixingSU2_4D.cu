@@ -9,7 +9,7 @@
 #include <sstream>
 #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingStepSU2.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStatsV2.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
 #include "../lattice/gaugefixing/simulated_annealing/SaUpdate.hxx"

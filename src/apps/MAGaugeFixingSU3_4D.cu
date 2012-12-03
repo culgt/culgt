@@ -10,7 +10,7 @@
 #include <sstream>
 #include <malloc.h>
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStatsV2.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
 #include "../lattice/gaugefixing/MAGKernelsSU3.hxx"

@@ -12,7 +12,7 @@
 #include "malloc.h"
 #endif
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStatsV2.hxx"
+#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
 #include "../lattice/gaugefixing/simulated_annealing/SaUpdate.hxx"
