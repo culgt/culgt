@@ -1,4 +1,5 @@
 // wrapper functions for kernel calls etc.
+//TODO this file is temporary.
 
 #ifndef MULTIGPU_MPI_LANDAUGAUGEFIXINGSU3_4D_H_
 #define MULTIGPU_MPI_LANDAUGAUGEFIXINGSU3_4D_H_
