@@ -13,7 +13,7 @@
 class FileVogt
 {
 public:
-	FileVogt();
+	FileVogt( int LENGTH_OF_REAL );
 	virtual ~FileVogt();
 	bool loadHeader( std::fstream* file );
 	bool saveHeader( std::fstream* file );
@@ -23,10 +23,12 @@ public:
 	short nc;
 	short latsize[20];
 	short lengthOfReal;
+private:
+	int LENGTH_OF_REAL;
 };
 
 
-FileVogt::FileVogt()
+FileVogt::FileVogt( int LENGTH_OF_REAL ) : LENGTH_OF_REAL( LENGTH_OF_REAL )
 {
 }
 
@@ -55,6 +57,8 @@ bool FileVogt::loadHeader( std::fstream* file )
 
 	file->read( (char*)&lengthOfReal, sizeof(short) ); // length of real
 	std::cout << lengthOfReal << std::endl;
+
+	if( lengthOfReal != LENGTH_OF_REAL ) std::cout << "WRONG LENGTH OF REAL: " << lengthOfReal << " bytes in header, while app wants " << LENGTH_OF_REAL << " bytes" << std::endl;
 
 	return true;
 }

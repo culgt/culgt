@@ -215,12 +215,9 @@ int main(int argc, char* argv[])
 	SiteCoord<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
 
 	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly;
-	lfHeaderOnly.reinterpret = options.getReinterpret();
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt;
-	lfVogt.reinterpret = options.getReinterpret();
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain;
-	lfPlain.reinterpret = options.getReinterpret();
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly( options.getReinterpret() );
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt( options.getReinterpret() );
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain( options.getReinterpret() );
 
 
 	// allocate Memory

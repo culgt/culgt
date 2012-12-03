@@ -41,17 +41,18 @@
 template<class FileType, class FilePattern, class MemoryPattern, class TheSite> class LinkFile
 {
 public:
-	LinkFile();
+	LinkFile( ReinterpretReal reinterpret = STANDARD );
 	virtual ~LinkFile();
 	bool load( TheSite site, std::string filename, Real *U );
 	bool save( TheSite site, std::string filename, Real *U );
 	FileType filetype;
+private:
 	ReinterpretReal reinterpret; // defined in "filetypes/filetype_typedefs.h"
+	int getLengthOfReal( ReinterpretReal reinterpret );
 };
 
-template <class FileType, class FilePattern, class MemoryPattern, class TheSite> LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::LinkFile()
+template <class FileType, class FilePattern, class MemoryPattern, class TheSite> LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::LinkFile( ReinterpretReal reinterpret ) : filetype(  getLengthOfReal(reinterpret) ), reinterpret( reinterpret)
 {
-	reinterpret = STANDARD;
 }
 
 template <class FileType, class FilePattern, class MemoryPattern, class TheSite> LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::~LinkFile()
@@ -244,6 +245,14 @@ template <class FileType, class FilePattern, class MemoryPattern, class TheSite>
 
 	file.close();
 	return true;
+}
+
+// TODO place somewhere else
+template <class FileType, class FilePattern, class MemoryPattern, class TheSite> int LinkFile<FileType, FilePattern, MemoryPattern, TheSite>::getLengthOfReal( ReinterpretReal reinterpret )
+{
+	if ( reinterpret == DOUBLE ) return sizeof( double );
+	else if ( reinterpret == FLOAT ) return sizeof( float );
+	else return sizeof( Real );
 }
 
 

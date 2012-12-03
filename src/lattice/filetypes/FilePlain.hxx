@@ -13,20 +13,18 @@
 class FilePlain
 {
 public:
-	FilePlain();
+	FilePlain( int LENGTH_OF_REAL );
 	virtual ~FilePlain();
 	bool loadHeader( std::fstream* file );
 	bool saveHeader( std::fstream* file );
 	bool loadFooter( std::fstream* file );
 	bool saveFooter( std::fstream* file );
-	short ndim;
-	short nc;
-	short latsize[20];
-	short lengthOfReal;
+private:
+	int LENGTH_OF_REAL;
 };
 
 
-FilePlain::FilePlain()
+FilePlain::FilePlain( int LENGTH_OF_REAL ) : LENGTH_OF_REAL(LENGTH_OF_REAL)
 {
 }
 

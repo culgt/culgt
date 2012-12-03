@@ -199,9 +199,9 @@ int main(int argc, char* argv[])
 
 
 	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly;
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt;
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain;
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly( options.getReinterpret() );
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt( options.getReinterpret() );
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain( options.getReinterpret() );
 
 
 	// allocate Memory
@@ -255,15 +255,12 @@ int main(int argc, char* argv[])
 		switch( options.getFType() )
 		{
 		case VOGT:
-			lfVogt.reinterpret = options.getReinterpret();
 			loadOk = lfVogt.load( s, fi.getFilename(), U );
 			break;
 		case PLAIN:
-			lfPlain.reinterpret = options.getReinterpret();
 			loadOk = lfPlain.load( s, fi.getFilename(), U );
 			break;
 		case HEADERONLY:
-			lfHeaderOnly.reinterpret = options.getReinterpret();
 			loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
 			break;
 		default:
