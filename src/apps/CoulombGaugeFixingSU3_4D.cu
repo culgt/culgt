@@ -193,6 +193,10 @@ void initNeighbourTable( lat_index_t* nnt )
 
 int main(int argc, char* argv[])
 {
+	Chronotimer allTimer;
+	allTimer.reset();
+	allTimer.start();
+
 	CoulombKernelsSU3::initCacheConfig();
 
 	// read configuration from file or command line
@@ -207,8 +211,6 @@ int main(int argc, char* argv[])
 	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
-	Chronotimer allTimer;
-	allTimer.reset();
 
 	SiteCoord<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
 
@@ -253,12 +255,17 @@ int main(int argc, char* argv[])
 
 	GaugeFixingStats<Ndim,Nc,CoulombKernelsSU3,AVERAGE> gaugeStats( dUtUp, HOST_CONSTANTS::SIZE_TIMESLICE );
 
-	double totalKernelTime = 0;
-	long totalStepNumber = 0;
+	// timer to measure kernel times
+	Chronotimer kernelTimer;
+	kernelTimer.reset();
+	kernelTimer.start();
+
+	double orTotalKernelTime = 0; // sum up total kernel time for OR
+	long orTotalStepnumber = 0;
+	double saTotalKernelTime = 0;
 
 	FileIterator fi( options );
 
-	allTimer.start();
 	for( fi.reset(); fi.hasNext(); fi.next() )
 	{
 		cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl; // TODO why is FileType printed as a number (not as text according to filetype_typedefs.h)
@@ -295,76 +302,105 @@ int main(int argc, char* argv[])
 		{
 			int tDw = (t > 0)?(t-1):(s.size[0]-1); // calculating t-1 (periodic boundaries)
 
-			// copying timeslice t ...
-			cudaMemcpy( dUtUp, &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-			// ... and t-1 to device
-			cudaMemcpy( dUtDw, &U[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-			// TODO it is not necessary to copy the (t-1) again for t>0, simply swap pointers on device side...
-
-			// calculate and print the gauge quality
-			printf( "i:\t\tgff:\t\tdA:\n");
-			gaugeStats.generateGaugeQuality();
-
-			Chronotimer kernelTimer;
-			kernelTimer.reset();
-			kernelTimer.start();
-
-			float temperature = options.getSaMax();
-			float tempStep = (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps();
-
-			for( int i = 0; i < options.getSaSteps(); i++ )
+			double bestGff = 0.0;
+			for( int copy = 0; copy < options.getGaugeCopies(); copy++ )
 			{
+				// copying timeslice t ...
+				cudaMemcpy( dUtUp, &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+				// ... and t-1 to device
+				cudaMemcpy( dUtDw, &U[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+				// TODO it is not necessary to copy the (t-1) again for t>0, simply swap pointers on device side...
 
-
-				CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, temperature, PhiloxWrapper::getNextCounter() );
-				CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, temperature, PhiloxWrapper::getNextCounter() );
-
-				for( int mic = 0; mic < options.getSaMicroupdates(); mic++ )
+				if( !options.isNoRandomTrafo() ) // I'm an optimist! This should be called isRandomTrafo()!
 				{
-					CoulombKernelsSU3::microStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0 );
-					CoulombKernelsSU3::microStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1 );
+					CoulombKernelsSU3::randomTrafo(numBlocks,threadsPerBlock, dUtUp, dUtDw, dNnt, 0, PhiloxWrapper::getNextCounter() );
+					CoulombKernelsSU3::randomTrafo(numBlocks,threadsPerBlock, dUtUp, dUtDw, dNnt, 1, PhiloxWrapper::getNextCounter() );
 				}
 
+				// calculate and print the gauge quality
+				printf( "i:\t\tgff:\t\tdA:\n");
+				gaugeStats.generateGaugeQuality();
 
-				if( i % options.getCheckPrecision() == 0 )
+
+				float temperature = options.getSaMax();
+				float tempStep = (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps();
+
+				kernelTimer.reset();
+				kernelTimer.start();
+				for( int i = 0; i < options.getSaSteps(); i++ )
 				{
-					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
-					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 
-					gaugeStats.generateGaugeQuality();
-					CudaError::getLastError( "generateGaugeQuality error" );
-					printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+
+					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, temperature, PhiloxWrapper::getNextCounter() );
+					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, temperature, PhiloxWrapper::getNextCounter() );
+
+					for( int mic = 0; mic < options.getSaMicroupdates(); mic++ )
+					{
+						CoulombKernelsSU3::microStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0 );
+						CoulombKernelsSU3::microStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1 );
+					}
+
+
+					if( i % options.getCheckPrecision() == 0 )
+					{
+						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+
+						gaugeStats.generateGaugeQuality();
+						CudaError::getLastError( "generateGaugeQuality error" );
+						printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+					}
+					temperature -= tempStep;
 				}
-				temperature -= tempStep;
+				cudaThreadSynchronize();
+				kernelTimer.stop();
+				saTotalKernelTime += kernelTimer.getTime();
+
+
+				kernelTimer.reset();
+				kernelTimer.start();
+				for( int i = 0; i < options.getOrMaxIter(); i++ )
+				{
+
+					CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, options.getOrParameter() );
+					CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, options.getOrParameter() );
+
+					if( i % options.getCheckPrecision() == 0 )
+					{
+						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+
+						gaugeStats.generateGaugeQuality();
+						printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+
+						if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
+					}
+
+					orTotalStepnumber++;
+				}
+
+				cudaThreadSynchronize();
+				kernelTimer.stop();
+				orTotalKernelTime += kernelTimer.getTime();
+
+				// reconstruct third line before copy back
+				CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+				CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+
+				if( gaugeStats.getCurrentGff() > bestGff )
+				{
+					cout << "FOUND BETTER COPY" << endl;
+					bestGff = gaugeStats.getCurrentGff();
+
+					// copy back
+					cudaMemcpy( &U[t*timesliceArraySize], dUtUp, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+					cudaMemcpy( &U[tDw*timesliceArraySize], dUtDw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+				}
+				else
+				{
+					cout << "NO BETTER COPY" << endl;
+				}
 			}
-
-			for( int i = 0; i < options.getOrMaxIter(); i++ )
-			{
-
-				CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, options.getOrParameter() );
-				CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, options.getOrParameter() );
-
-				if( i % options.getCheckPrecision() == 0 )
-				{
-					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
-					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
-
-					gaugeStats.generateGaugeQuality();
-					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
-
-					if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
-				}
-
-				totalStepNumber++;
-			}
-
-			cudaThreadSynchronize();
-			kernelTimer.stop();
-			cout << "kernel time for timeslice: " << kernelTimer.getTime() << " s"<< endl;
-			totalKernelTime += kernelTimer.getTime();
-			// copy back TODO: copying back timeslice t is not necessary (only in the end)
-			cudaMemcpy( &U[t*timesliceArraySize], dUtUp, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-			cudaMemcpy( &U[tDw*timesliceArraySize], dUtDw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 		}
 
 
@@ -390,9 +426,16 @@ int main(int argc, char* argv[])
 
 	allTimer.stop();
 	cout << "total time: " << allTimer.getTime() << " s" << endl;
-	cout << "total kernel time: " << totalKernelTime << " s" << endl;
-	cout << (double)((long)2205*(long)s.getLatticeSize()*(long)totalStepNumber)/totalKernelTime/1.0e9/(double)s.size[0] << " GFlops at "
-			<< (double)((long)192*(long)s.getLatticeSize()*(long)(totalStepNumber)*(long)sizeof(Real))/totalKernelTime/1.0e9/(double)s.size[0] << "GB/s memory throughput." << endl;
 
 
+	long hbFlops = 2176-18;
+	long microFlops = 2118-18;
+	cout << "Simulated Annealing (HB+Micro): " << (double)((long)(hbFlops+microFlops*options.getSaMicroupdates())*(long)s.getLatticeSize()*(long)options.getSaSteps()*(long)options.getGaugeCopies())/saTotalKernelTime/1.0e9 << " GFlops at "
+					<< (double)((long)192*(long)s.getLatticeSize()*options.getSaSteps()*(options.getSaMicroupdates()+1)*(long)sizeof(Real))/saTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
+
+
+//	long orFlops = 2253;
+	long orFlops = 2124-18; // HV 2012-12-03
+	cout << "Overrelaxation: " << (double)((long)orFlops*(long)s.getLatticeSize()*(long)orTotalStepnumber)/orTotalKernelTime/1.0e9/(double)s.size[0] << " GFlops at "
+				<< (double)((long)192*(long)s.getLatticeSize()*(long)(orTotalStepnumber)*(long)sizeof(Real))/orTotalKernelTime/1.0e9/(double)s.size[0] << "GB/s memory throughput." << endl;
 }
