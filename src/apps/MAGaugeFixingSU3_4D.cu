@@ -14,6 +14,7 @@
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
 #include "../lattice/gaugefixing/MAGKernelsSU3.hxx"
+#include "../lattice/gaugefixing/CommonKernelsSU3.hxx"
 #include "../lattice/access_pattern/StandardPattern.hxx"
 #include "../lattice/access_pattern/GpuCoulombPattern.hxx"
 #include "../lattice/access_pattern/GpuLandauPattern.hxx"
@@ -41,35 +42,6 @@ using namespace std;
 const lat_dim_t Ndim = 4;
 const short Nc = 3;
 
-
-
-// boost program options setup
-//boost::program_options::variables_map options_vm;
-//boost::program_options::options_description options_desc("Allowed options");
-//
-//// parameters from command line or config file
-//int nconf;
-//int devicenumb;
-//long seed; // TODO check datatype
-//int orMaxIter;
-//int orCheckPrec;
-//float orParameter;
-//float orPrecision;
-//int saSteps;
-//float saMin;
-//float saMax;
-//int gaugeCopies;
-//string fileEnding;
-//string postFixLabel;
-//string fileBasename;
-//int fileStartnumber;
-//int fileStepsize;
-//int fileNumberformat;
-//string configFile;
-//bool noRandomTrafo;
-//FileType fileType;
-
-
 // lattice setup
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
@@ -80,11 +52,6 @@ typedef GpuLandauPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 
-//__device__ inline Real cuFabs( Real a )
-//{
-//	return (a>0)?(a):(-a);
-//}
-
 void initNeighbourTable( lat_index_t* nnt )
 {
 //	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
@@ -92,23 +59,23 @@ void initNeighbourTable( lat_index_t* nnt )
 	s.calculateNeighbourTable( nnt );
 }
 
-
-__global__ void projectSU3( Real* U )
-{
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteCoord<4,FULL_SPLIT> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	s.setLatticeIndex( site );
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		TLink linkUp( U, s, mu );
-		SU3<TLink> globUp( linkUp );
-
-		globUp.projectSU3();
-	}
-}
+//
+//__global__ void projectSU3( Real* U )
+//{
+//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+//	SiteCoord<4,FULL_SPLIT> s(size);
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	s.setLatticeIndex( site );
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		TLink linkUp( U, s, mu );
+//		SU3<TLink> globUp( linkUp );
+//
+//		globUp.projectSU3();
+//	}
+//}
 //
 //
 //__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
@@ -342,7 +309,7 @@ int main(int argc, char* argv[])
 
 			if( i % options.getCheckPrecision() == 0 )
 			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
+				CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
 
 
 				gaugeStats.generateGaugeQuality();
@@ -360,7 +327,8 @@ int main(int argc, char* argv[])
 
 			if( i % options.getCheckPrecision() == 0 )
 			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
+				CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+//				projectSU3<<<numBlocks*2,32>>>( dU );
 				gaugeStats.generateGaugeQuality();
 				printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
@@ -376,7 +344,8 @@ int main(int argc, char* argv[])
 
 			if( i % options.getCheckPrecision() == 0 )
 			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
+				CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+//				projectSU3<<<numBlocks*2,32>>>( dU );
 				gaugeStats.generateGaugeQuality();
 				printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 

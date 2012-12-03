@@ -33,6 +33,7 @@
 #include "../lattice/filetypes/filetype_typedefs.h"
 #include "../lattice/gaugefixing/GlobalConstants.hxx"
 #include "../lattice/gaugefixing/LandauKernelsSU3.hxx"
+#include "../lattice/gaugefixing/CommonKernelsSU3.hxx"
 #include "program_options/ProgramOptions.hxx"
 #include "program_options/FileIterator.hxx"
 
@@ -90,32 +91,32 @@ void initNeighbourTable( lat_index_t* nnt )
 }
 
 
-__global__ void projectSU3( Real* U )
-{
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteCoord<4,FULL_SPLIT> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	s.setLatticeIndex( site );
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		TLink linkUp( U, s, mu );
-		SU3<TLink> globUp( linkUp );
-
-
-		Matrix<Complex<Real>,Nc> locMat;
-		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
-
-		locU.assignWithoutThirdLine(globUp);
-		locU.projectSU3withoutThirdRow();
-
-
-		globUp.assignWithoutThirdLine(locU);
-
-//		globUp.projectSU3withoutThirdRow();
-	}
-}
+//__global__ void projectSU3( Real* U )
+//{
+//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+//	SiteCoord<4,FULL_SPLIT> s(size);
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	s.setLatticeIndex( site );
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		TLink linkUp( U, s, mu );
+//		SU3<TLink> globUp( linkUp );
+//
+//
+//		Matrix<Complex<Real>,Nc> locMat;
+//		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
+//
+//		locU.assignWithoutThirdLine(globUp);
+//		locU.projectSU3withoutThirdRow();
+//
+//
+//		globUp.assignWithoutThirdLine(locU);
+//
+////		globUp.projectSU3withoutThirdRow();
+//	}
+//}
 //
 //
 //__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
@@ -528,8 +529,8 @@ int main(int argc, char* argv[])
 
 			if( i % options.getCheckPrecision() == 0 )
 			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
-
+				CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+//				projectSU3<<<numBlocks*2,32>>>( dU );
 
 				gaugeStats.generateGaugeQuality();
 //				CudaError::getLastError( "generateGaugeQuality error" );
@@ -547,7 +548,8 @@ int main(int argc, char* argv[])
 
 			if( i % options.getCheckPrecision() == 0 )
 			{
-				projectSU3<<<numBlocks*2,32>>>( dU );
+				CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+//				projectSU3<<<numBlocks*2,32>>>( dU );
 				gaugeStats.generateGaugeQuality();
 				printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 

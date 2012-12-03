@@ -40,6 +40,7 @@
 #include "../lattice/gaugefixing/GlobalConstants.hxx"
 #include "../util/cuda/CudaError.hxx"
 #include "../lattice/gaugefixing/CoulombKernelsSU3.hxx"
+#include "../lattice/gaugefixing/CommonKernelsSU3.hxx"
 
 using namespace std;
 
@@ -96,101 +97,101 @@ void initNeighbourTable( lat_index_t* nnt )
 
 
 
-__global__ void projectSU3( Real* U )
-{
-	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteCoord<4,FULL_SPLIT> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	s.setLatticeIndex( site );
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		TLink3 linkUp( U, s, mu );
-		SU3<TLink3> globUp( linkUp );
-
-		globUp.projectSU3();
-	}
-}
-
-__global__ void projectSU3DP( Real* U )
-{
-	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-	SiteCoord<4,FULL_SPLIT> s(size);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-
-	s.setLatticeIndex( site );
-
-	for( int mu = 0; mu < 4; mu++ )
-	{
-		TLink3 linkUp( U, s, mu );
-		SU3<TLink3> globUp( linkUp );
-
-		Matrix<complex,Nc> locMat;
-		SU3<Matrix<complex,Nc> > temp(locMat);
-
-		temp.assignWithoutThirdLine( globUp );
-
-		Matrix<Complex<double>,Nc > doubleMat;
-
-		for( int i = 0; i < 2; i++ )
-			for(int j = 0; j < 3; j++ )
-			{
-				Complex<double> a;
-				a.x = (double)temp.get( i, j ).x;
-				a.y = (double)temp.get( i, j ).y;
-				doubleMat.set( i,j, a);
-			}
-		double abs_u = 0, abs_v = 0;
-		Complex<double> sp(0.,0.);
-
-		// normalize first row
-		for( lat_group_dim_t i = 0; i < 3; i++ )
-		{
-			abs_u += doubleMat.get( 0, i ).abs_squared();
-		}
-
-		abs_u = sqrt(abs_u);
-
-		for( lat_group_dim_t i = 0; i < 3; i++ )
-		{
-			doubleMat.set( 0, i, doubleMat.get(0,i)/abs_u );
-		}
-
-		// orthogonalize second row
-		for( lat_group_dim_t i = 0; i < 3; i++ )
-		{
-			sp += doubleMat.get( 1,i ) * doubleMat.get( 0, i ).conj();
-		}
-		for( lat_group_dim_t i = 0; i < 3; i++ )
-		{
-			doubleMat.set( 1, i, doubleMat.get(1,i) - doubleMat.get( 0, i)*sp );
-		}
-
-		// normalize second row
-		for( lat_group_dim_t i = 0; i < 3; i++ )
-		{
-			abs_v += doubleMat.get( 1, i ).abs_squared();
-		}
-		abs_v = sqrt(abs_v);
-		for( lat_group_dim_t i = 0; i < 3; i++ )
-		{
-			doubleMat.set( 1, i, doubleMat.get(1,i)/abs_v );
-		}
-
-
-		for( int i = 0; i < 2; i++ )
-			for(int j = 0; j < 3; j++ )
-			{
-				Complex<Real> a;
-				a.x = (Real)doubleMat.get( i, j ).x;
-				a.y = (Real)doubleMat.get( i, j ).y;
-				temp.set( i,j, a);
-			}
-
-		globUp.assignWithoutThirdLine( temp );
-	}
-}
+//__global__ void projectSU3( Real* U )
+//{
+//	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+//	SiteCoord<4,FULL_SPLIT> s(size);
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	s.setLatticeIndex( site );
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		TLink3 linkUp( U, s, mu );
+//		SU3<TLink3> globUp( linkUp );
+//
+//		globUp.projectSU3();
+//	}
+//}
+//
+//__global__ void projectSU3DP( Real* U )
+//{
+//	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+//	SiteCoord<4,FULL_SPLIT> s(size);
+//	int site = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//	s.setLatticeIndex( site );
+//
+//	for( int mu = 0; mu < 4; mu++ )
+//	{
+//		TLink3 linkUp( U, s, mu );
+//		SU3<TLink3> globUp( linkUp );
+//
+//		Matrix<complex,Nc> locMat;
+//		SU3<Matrix<complex,Nc> > temp(locMat);
+//
+//		temp.assignWithoutThirdLine( globUp );
+//
+//		Matrix<Complex<double>,Nc > doubleMat;
+//
+//		for( int i = 0; i < 2; i++ )
+//			for(int j = 0; j < 3; j++ )
+//			{
+//				Complex<double> a;
+//				a.x = (double)temp.get( i, j ).x;
+//				a.y = (double)temp.get( i, j ).y;
+//				doubleMat.set( i,j, a);
+//			}
+//		double abs_u = 0, abs_v = 0;
+//		Complex<double> sp(0.,0.);
+//
+//		// normalize first row
+//		for( lat_group_dim_t i = 0; i < 3; i++ )
+//		{
+//			abs_u += doubleMat.get( 0, i ).abs_squared();
+//		}
+//
+//		abs_u = sqrt(abs_u);
+//
+//		for( lat_group_dim_t i = 0; i < 3; i++ )
+//		{
+//			doubleMat.set( 0, i, doubleMat.get(0,i)/abs_u );
+//		}
+//
+//		// orthogonalize second row
+//		for( lat_group_dim_t i = 0; i < 3; i++ )
+//		{
+//			sp += doubleMat.get( 1,i ) * doubleMat.get( 0, i ).conj();
+//		}
+//		for( lat_group_dim_t i = 0; i < 3; i++ )
+//		{
+//			doubleMat.set( 1, i, doubleMat.get(1,i) - doubleMat.get( 0, i)*sp );
+//		}
+//
+//		// normalize second row
+//		for( lat_group_dim_t i = 0; i < 3; i++ )
+//		{
+//			abs_v += doubleMat.get( 1, i ).abs_squared();
+//		}
+//		abs_v = sqrt(abs_v);
+//		for( lat_group_dim_t i = 0; i < 3; i++ )
+//		{
+//			doubleMat.set( 1, i, doubleMat.get(1,i)/abs_v );
+//		}
+//
+//
+//		for( int i = 0; i < 2; i++ )
+//			for(int j = 0; j < 3; j++ )
+//			{
+//				Complex<Real> a;
+//				a.x = (Real)doubleMat.get( i, j ).x;
+//				a.y = (Real)doubleMat.get( i, j ).y;
+//				temp.set( i,j, a);
+//			}
+//
+//		globUp.assignWithoutThirdLine( temp );
+//	}
+//}
 
 //__global__ void generateGaugeQuality( Real *U, Real *dGff, Real *dA )
 //{
@@ -460,9 +461,8 @@ int main(int argc, char* argv[])
 
 				if( i % options.getCheckPrecision() == 0 )
 				{
-					projectSU3<<<numBlocks*2,32>>>( dUtUp );
-					projectSU3<<<numBlocks*2,32>>>( dUtDw );
-
+					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 
 					gaugeStats.generateGaugeQuality();
 					CudaError::getLastError( "generateGaugeQuality error" );
@@ -488,8 +488,12 @@ int main(int argc, char* argv[])
 
 				if( i % options.getCheckPrecision() == 0 )
 				{
-					projectSU3<<<numBlocks*2,32>>>( dUtUp );
-					projectSU3<<<numBlocks*2,32>>>( dUtDw );
+//					lat_coord_t* temp;
+//					cudaGetSymbolAddress((void **)&temp, DEVICE_CONSTANTS::SIZE_TIMESLICE );
+//					cout << temp << endl;
+					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+					CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+
 					gaugeStats.generateGaugeQuality();
 					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
