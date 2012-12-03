@@ -366,6 +366,26 @@ int main(int argc, char* argv[])
 			cudaMemcpy( &U[t*timesliceArraySize], dUtUp, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 			cudaMemcpy( &U[tDw*timesliceArraySize], dUtDw, timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
 		}
+
+
+		//saving file
+		cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
+
+		switch( options.getFType() )
+		{
+		case VOGT:
+			loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
+			break;
+		case PLAIN:
+			loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
+			break;
+		case HEADERONLY:
+			loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
+			break;
+		default:
+			cout << "Filetype not set to a known value. Exiting";
+			exit(1);
+		}
 	}
 
 	allTimer.stop();

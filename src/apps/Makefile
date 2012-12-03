@@ -27,7 +27,7 @@ endif
 
 # do the updates in DP even if links are stored in SP
 ifeq ($(DPUPDATES),true)
-DPREC += -DUSE_DP_ORUPDATE # TODO add the flags for SA,SR,Micro
+DPREC += -DUSE_DP_ORUPDATE -DUSE_DP_MICROUPDATE -DUSE_DP_SAUPDATE # TODO add the flags for SA,SR
 endif
 
 # define 
@@ -55,10 +55,10 @@ $(APP): $(CUOBJ) Chronotimer.o
 	$(NVCC) -c $(CUFLAGS) $< $(CUDEFS) 
 
 %.o: %.cpp
-	$(CC) -c $< $(CCDEFS)
+	$(CC) -c $(CCFLAGS) $< $(CCDEFS)
 
 Chronotimer.o: ../util/timer/Chronotimer.cc
-	$(CC) -c ../util/timer/Chronotimer.cc
+	$(CC) -c $(CCFLAGS) ../util/timer/Chronotimer.cc
 
 
 clean: 
