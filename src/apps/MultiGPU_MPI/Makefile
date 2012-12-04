@@ -27,7 +27,7 @@ NVCC = nvcc
 # the objects to be compiled with MPICC
 CCOBJ = main.o MultiGPU_MPI_AlgorithmOptions.o
 # the objects to be compiled with NVCC
-CUOBJ = Chronotimer.o $(PROG).o MultiGPU_MPI_LandauKernelsSU3.o MultiGPU_MPI_Reduce.o 
+CUOBJ = Chronotimer.o MultiGPU_MPI_LandauKernelsSU3.o MultiGPU_MPI_Reduce.o 
 # libs for the linking process
 LIBS = -lboost_program_options -L/usr/local/cuda/lib64 -lcudart 
 # flags for the NVCC compiler
