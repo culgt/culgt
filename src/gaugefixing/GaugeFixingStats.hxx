@@ -14,18 +14,14 @@
 #define GAUGEFIXINGSTATS_HXX_
 
 #include "GlobalConstants.h"
-#include "../../util/datatype/datatypes.h"
-#include "../../util/cuda/cuda_host_device.h"
-#include "../access_pattern/StandardPattern.hxx"
-#include "../access_pattern/GpuCoulombPattern.hxx"
-#include "../access_pattern/GpuLandauPattern.hxx"
-#include "../SiteCoord.hxx"
-#include "../SiteIndex.hxx"
-#include "../Link.hxx"
-#include "../SU3.hxx"
-#include "../SU2.hxx"
-#include "../Matrix.hxx"
-#include "../LinkFile.hxx"
+#include "../lattice/datatype/datatypes.h"
+#include "../lattice/cuda/cuda_host_device.h"
+#include "../lattice/access_pattern/StandardPattern.hxx"
+#include "../lattice/access_pattern/GpuCoulombPattern.hxx"
+#include "../lattice/access_pattern/GpuLandauPattern.hxx"
+#include "../lattice/SiteCoord.hxx"
+#include "../lattice/SiteIndex.hxx"
+#include "../lattice/Link.hxx"
 
 #include <iostream>
 

@@ -59,11 +59,11 @@ $(APP): $(CUOBJ) Chronotimer.o GlobalConstants.o
 #%.o: %.cc
 #	$(CC) -c $(CCFLAGS) $< $(CCDEFS)
 
-Chronotimer.o: ../util/timer/Chronotimer.cc
-	$(CC) -c $(CCFLAGS) ../util/timer/Chronotimer.cc
+Chronotimer.o: ../../util/timer/Chronotimer.cc
+	$(CC) -c $(CCFLAGS) ../../util/timer/Chronotimer.cc
 
-GlobalConstants.o: ../lattice/gaugefixing/GlobalConstants.cu
-	$(NVCC) -c $(CUDEFS) $(CUFLAGS) -I/usr/local/cuda/include/ ../lattice/gaugefixing/GlobalConstants.cu
+GlobalConstants.o: ../GlobalConstants.cu
+	$(NVCC) -c $(CUDEFS) $(CUFLAGS) -I/usr/local/cuda/include/ ../GlobalConstants.cu
 
 clean: 
 	rm -f *.o $(APP)

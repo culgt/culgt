@@ -16,8 +16,8 @@
 #ifndef SITECOORD_HXX_
 #define SITECOORD_HXX_
 
-#include "../util/cuda/cuda_host_device.h"
-#include "../util/datatype/lattice_typedefs.h"
+#include "cuda/cuda_host_device.h"
+#include "datatype/lattice_typedefs.h"
 
 /**
  * The template parameter "bool par" defines normal indexing (par==false) or parity split indexing (par==true).

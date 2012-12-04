@@ -9,15 +9,19 @@
 #ifndef MAGKERNELSSU3_HXX_
 #define MAGKERNELSSU3_HXX_
 
-#include "../../util/datatype/datatypes.h"
-#include "../../util/datatype/lattice_typedefs.h"
-#include "../../util/rng/PhiloxWrapper.hxx"
-#include "simulated_annealing/SaUpdate.hxx"
-#include "simulated_annealing/RandomUpdate.hxx"
-#include "overrelaxation/SrUpdate.hxx"
-#include "overrelaxation/MicroUpdate.hxx"
-#include "overrelaxation/OrUpdate.hxx"
 #include "GlobalConstants.h"
+#include "../lattice/datatype/datatypes.h"
+#include "../lattice/datatype/lattice_typedefs.h"
+#include "../lattice/rng/PhiloxWrapper.hxx"
+#include "GaugeFixingSubgroupStep.hxx"
+#include "algorithms/SaUpdate.hxx"
+#include "algorithms/SrUpdate.hxx"
+#include "algorithms/OrUpdate.hxx"
+#include "algorithms/MicroUpdate.hxx"
+#include "algorithms/RandomUpdate.hxx"
+#include "../lattice/Matrix.hxx"
+#include "../lattice/SU3.hxx"
+#include "../lattice/Link.hxx"
 
 
 // kernels as class members are not supported (even static): wrap the kernel calls and hide the kernels in namespace.

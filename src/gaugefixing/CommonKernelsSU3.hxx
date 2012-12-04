@@ -8,8 +8,8 @@
 #ifndef COMMONKERNELSSU3_HXX_
 #define COMMONKERNELSSU3_HXX_
 
-#include "../../util/datatype/datatypes.h"
-#include "../../util/datatype/lattice_typedefs.h"
+#include "../lattice/datatype/datatypes.h"
+#include "../lattice/datatype/lattice_typedefs.h"
 #include "GlobalConstants.h"
 
 

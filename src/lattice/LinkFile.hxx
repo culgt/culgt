@@ -31,7 +31,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include "../util/datatype/datatypes.h"
+#include "datatype/datatypes.h"
 #include "../util/log/Logger.hxx"
 #include "filetypes/filetype_typedefs.h"
 

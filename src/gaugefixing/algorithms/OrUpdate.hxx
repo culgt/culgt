@@ -8,8 +8,8 @@
 #ifndef ORUPDATE_HXX_
 #define ORUPDATE_HXX_
 
-#include "../../../util/datatype/datatypes.h"
 #include "../GlobalConstants.h"
+#include "../../lattice/datatype/datatypes.h"
 
 class OrUpdate
 {

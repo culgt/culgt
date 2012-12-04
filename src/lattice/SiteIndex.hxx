@@ -20,8 +20,8 @@
 #ifndef SITEINDEX_HXX_
 #define SITEINDEX_HXX_
 
-#include "../util/cuda/cuda_host_device.h"
-#include "../util/datatype/lattice_typedefs.h"
+#include "cuda/cuda_host_device.h"
+#include "datatype/lattice_typedefs.h"
 #include <assert.h>
 
 /**

@@ -9,12 +9,18 @@
 #ifndef LANDAUKERNELSSU3_HXX_
 #define LANDAUKERNELSSU3_HXX_
 
-#include "../../util/datatype/datatypes.h"
-#include "../../util/datatype/lattice_typedefs.h"
-#include "../../util/rng/PhiloxWrapper.hxx"
-#include "simulated_annealing/SaUpdate.hxx"
-#include "simulated_annealing/RandomUpdate.hxx"
 #include "GlobalConstants.h"
+#include "../lattice/datatype/datatypes.h"
+#include "../lattice/datatype/lattice_typedefs.h"
+#include "../lattice/rng/PhiloxWrapper.hxx"
+#include "GaugeFixingSubgroupStep.hxx"
+#include "algorithms/SaUpdate.hxx"
+#include "algorithms/OrUpdate.hxx"
+#include "algorithms/MicroUpdate.hxx"
+#include "algorithms/RandomUpdate.hxx"
+#include "../lattice/Matrix.hxx"
+#include "../lattice/SU3.hxx"
+#include "../lattice/Link.hxx"
 
 
 // kernels as class members are not supported (even static): wrap the kernel calls and hide the kernels in namespace.
@@ -97,8 +103,8 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 	SiteCoord<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 
-	Matrix<complex,Nc> locMatSum;
-	SU3<Matrix<complex,Nc> > Sum(locMatSum);
+	Matrix<Complex<Real>,Nc> locMatSum;
+	SU3<Matrix<Complex<Real>,Nc> > Sum(locMatSum);
 
 	Sum.zero();
 
@@ -107,8 +113,8 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 	{
 		s.setLatticeIndex( site );
 
-		Matrix<complex,Nc> locMat;
-		SU3<Matrix<complex,Nc> > temp(locMat);
+		Matrix<Complex<Real>,Nc> locMat;
+		SU3<Matrix<Complex<Real>,Nc> > temp(locMat);
 
 		TLink linkUp( U, s, mu );
 		SU3<TLink> globUp( linkUp );
@@ -131,8 +137,8 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 
 	Sum -= Sum.trace()/Real(3.);
 
-	Matrix<complex,Nc> locMatSumHerm;
-	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
+	Matrix<Complex<Real>,Nc> locMatSumHerm;
+	SU3<Matrix<Complex<Real>,Nc> > SumHerm(locMatSumHerm);
 	SumHerm = Sum;
 	SumHerm.hermitian();
 
@@ -153,8 +159,8 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 	s.setLatticeIndex( site );
 	double result = 0;
 
-	Matrix<complex,Nc> locTemp;
-	SU3<Matrix<complex,Nc> > temp(locTemp);
+	Matrix<Complex<Real>,Nc> locTemp;
+	SU3<Matrix<Complex<Real>,Nc> > temp(locTemp);
 	for( int mu = 0; mu < 4; mu++ )
 	{
 		TLink linkUp( U, s, mu );

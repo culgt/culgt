@@ -8,9 +8,9 @@
 #ifndef GPUCOULOMBPATTERNPARITY_HXX_
 #define GPUCOULOMBPATTERNPARITY_HXX_
 
-#include "../../util/cuda/cuda_host_device.h"
-#include "../../util/datatype/lattice_typedefs.h"
 #include <assert.h>
+#include "../cuda/cuda_host_device.h"
+#include "../datatype/lattice_typedefs.h"
 
 template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuCoulombPatternParity
 {

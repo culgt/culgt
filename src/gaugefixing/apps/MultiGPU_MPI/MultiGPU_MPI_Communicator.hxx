@@ -12,9 +12,9 @@
 #define MULTIGPU_MPI_COMMUNICATOR_HXX_
 
 #include <stdio.h>
-#include "../../util/datatype/datatypes.h"
-#include "../../util/datatype/lattice_typedefs.h"
-#include "../../lattice/gaugefixing/GlobalConstants.h"
+#include "../../../lattice/datatype/datatypes.h"
+#include "../../../lattice/datatype/lattice_typedefs.h"
+#include "../../GlobalConstants.h"
 // #include "./MPI_ProcInfo.h"
 #include "./MultiGPU_MPI_LandauKernelsSU3.h"
 #include "./MultiGPU_MPI_Reduce.h"

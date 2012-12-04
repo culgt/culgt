@@ -12,10 +12,10 @@
 #ifndef SUGENERATOR_HXX_
 #define SUGENERATOR_HXX_
 
-#include "../util/datatype/lattice_typedefs.h"
-#include "../util/datatype/datatypes.h"
+#include "datatype/lattice_typedefs.h"
+#include "datatype/datatypes.h"
 #include "Matrix.hxx"
-#include "assert.h"
+#include <assert.h">
 #include <math.h>
 
 template<int Nc> class SUGenerator
@@ -24,82 +24,82 @@ public:
 	static void init();
 	static void initProduct();
 	static void initAntiCommutator();
-	static Matrix<complex,Nc>& get( int i );
-	static Matrix<complex,Nc>& getProduct( int a, int b );
-	static Matrix<complex,Nc>& getAntiCommutator( int a, int b );
+	static Matrix<Complex<Real>,Nc>& get( int i );
+	static Matrix<Complex<Real>,Nc>& getProduct( int a, int b );
+	static Matrix<Complex<Real>,Nc>& getAntiCommutator( int a, int b );
 private:
 	static bool initialized;
 	static bool initializedProduct;
 	static bool initializedAntiCommutator;
-	static Matrix<complex,Nc> generator[Nc*Nc];
-	static Matrix<complex,Nc> product[(Nc*Nc-1)*(Nc*Nc-1)];
-	static Matrix<complex,Nc> antiCommutator[(Nc*Nc-1)*(Nc*Nc-1)];
+	static Matrix<Complex<Real>,Nc> generator[Nc*Nc];
+	static Matrix<Complex<Real>,Nc> product[(Nc*Nc-1)*(Nc*Nc-1)];
+	static Matrix<Complex<Real>,Nc> antiCommutator[(Nc*Nc-1)*(Nc*Nc-1)];
 };
 
 template<int Nc> bool SUGenerator<Nc>::initialized = false;
 template<int Nc> bool SUGenerator<Nc>::initializedProduct = false;
 template<int Nc> bool SUGenerator<Nc>::initializedAntiCommutator = false;
-template<int Nc> Matrix<complex,Nc> SUGenerator<Nc>::generator[Nc*Nc];
-template<int Nc> Matrix<complex,Nc> SUGenerator<Nc>::product[(Nc*Nc-1)*(Nc*Nc-1)];
-template<int Nc> Matrix<complex,Nc> SUGenerator<Nc>::antiCommutator[(Nc*Nc-1)*(Nc*Nc-1)];
+template<int Nc> Matrix<Complex<Real>,Nc> SUGenerator<Nc>::generator[Nc*Nc];
+template<int Nc> Matrix<Complex<Real>,Nc> SUGenerator<Nc>::product[(Nc*Nc-1)*(Nc*Nc-1)];
+template<int Nc> Matrix<Complex<Real>,Nc> SUGenerator<Nc>::antiCommutator[(Nc*Nc-1)*(Nc*Nc-1)];
 
 template<> void SUGenerator<2>::init()
 {
 	initialized = true;
 
-	generator[0] = complex(1,0);
+	generator[0] = Complex<Real>(1,0);
 
-	generator[1] = complex(0,0);
-	generator[1].set( 0, 1, complex( 0, 1 ) );
-	generator[1].set( 1, 0, complex( 0, 1 ) );
+	generator[1] = Complex<Real>(0,0);
+	generator[1].set( 0, 1, Complex<Real>( 0, 1 ) );
+	generator[1].set( 1, 0, Complex<Real>( 0, 1 ) );
 
-	generator[2] = complex(0,0);
-	generator[2].set( 0, 1, complex( -1, 0 ) );
-	generator[2].set( 1, 0, complex( 1, 0 ) );
+	generator[2] = Complex<Real>(0,0);
+	generator[2].set( 0, 1, Complex<Real>( -1, 0 ) );
+	generator[2].set( 1, 0, Complex<Real>( 1, 0 ) );
 
-	generator[3] = complex(0,0);
-	generator[3].set( 0, 0, complex( 0, 1 ) );
-	generator[3].set( 1, 1, complex( 0, -1 ) );
+	generator[3] = Complex<Real>(0,0);
+	generator[3].set( 0, 0, Complex<Real>( 0, 1 ) );
+	generator[3].set( 1, 1, Complex<Real>( 0, -1 ) );
 }
 
 template<> void SUGenerator<3>::init()
 {
 	initialized = true;
 
-	generator[0] = complex(1,0);
+	generator[0] = Complex<Real>(1,0);
 
-	generator[1] = complex(0,0);
-	generator[1].set( 0, 1, complex( 1, 0 ) );
-	generator[1].set( 1, 0, complex( 1, 0 ) );
+	generator[1] = Complex<Real>(0,0);
+	generator[1].set( 0, 1, Complex<Real>( 1, 0 ) );
+	generator[1].set( 1, 0, Complex<Real>( 1, 0 ) );
 
-	generator[2] = complex(0,0);
-	generator[2].set( 0, 1, complex( 0, -1 ) );
-	generator[2].set( 1, 0, complex( 0, 1 ) );
+	generator[2] = Complex<Real>(0,0);
+	generator[2].set( 0, 1, Complex<Real>( 0, -1 ) );
+	generator[2].set( 1, 0, Complex<Real>( 0, 1 ) );
 
-	generator[3] = complex(0,0);
-	generator[3].set( 0, 0, complex( 1, 0 ) );
-	generator[3].set( 1, 1, complex( -1, 0 ) );
+	generator[3] = Complex<Real>(0,0);
+	generator[3].set( 0, 0, Complex<Real>( 1, 0 ) );
+	generator[3].set( 1, 1, Complex<Real>( -1, 0 ) );
 
-	generator[4] = complex(0,0);
-	generator[4].set( 0, 2, complex( 1, 0 ) );
-	generator[4].set( 2, 0, complex( 1, 0 ) );
+	generator[4] = Complex<Real>(0,0);
+	generator[4].set( 0, 2, Complex<Real>( 1, 0 ) );
+	generator[4].set( 2, 0, Complex<Real>( 1, 0 ) );
 
-	generator[5] = complex(0,0);
-	generator[5].set( 0, 2, complex( 0, -1 ) );
-	generator[5].set( 2, 0, complex( 0, 1 ) );
+	generator[5] = Complex<Real>(0,0);
+	generator[5].set( 0, 2, Complex<Real>( 0, -1 ) );
+	generator[5].set( 2, 0, Complex<Real>( 0, 1 ) );
 
-	generator[6] = complex(0,0);
-	generator[6].set( 1, 2, complex( 1, 0 ) );
-	generator[6].set( 2, 1, complex( 1, 0 ) );
+	generator[6] = Complex<Real>(0,0);
+	generator[6].set( 1, 2, Complex<Real>( 1, 0 ) );
+	generator[6].set( 2, 1, Complex<Real>( 1, 0 ) );
 
-	generator[7] = complex(0,0);
-	generator[7].set( 1, 2, complex( 0, -1 ) );
-	generator[7].set( 2, 1, complex( 0, 1 ) );
+	generator[7] = Complex<Real>(0,0);
+	generator[7].set( 1, 2, Complex<Real>( 0, -1 ) );
+	generator[7].set( 2, 1, Complex<Real>( 0, 1 ) );
 
-	generator[8] = complex(0,0);
-	generator[8].set( 0, 0, complex( 1, 0 ) );
-	generator[8].set( 1, 1, complex( 1, 0 ) );
-	generator[8].set( 2, 2, complex( -2, 0 ) );
+	generator[8] = Complex<Real>(0,0);
+	generator[8].set( 0, 0, Complex<Real>( 1, 0 ) );
+	generator[8].set( 1, 1, Complex<Real>( 1, 0 ) );
+	generator[8].set( 2, 2, Complex<Real>( -2, 0 ) );
 	generator[8] *= 1./pow(3.,.5);
 
 
@@ -139,19 +139,19 @@ template<int Nc> void SUGenerator<Nc>::initAntiCommutator()
 	}
 }
 
-template<int Nc> Matrix<complex,Nc>& SUGenerator<Nc>::get( int i )
+template<int Nc> Matrix<Complex<Real>,Nc>& SUGenerator<Nc>::get( int i )
 {
 	if( initialized ) return generator[i];
 	else assert( false ); // TODO put some nice error handling here
 }
 
-template<int Nc> Matrix<complex,Nc>& SUGenerator<Nc>::getProduct( int a, int b )
+template<int Nc> Matrix<Complex<Real>,Nc>& SUGenerator<Nc>::getProduct( int a, int b )
 {
 	if( initializedProduct ) return product[(a-1)*(Nc*Nc-1)+(b-1)];
 	else assert( false ); // TODO put some nice error handling here
 }
 
-template<int Nc> Matrix<complex,Nc>& SUGenerator<Nc>::getAntiCommutator( int a, int b )
+template<int Nc> Matrix<Complex<Real>,Nc>& SUGenerator<Nc>::getAntiCommutator( int a, int b )
 {
 	if( initializedAntiCommutator ) return antiCommutator[(a-1)*(Nc*Nc-1)+(b-1)];
 	else assert( false ); // TODO put some nice error handling here

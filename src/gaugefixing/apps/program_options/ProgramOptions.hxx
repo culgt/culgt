@@ -12,7 +12,7 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
 
-#include "../../lattice/filetypes/filetype_typedefs.h"
+#include "../../../lattice/filetypes/filetype_typedefs.h"
 
 #include <fstream>
 #include <string>

@@ -8,7 +8,7 @@
 #ifndef COMPLEX_HXX_
 #define COMPLEX_HXX_
 
-#include "../cuda/cuda_host_device.h"
+#include "cuda/cuda_host_device.h"
 
 template <class datatype> class Complex
 {

@@ -9,7 +9,7 @@
 
 #include <string>
 #include <stdio.h>
-#include "../cuda/cuda_host_device.h"
+#include "../../lattice/cuda/cuda_host_device.h"
 
 
 namespace util

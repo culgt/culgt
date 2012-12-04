@@ -10,7 +10,7 @@
 #ifndef MICROUPDATE_HXX_
 #define MICROUPDATE_HXX_
 
-#include "../../../util/datatype/datatypes.h"
+#include "../../lattice/datatype/datatypes.h"
 
 class MicroUpdate
 {

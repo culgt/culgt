@@ -45,11 +45,11 @@ $(PROG): $(CCOBJ) $(CUOBJ)
 %.o: %.cu
 	$(NVCC) -c $(CUFLAGS) $< $(CUDEFS)
 
-Chronotimer.o: ../../util/timer/Chronotimer.cc
-	$(NVCC) -c ../../util/timer/Chronotimer.cc
+Chronotimer.o: ../../../util/timer/Chronotimer.cc
+	$(NVCC) -c ../../../util/timer/Chronotimer.cc
 
-GlobalConstants.o: ../../lattice/gaugefixing/GlobalConstants.cu
-	$(NVCC) -c $(CUDEFS) $(CUFLAGS) ../../lattice/gaugefixing/GlobalConstants.cu
+GlobalConstants.o: ../../GlobalConstants.cu
+	$(NVCC) -c $(CUDEFS) $(CUFLAGS) ../../GlobalConstants.cu
 
 clean: 
 	rm -f *.o $(PROG)

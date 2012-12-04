@@ -24,9 +24,9 @@
 #ifndef SU3_HXX_
 #define SU3_HXX_
 
-#include "../util/cuda/cuda_host_device.h"
-#include "../util/datatype/datatypes.h"
-#include "../util/datatype/lattice_typedefs.h"
+#include "cuda/cuda_host_device.h"
+#include "datatype/datatypes.h"
+#include "datatype/lattice_typedefs.h"
 #include "Matrix.hxx"
 #include "Link.hxx"
 #include "Quaternion.hxx"
@@ -41,29 +41,29 @@ public:
 
 	CUDA_HOST_DEVICE inline Type& getMat();
 
-	CUDA_HOST_DEVICE inline complex get( lat_group_dim_t i, lat_group_dim_t j );
-	CUDA_HOST_DEVICE inline complex get(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j);
+	CUDA_HOST_DEVICE inline Complex<Real> get( lat_group_dim_t i, lat_group_dim_t j );
+	CUDA_HOST_DEVICE inline Complex<Real> get(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j);
 	CUDA_HOST_DEVICE inline Quaternion<Real> getSubgroupQuaternion( lat_group_dim_t iSub, lat_group_dim_t jSub ); // TODO binding this class to class Quaternion is not good style -> make this a static function elsewhere
-	CUDA_HOST_DEVICE inline void set( lat_group_dim_t i, lat_group_dim_t j, complex c);
-	CUDA_HOST_DEVICE inline void set(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, complex c);
+	CUDA_HOST_DEVICE inline void set( lat_group_dim_t i, lat_group_dim_t j, Complex<Real> c);
+	CUDA_HOST_DEVICE inline void set(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, Complex<Real> c);
 	CUDA_HOST_DEVICE inline SU3<Type>& operator+=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
 	CUDA_HOST_DEVICE inline SU3<Type>& operator-=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
 	CUDA_HOST_DEVICE inline SU3<Type>& operator*=( SU3<Type> );  // TODO can we overload this for arbitrary Type2 (we need some temporary matrix but we don't know of which type we want it!
 																	// The problem boils down to that we can't do SU3<Link>*SU3<Link> because we don't know where to store the data...
 																	// Maybe the SU3 wrapper is not as good as it looked in the first place.
 
-	CUDA_HOST_DEVICE inline SU3<Type>& operator/=( complex );
-	CUDA_HOST_DEVICE inline SU3<Type>& operator-=( complex );
+	CUDA_HOST_DEVICE inline SU3<Type>& operator/=( Complex<Real> );
+	CUDA_HOST_DEVICE inline SU3<Type>& operator-=( Complex<Real> );
 
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator+=( SU3<Type2> );
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& operator=( SU3<Type2> );
-//	template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> );
+//	template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<Complex<Real>,3> > operator*( SU3<Type2> );
 	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLine( SU3<Type2> );
 //	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4ToMat( SU3<Type2> ); // TODO uebelster HACK
 //	template<class Type2> CUDA_HOST_DEVICE inline SU3<Type>& assignWithoutThirdLineFloat4FromMat( SU3<Type2> );// TODO uebelster HACK
 
-	CUDA_HOST_DEVICE inline complex det();
-	CUDA_HOST_DEVICE inline complex trace();
+	CUDA_HOST_DEVICE inline Complex<Real> det();
+	CUDA_HOST_DEVICE inline Complex<Real> trace();
 	CUDA_HOST_DEVICE inline void identity();
 	CUDA_HOST_DEVICE inline void zero();
 	CUDA_HOST_DEVICE inline void projectSU3();
@@ -116,7 +116,7 @@ template<class Type> Type& SU3<Type>::getMat()
  * @parameter col index j
  * @return matrix element (i,j)
  */
-template<class Type> complex SU3<Type>::get( lat_group_dim_t i, lat_group_dim_t j )
+template<class Type> Complex<Real> SU3<Type>::get( lat_group_dim_t i, lat_group_dim_t j )
 {
 	return mat.get(i,j);
 }
@@ -127,7 +127,7 @@ template<class Type> complex SU3<Type>::get( lat_group_dim_t i, lat_group_dim_t 
  * @parameter col index j
  * @parameter element to set
  */
-template<class Type> void SU3<Type>::set( lat_group_dim_t i, lat_group_dim_t j, complex c )
+template<class Type> void SU3<Type>::set( lat_group_dim_t i, lat_group_dim_t j, Complex<Real> c )
 {
 	return mat.set(i,j,c);
 }
@@ -141,7 +141,7 @@ template<class Type> void SU3<Type>::set( lat_group_dim_t i, lat_group_dim_t j, 
  * @parameter col of 2x2-subgroup, i.e. j = 0 or 1
  * @return matrix element in 2x2-submatrix.
  */
-template<class Type> complex SU3<Type>::get( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j )
+template<class Type> Complex<Real> SU3<Type>::get( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j )
 {
 	return mat.get( (i==0)?(iSub):(jSub), (j==1)?(iSub):(jSub) );	//Subgroup access TODO write about how this works
 }
@@ -154,7 +154,7 @@ template<class Type> complex SU3<Type>::get( lat_group_dim_t iSub, lat_group_dim
  * @parameter col of 2x2-subgroup, i.e. j = 0 or 1
  * @parameter element to set.
  */
-template<class Type> void SU3<Type>::set( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, complex c )
+template<class Type> void SU3<Type>::set( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, Complex<Real> c )
 {
 	return mat.set((i==0)?(iSub):(jSub), (j==1)?(iSub):(jSub) ,c);
 }
@@ -174,7 +174,7 @@ template<class Type> void SU3<Type>::set( lat_group_dim_t iSub, lat_group_dim_t 
 template<class Type> Quaternion<Real> SU3<Type>::getSubgroupQuaternion( lat_group_dim_t iSub, lat_group_dim_t jSub )
 {
 	Quaternion<Real> q;
-	complex temp;
+	Complex<Real> temp;
 	temp = mat.get(iSub,iSub);
 	q[0] = temp.x;
 	q[3] = temp.y;
@@ -231,13 +231,13 @@ template<class Type> SU3<Type>& SU3<Type>::operator*=( SU3<Type> c )
 	return *this;
 }
 
-template<class Type> SU3<Type>& SU3<Type>::operator/=( complex c )
+template<class Type> SU3<Type>& SU3<Type>::operator/=( Complex<Real> c )
 {
 	mat /= c;
 	return *this;
 }
 
-template<class Type> SU3<Type>& SU3<Type>::operator-=( complex c )
+template<class Type> SU3<Type>& SU3<Type>::operator-=( Complex<Real> c )
 {
 	mat -= c;
 	return *this;
@@ -260,7 +260,7 @@ template<class Type> template<class Type2> SU3<Type>& SU3<Type>::operator=( SU3<
 // * TODO comments!
 // * We return always with storage type Matrix. Think about how this can be done in a nice way.
 // */
-//template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<complex,3> > operator*( SU3<Type2> )
+//template<class Type2> CUDA_HOST_DEVICE inline SU3<Matrix<Complex<Real>,3> > operator*( SU3<Type2> )
 //{
 //
 //}
@@ -289,22 +289,22 @@ template<class Type> template<class Type2> SU3<Type>& SU3<Type>::assignWithoutTh
 //	f1 = c.mat.getFloat4( 0, 2 );
 //	f2 = c.mat.getFloat4( 1, 1 );
 //
-//	complex a( f0.x, f0.y );
+//	Complex<Real> a( f0.x, f0.y );
 //	mat.set( 0, 0, a);
 //
-//	a = complex( f0.z, f0.w );
+//	a = Complex<Real>( f0.z, f0.w );
 //	mat.set( 0, 1, a);
 //
-//	a = complex( f1.x, f1.y );
+//	a = Complex<Real>( f1.x, f1.y );
 //		mat.set( 0, 2, a);
 //
-//	a = complex( f1.z, f1.w );
+//	a = Complex<Real>( f1.z, f1.w );
 //		mat.set( 1, 0, a);
 //
-//	a = complex( f2.x, f2.y );
+//	a = Complex<Real>( f2.x, f2.y );
 //	mat.set( 1, 1, a);
 //
-//	a = complex( f2.z, f2.w );
+//	a = Complex<Real>( f2.z, f2.w );
 //	mat.set( 1, 2, a);
 //
 //	return *this;
@@ -347,7 +347,7 @@ template<class Type> template<class Type2> SU3<Type> SU3<Type>::operator*( SU3<T
 	{
 		for( lat_group_dim_t j = 0; j < 3; j++ )
 		{
-			complex temp(0,0);
+			Complex<Real> temp(0,0);
 			for( lat_group_dim_t k = 0; k < 3; k++ )
 			{
 				temp += get(i,k)*b.get(k,j);
@@ -371,10 +371,10 @@ template<class Type> template<class Type2> SU3<Type> SU3<Type>::operator+( SU3<T
  * Determinant.
  * TODO Check for faster implementations...
  */
-template<class Type> complex SU3<Type>::det()
+template<class Type> Complex<Real> SU3<Type>::det()
 {
-	complex c( 0, 0 );
-	complex temp = get(0,0);
+	Complex<Real> c( 0, 0 );
+	Complex<Real> temp = get(0,0);
 	temp *= get(1,1);
 	temp *= get(2,2);
 	c += temp;
@@ -412,7 +412,7 @@ template<class Type> complex SU3<Type>::det()
 /**
  * Delegate trace() to underlying storage class.
  */
-template<class Type> complex SU3<Type>::trace()
+template<class Type> Complex<Real> SU3<Type>::trace()
 {
 	return mat.trace();
 }
@@ -428,11 +428,11 @@ template<class Type> void SU3<Type>::identity()
 		{
 			if( i == j )
 			{
-				set( i,j, complex( 1, 0 ) );
+				set( i,j, Complex<Real>( 1, 0 ) );
 			}
 			else
 			{
-				set( i,j, complex( 0, 0 ) );
+				set( i,j, Complex<Real>( 0, 0 ) );
 			}
 		}
 	}
@@ -443,7 +443,7 @@ template<class Type> void SU3<Type>::identity()
  */
 template<class Type> SU3<Type>& SU3<Type>::hermitian()
 {
-	Matrix<complex,3> temp;
+	Matrix<Complex<Real>,3> temp;
 	for( lat_group_dim_t i = 0; i < 3; i++ )
 	{
 		for( lat_group_dim_t j = 0; j < 3; j++ )
@@ -470,7 +470,7 @@ template<class Type> void SU3<Type>::zero()
 	{
 		for(lat_group_dim_t j = 0; j < 3; j++ )
 		{
-			set( i,j, complex(0, 0 ) );
+			set( i,j, Complex<Real>(0, 0 ) );
 		}
 	}
 }

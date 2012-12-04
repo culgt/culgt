@@ -8,6 +8,7 @@
 #define FILEITERATOR_HXX_
 
 #include "ProgramOptions.hxx"
+#include <iomanip>
 #include <sstream>
 
 

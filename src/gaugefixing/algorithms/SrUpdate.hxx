@@ -8,8 +8,8 @@
 #ifndef SRUPDATE_HXX_
 #define SRUPDATE_HXX_
 
-#include "../../../util/rng/PhiloxWrapper.hxx"
-#include "../../../util/datatype/datatypes.h"
+#include "../../lattice/datatype/datatypes.h"
+#include "../../lattice/rng/PhiloxWrapper.hxx"
 
 class SrUpdate
 {

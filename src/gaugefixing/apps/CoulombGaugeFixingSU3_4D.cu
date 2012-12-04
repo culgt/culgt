@@ -11,36 +11,29 @@
 #ifndef OSX
 #include "malloc.h"
 #endif
-#include "../lattice/gaugefixing/GlobalConstants.h"
-#include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
-#include "../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
-#include "../lattice/gaugefixing/simulated_annealing/SaUpdate.hxx"
-#include "../lattice/access_pattern/StandardPattern.hxx"
-#include "../lattice/access_pattern/GpuCoulombPattern.hxx"
-#include "../lattice/access_pattern/GpuLandauPattern.hxx"
-#include "../lattice/SiteCoord.hxx"
-#include "../lattice/SiteIndex.hxx"
-#include "../lattice/Link.hxx"
-#include "../lattice/SU3.hxx"
-#include "../lattice/Matrix.hxx"
-#include "../lattice/LinkFile.hxx"
-#include "../util/timer/Chronotimer.h"
-#include "../lattice/filetypes/FileVogt.hxx"
-#include "../lattice/filetypes/FilePlain.hxx"
-#include "../lattice/filetypes/FileHeaderOnly.hxx"
-#include "../lattice/filetypes/filetype_typedefs.h"
-#include "../util/datatype/lattice_typedefs.h"
-#include "../util/rng/PhiloxWrapper.hxx"
+#include "../GlobalConstants.h"
+#include "../GaugeFixingStats.hxx"
+#include "../../lattice/access_pattern/StandardPattern.hxx"
+#include "../../lattice/access_pattern/GpuLandauPattern.hxx"
+#include "../../lattice/access_pattern/GpuCoulombPattern.hxx"
+#include "../../lattice/SiteCoord.hxx"
+#include "../../lattice/SiteIndex.hxx"
+#include "../../lattice/LinkFile.hxx"
+#include "../../util/timer/Chronotimer.h"
+#include "../../lattice/filetypes/FileVogt.hxx"
+#include "../../lattice/filetypes/FilePlain.hxx"
+#include "../../lattice/filetypes/FileHeaderOnly.hxx"
+#include "../../lattice/filetypes/filetype_typedefs.h"
+#include "../../lattice/datatype/lattice_typedefs.h"
+#include "../../lattice/rng/PhiloxWrapper.hxx"
 //#include <boost/program_options/parsers.hpp>
 //#include <boost/program_options/variables_map.hpp>
 //#include <boost/program_options/options_description.hpp>
 #include "program_options/ProgramOptions.hxx"
 #include "program_options/FileIterator.hxx"
-#include "../util/cuda/CudaError.hxx"
-#include "../lattice/gaugefixing/CoulombKernelsSU3.hxx"
-#include "../lattice/gaugefixing/CommonKernelsSU3.hxx"
+//#include "../util/cuda/CudaError.hxx"
+#include "../CoulombKernelsSU3.hxx"
+#include "../CommonKernelsSU3.hxx"
 
 using namespace std;
 
@@ -344,7 +337,7 @@ int main(int argc, char* argv[])
 						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 
 						gaugeStats.generateGaugeQuality();
-						CudaError::getLastError( "generateGaugeQuality error" );
+//						CudaError::getLastError( "generateGaugeQuality error" );
 						printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 					}
 					temperature -= tempStep;

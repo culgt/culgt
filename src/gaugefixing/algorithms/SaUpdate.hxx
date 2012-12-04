@@ -10,8 +10,8 @@
 #ifndef SAUPDATE_HXX_
 #define SAUPDATE_HXX_
 
-#include "../../../util/datatype/datatypes.h"
-#include "../../../util/rng/PhiloxWrapper.hxx"
+#include "../../lattice/datatype/datatypes.h"
+#include "../../lattice/rng/PhiloxWrapper.hxx"
 
 class SaUpdate
 {

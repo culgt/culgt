@@ -15,7 +15,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "../gaugefixing/GlobalConstants.h"
+#include "../../gaugefixing/GlobalConstants.h" // TODO must not use a gaugefixing class!!!
 
 using namespace std;
 

@@ -10,7 +10,8 @@
 #ifndef MATRIX_HXX_
 #define MATRIX_HXX_
 
-#include "../util/datatype/datatypes.h"
+#include "cuda/cuda_host_device.h"
+#include "datatype/datatypes.h"
 #include <iostream>
 #include <fstream>
 

@@ -19,9 +19,9 @@
 #define QUATERNION_HXX_
 
 
-#include "../util/cuda/cuda_host_device.h"
-#include "../util/datatype/Complex.hxx"
-#include "../util/datatype/lattice_typedefs.h"
+#include "cuda/cuda_host_device.h"
+#include "Complex.hxx"
+#include "datatype/lattice_typedefs.h"
 #include <assert.h>
 
 template<class T> class Quaternion

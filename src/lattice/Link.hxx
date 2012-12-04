@@ -15,20 +15,21 @@
 #ifndef LINK_HXX_
 #define LINK_HXX_
 
-#include "../util/datatype/datatypes.h"
 #include <assert.h>
 #include <iostream>
+#include "datatype/datatypes.h"
+#include "Complex.hxx"
 
 template<class Pattern, class TheSite, int T_Ndim, int T_Nc> class Link
 {
 public:
 	CUDA_HOST_DEVICE inline Link( Real* data, TheSite site, int mu );
 	CUDA_HOST_DEVICE inline virtual ~Link();
-	CUDA_HOST_DEVICE inline complex get(int i, int j);
+	CUDA_HOST_DEVICE inline Complex<Real> get(int i, int j);
 //	CUDA_HOST_DEVICE inline float4 getFloat4(int i, int j);
-	CUDA_HOST_DEVICE inline void set(int i, int j, complex c);
+	CUDA_HOST_DEVICE inline void set(int i, int j, Complex<Real> c);
 //	CUDA_HOST_DEVICE inline void setFloat4(int i, int j, float4 f);
-	CUDA_HOST_DEVICE inline complex trace();
+	CUDA_HOST_DEVICE inline Complex<Real> trace();
 	CUDA_HOST_DEVICE inline Link<Pattern, TheSite, T_Ndim, T_Nc>& operator+=( Link<Pattern, TheSite, T_Ndim, T_Nc> );
 
 	CUDA_HOST_DEVICE inline TheSite& getSite();
@@ -105,9 +106,9 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, 
  * Trace.
  * TODO do it here or in frontend class SU3? Maybe we want to use Link without frontend class?
  */
-template<class Pattern, class TheSite, int T_Ndim, int T_Nc> complex Link<Pattern, TheSite, T_Ndim, T_Nc>::trace()
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> Complex<Real> Link<Pattern, TheSite, T_Ndim, T_Nc>::trace()
 {
-	complex c;
+	Complex<Real> c;
 	for( int i = 0; i < T_Nc; i++ )
 	{
 		c += get(i,i);

@@ -5,35 +5,32 @@
  *      Author: vogt
  */
 
-#include "../lattice/gaugefixing/GlobalConstants.h"
+#include "../GlobalConstants.h"
 #include <iostream>
 #include <math.h>
 #include <sstream>
 #ifndef OSX
 #include "malloc.h"
 #endif
-#include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
-#include "../lattice/gaugefixing/GaugeFixingStats.hxx"
-#include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
-#include "../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
+#include "../GaugeFixingStats.hxx"
 //#include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
-#include "../lattice/access_pattern/StandardPattern.hxx"
-#include "../lattice/access_pattern/GpuCoulombPattern.hxx"
-#include "../lattice/access_pattern/GpuLandauPattern.hxx"
-#include "../lattice/SiteCoord.hxx"
-#include "../lattice/SiteIndex.hxx"
-#include "../lattice/Link.hxx"
-#include "../lattice/SU3.hxx"
-#include "../lattice/Matrix.hxx"
-#include "../lattice/LinkFile.hxx"
+#include "../../lattice/access_pattern/StandardPattern.hxx"
+#include "../../lattice/access_pattern/GpuLandauPattern.hxx"
+#include "../../lattice/SiteCoord.hxx"
+#include "../../lattice/SiteIndex.hxx"
+//#include "../lattice/Link.hxx"
+//#include "../lattice/SU3.hxx"
+//#include "../lattice/Matrix.hxx"
+//#include "../lattice/LinkFile.hxx"
 //#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
-#include "../util/timer/Chronotimer.h"
-#include "../lattice/filetypes/FileHeaderOnly.hxx"
-#include "../lattice/filetypes/FilePlain.hxx"
-#include "../lattice/filetypes/FileVogt.hxx"
-#include "../lattice/filetypes/filetype_typedefs.h"
-#include "../lattice/gaugefixing/LandauKernelsSU3.hxx"
-#include "../lattice/gaugefixing/CommonKernelsSU3.hxx"
+#include "../../util/timer/Chronotimer.h"
+#include "../../lattice/filetypes/FileHeaderOnly.hxx"
+#include "../../lattice/filetypes/FilePlain.hxx"
+#include "../../lattice/filetypes/FileVogt.hxx"
+#include "../../lattice/filetypes/filetype_typedefs.h"
+#include "../../lattice/LinkFile.hxx"
+#include "../LandauKernelsSU3.hxx"
+#include "../CommonKernelsSU3.hxx"
 #include "program_options/ProgramOptions.hxx"
 #include "program_options/FileIterator.hxx"
 

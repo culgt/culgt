@@ -13,24 +13,18 @@
 #ifndef OSX
 #include "malloc.h"
 #endif
-#include "../../lattice/access_pattern/StandardPattern.hxx"
-#include "../../lattice/access_pattern/GpuCoulombPatternParity.hxx"
-#include "../../lattice/access_pattern/GpuLandauPatternParity.hxx"
-#include "../../lattice/SiteCoord.hxx"
-#include "../../lattice/SiteIndex.hxx"
-#include "../../lattice/Link.hxx"
-#include "../../lattice/SU3.hxx"
-#include "../../lattice/Matrix.hxx"
-#include "../../lattice/LinkFile.hxx"
-#include "../../util/timer/Chronotimer.h"
-#include "../../lattice/filetypes/FileHeaderOnly.hxx"
-#include "../../lattice/filetypes/FilePlain.hxx"
-#include "../../lattice/filetypes/FileVogt.hxx"
-#include "../../lattice/filetypes/filetype_typedefs.h"
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/program_options/options_description.hpp>
-#include "../../lattice/gaugefixing/GlobalConstants.h"
+#include "../../../lattice/access_pattern/StandardPattern.hxx"
+#include "../../../lattice/access_pattern/GpuCoulombPatternParity.hxx"
+#include "../../../lattice/access_pattern/GpuLandauPatternParity.hxx"
+#include "../../../lattice/SiteCoord.hxx"
+#include "../../../lattice/SiteIndex.hxx"
+#include "../../../lattice/LinkFile.hxx"
+#include "../../../util/timer/Chronotimer.h"
+#include "../../../lattice/filetypes/FileHeaderOnly.hxx"
+#include "../../../lattice/filetypes/FilePlain.hxx"
+#include "../../../lattice/filetypes/FileVogt.hxx"
+#include "../../../lattice/filetypes/filetype_typedefs.h"
+#include "../../GlobalConstants.h"
 #include "../program_options/ProgramOptions.hxx"
 #include "../program_options/FileIterator.hxx"
 

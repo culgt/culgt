@@ -8,9 +8,9 @@
 #ifndef GLOBALCONSTANTS_HXX_
 #define GLOBALCONSTANTS_HXX_
 
-#include "../../util/cuda/cuda_host_device.h"
-#include "../../util/datatype/lattice_typedefs.h"
-#include <cuda_runtime.h>
+#include "../lattice/cuda/cuda_host_device.h"
+#include "../lattice/datatype/lattice_typedefs.h"
+#include <cuda.h>
 
 #ifdef _X_
 const lat_coord_t Nx = _X_;

@@ -13,9 +13,9 @@
 #ifndef GAUGEFIXINGSUBGROUPSTEP_HXX_
 #define GAUGEFIXINGSUBGROUPSTEP_HXX_
 
-#include "../../util/datatype/datatypes.h"
-#include "../../util/datatype/lattice_typedefs.h"
-#include "../Quaternion.hxx"
+#include "../lattice/datatype/datatypes.h"
+#include "../lattice/datatype/lattice_typedefs.h"
+#include "../lattice/Quaternion.hxx"
 #include "./GlobalConstants.h"
 
 #define USEATOMIC
