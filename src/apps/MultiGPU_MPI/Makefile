@@ -48,5 +48,8 @@ $(PROG): $(CCOBJ) $(CUOBJ)
 Chronotimer.o: ../../util/timer/Chronotimer.cc
 	$(NVCC) -c ../../util/timer/Chronotimer.cc
 
+GlobalConstants.o: ../../lattice/gaugefixing/GlobalConstants.cu
+	$(NVCC) -c $(CUDEFS) $(CUFLAGS) ../../lattice/gaugefixing/GlobalConstants.cu
+
 clean: 
 	rm -f *.o $(PROG)

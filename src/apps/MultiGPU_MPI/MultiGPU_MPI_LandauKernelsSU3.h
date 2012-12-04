@@ -24,10 +24,11 @@ static const int Nc = 3;
 template<class Algorithm> inline __device__ void applyOneTimeslice( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, Algorithm algorithm  );
 __global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA );
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt );
-__global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int counter );
+__global__ void randomTrafo( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, int counter );
 __global__ void orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter );
 __global__ void microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity );
 __global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter );
+__global__ void projectSU3( Real* Ut );
 }
 
 // wrappers:
@@ -44,6 +45,8 @@ public:
 	
 	void applyOneTimeslice( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, MultiGPU_MPI_AlgorithmOptions algoOptions  );
 
+	void projectSU3( int a, int b, cudaStream_t stream, Real* Ut );
+	
 	void generateGaugeQualityPerSite( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA );
 // 	static double getGaugeQualityPrefactorA();
 // 	static double getGaugeQualityPrefactorGff();

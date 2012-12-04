@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include "../../util/datatype/datatypes.h"
 #include "../../util/datatype/lattice_typedefs.h"
-#include "../../lattice/gaugefixing/GlobalConstants.hxx"
+#include "../../lattice/gaugefixing/GlobalConstants.h"
 // #include "./MPI_ProcInfo.h"
 #include "./MultiGPU_MPI_LandauKernelsSU3.h"
 #include "./MultiGPU_MPI_Reduce.h"
@@ -67,6 +67,8 @@ public:
 	int getEndPart( int end );
 	// apply: applies algorithm, takes care of communication between devices
 	void apply( Real** dU, lat_index_t** dNnt, bool evenodd, MultiGPU_MPI_AlgorithmOptions algoOptions );
+	// projectSU3: iterates over the timeslices, no comm. needed.
+	void projectSU3( Real** dU );
 	// generate the gauge quality
 	void generateGaugeQuality( Real** dU, lat_index_t** dNnt );
 	// get the current value of the gauge functional
@@ -401,6 +403,23 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::apply( Real*
 			kernelWrapper.applyOneTimeslice( numBlocks, threadsPerBlock, streamStd, dU[t], dU[tDw], dNnt[rank], evenodd ^ (t%2), algoOptions );
 		}
 	} // end if nproc > 1
+}
+
+
+template< class MultiGPU_MPI_GaugeKernels >
+inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::projectSU3( Real** dU )
+{
+	static const int threadsPerBlock = NSB; // NSB sites are updated within a block (8 threads are needed per site)
+	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
+	
+	// instantiate object of kernel wrapper class
+	static MultiGPU_MPI_GaugeKernels kernelWrapper;
+
+	for( int t=tmin; t<tmax; t++ )
+	{
+		kernelWrapper.projectSU3( numBlocks, threadsPerBlock, streamStd, dU[t] );
+	}
+	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 }
 
 

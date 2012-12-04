@@ -89,3 +89,7 @@ void MultiGPU_MPI_AlgorithmOptions::setAlgorithm( enum AlgoType _algo ) {
 	algo = _algo;
 }
 
+void MultiGPU_MPI_AlgorithmOptions::decreaseTemperature() {
+	temperature -= tempStep;
+}
+

@@ -21,7 +21,8 @@
 // SR = stochastic relaxation
 // SA = simulated annealing
 // MS = micro step
-enum AlgoType { OR, SR, SA, MS };
+// RT = random transformation
+enum AlgoType { OR, SR, SA, MS, RT };
 
 
 class MultiGPU_MPI_AlgorithmOptions
@@ -50,6 +51,8 @@ public:
 	void setSaSteps( int );
 	// set an algorithm to active
 	void setAlgorithm( enum AlgoType );
+	// temperature -= tempStep:
+	void decreaseTemperature();
 private:
 	int saSteps;
 	float saMin;

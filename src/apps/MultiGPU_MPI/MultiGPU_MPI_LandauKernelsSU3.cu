@@ -7,10 +7,10 @@
  */
 
 #include "../../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
-// #include "../../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
 #include "../../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
 #include "../../lattice/gaugefixing/simulated_annealing/SaUpdate.hxx"
+#include "../../lattice/gaugefixing/simulated_annealing/RandomUpdate.hxx"
 #include "../../lattice/access_pattern/StandardPattern.hxx"
 #include "../../lattice/access_pattern/GpuCoulombPattern.hxx"
 #include "../../lattice/access_pattern/GpuLandauPatternParity.hxx"
@@ -19,7 +19,7 @@
 #include "../../lattice/Link.hxx"
 #include "../../lattice/SU3.hxx"
 #include "../../lattice/Matrix.hxx"
-#include "../../lattice/gaugefixing/GlobalConstants.hxx"
+#include "../../lattice/gaugefixing/GlobalConstants.h"
 #include "../../util/rng/PhiloxWrapper.hxx"
 
 #include "./MultiGPU_MPI_LandauKernelsSU3.h"
@@ -189,11 +189,6 @@ __global__ void restoreThirdLine( Real* U, lat_index_t* nnt )
 }
 
 
-__global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int counter )
-{
-	// TODO
-}
-
 __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
 {
 	OrUpdate overrelax( orParameter );
@@ -211,6 +206,34 @@ __global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, f
 	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
 	SaUpdate sa( temperature, &rng );
 	applyOneTimeslice( UtUp, UtDw, nnt, parity, sa );
+}
+
+__global__ void randomTrafo( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, int counter )
+{
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	RandomUpdate random( &rng );
+	applyOneTimeslice( UtUp, UtDw, nnt, parity, random );
+}
+
+__global__ void projectSU3( Real* Ut )
+{
+	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
+
+	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+	SiteIndex<4,FULL_SPLIT> s(size);
+	
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+
+	s.setLatticeIndex( site );
+
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		TLinkIndex linkUp( Ut, s, mu );
+		SU3<TLinkIndex> globUp( linkUp );
+
+		globUp.projectSU3(); // IMPORTANT: Currently this kernel is used for reconstructing third line in the end. Be aware of this when changing something.
+	}
 }
 
 }
@@ -258,16 +281,25 @@ void MultiGPU_MPI_LandauKernelsSU3::applyOneTimeslice( int a, int b, cudaStream_
 	case SA:
 		MPILKSU3::saStep<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, algoOptions.getTemperature(), PhiloxWrapper::getNextCounter() );
 		break;
+	case RT:
+		MPILKSU3::randomTrafo<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, PhiloxWrapper::getNextCounter() );
+		break;
 	default:
 		printf("Algorithm type not set to a known value [MultiGPU_MPI_AlgorithmOptions::setAlgorithm(enum AlgoType)]. Exiting\n");
 		exit(1);
 	}
 }
 
+void MultiGPU_MPI_LandauKernelsSU3::projectSU3( int a, int b, cudaStream_t stream, Real* Ut )
+{
+	MPILKSU3::projectSU3<<<a,b,0,stream>>>( Ut );
+}
+
 void MultiGPU_MPI_LandauKernelsSU3::generateGaugeQualityPerSite( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA )
 {
 	MPILKSU3::generateGaugeQualityPerSite<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, dGff, dA );
-};
+}
+
 // double MultiGPU_MPI_LandauKernelsSU3::getGaugeQualityPrefactorA()
 // {
 // 	return 1./(double)MPILKSU3::Nc;

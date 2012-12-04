@@ -30,7 +30,7 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
-#include "../../lattice/gaugefixing/GlobalConstants.hxx"
+#include "../../lattice/gaugefixing/GlobalConstants.h"
 #include "../program_options/ProgramOptions.hxx"
 #include "../program_options/FileIterator.hxx"
 
@@ -77,6 +77,10 @@ int main(int argc, char* argv[])
 	
 	// instantiate object of MPI communicator
 	MultiGPU_MPI_Communicator< MultiGPU_MPI_LandauKernelsSU3 > comm(argc,argv);
+	
+	Chronotimer kernelTimer;
+	if( comm.isMaster() ) kernelTimer.reset();
+	if( comm.isMaster() ) kernelTimer.start();
 	
 	// inst. obj. to pass algorithm options to kernel wrappers
 	MultiGPU_MPI_AlgorithmOptions algoOptions;
@@ -141,8 +145,12 @@ int main(int argc, char* argv[])
 
 	
 
-	float totalKernelTime = 0;
-	long totalStepNumber = 0;
+// 	float totalKernelTime = 0;
+// 	long totalStepNumber = 0;
+	
+	double orTotalKernelTime = 0; // sum up total kernel time for OR
+	long orTotalStepnumber = 0;
+	double saTotalKernelTime = 0;
 
 	FileIterator fi( options );
 	for( fi.reset(); fi.hasNext(); fi.next() )
@@ -181,55 +189,164 @@ int main(int argc, char* argv[])
 				cout << "File loaded." << endl;
 			}
 		}
-		
+		//---------------------------------------------------------------------------
 		// send (parts of) config. to all processes and transfer to devices
-		comm.scatterGaugeField( dU, U );
+// 		comm.scatterGaugeField( dU, U );
 		
 		
-		// calculate and print the gauge quality
-		if( comm.isMaster() ) printf( "i:\t\tgff:\t\tdA:\n");
-		comm.generateGaugeQuality( dU, dNnt );
-		
-		//TODO divide somewhere else
-		if( comm.isMaster() ) printf( "-\t\t%1.10f\t\t%e\n", comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
+// 		// calculate and print the gauge quality
+// 		if( comm.isMaster() ) printf( "i:\t\tgff:\t\tdA:\n");
+// 		comm.generateGaugeQuality( dU, dNnt );
+// 		
+// 		//TODO divide somewhere else
+// 		if( comm.isMaster() ) printf( "-\t\t%1.10f\t\t%e\n", comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
 			
 			
-		Chronotimer kernelTimer;
-		if( comm.isMaster() ) kernelTimer.reset();
-		if( comm.isMaster() ) kernelTimer.start();
+// 		Chronotimer kernelTimer;
+// 		if( comm.isMaster() ) kernelTimer.reset();
+// 		if( comm.isMaster() ) kernelTimer.start();
+// 		
+// 		
+// 		// set algorithm = overrelaxation
+// 		algoOptions.setAlgorithm( OR );
+// 		
+// 		// iterate the algorithm
+// 		for( int i = 0; i < options.getOrMaxIter(); i++ )
+// 		{
+// 			for( int evenodd=0; evenodd<2; evenodd++ )
+// 			{
+// 				comm.apply( dU, dNnt, evenodd, algoOptions );
+// 			} 
+// 
+// 			// calculate and print the gauge quality
+// 			if( i % options.getCheckPrecision() == 0 )
+// 			{
+// 				comm.generateGaugeQuality( dU, dNnt );
+// 				
+// 				if( comm.isMaster() ) printf( "%d\t\t%1.10f\t\t%e\n", i, comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
+// 			}
+// 
+// 			totalStepNumber++;
+// 		}
+//  		cudaDeviceSynchronize();
+// 		if( comm.isMaster() ) kernelTimer.stop();
+// 		if( comm.isMaster() ) cout << "kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
+// 		totalKernelTime += kernelTimer.getTime();
 		
+		//---------------------------------------------------------------------------
 		
-		// set algorithm = overrelaxation
-		algoOptions.setAlgorithm( OR );
-		
-		// iterate the algorithm
-		for( int i = 0; i < options.getOrMaxIter(); i++ )
+		double bestGff = 0.0;
+		for( int copy = 0; copy < options.getGaugeCopies(); copy++ )
 		{
-			for( int evenodd=0; evenodd<2; evenodd++ )
-			{
-				comm.apply( dU, dNnt, evenodd, algoOptions );
-			} 
+			// we copy from host in every gaugecopy step to have a cleaner configuration (concerning numerical errors)
+			comm.scatterGaugeField( dU, U );
 
-			// calculate and print the gauge quality
-			if( i % options.getCheckPrecision() == 0 )
+			// random trafo
+			if( !options.isNoRandomTrafo() ) // I'm an optimist! This should be called isRandomTrafo()!
 			{
-				comm.generateGaugeQuality( dU, dNnt );
-				
-				if( comm.isMaster() ) printf( "%d\t\t%1.10f\t\t%e\n", i, comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
+				// set algorithm = random transformation
+				algoOptions.setAlgorithm( RT );
+				comm.apply( dU, dNnt, 0, algoOptions );
+				comm.apply( dU, dNnt, 1, algoOptions );
 			}
 
-			totalStepNumber++;
-		}
- 		cudaDeviceSynchronize();
-		if( comm.isMaster() ) kernelTimer.stop();
-		if( comm.isMaster() ) cout << "kernel time for config: " << kernelTimer.getTime() << " s"<< endl;
-		totalKernelTime += kernelTimer.getTime();
-		
+			// calculate and print the gauge quality
+			if( comm.isMaster() ) printf( "i:\t\tgff:\t\tdA:\n");
+			comm.generateGaugeQuality( dU, dNnt );
+			
+			//TODO divide somewhere else
+			if( comm.isMaster() ) printf( "-\t\t%1.10f\t\t%e\n", comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
+			
 
+			algoOptions.setTemperature( options.getSaMax() );
+			algoOptions.setTempStep( (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps() );
+
+			if( comm.isMaster() ) kernelTimer.reset();
+			if( comm.isMaster() ) kernelTimer.start();
+			
+			// simulated annealing
+			for( int i = 0; i < options.getSaSteps(); i++ )
+			{
+				// set algorithm = simulated annealing
+				algoOptions.setAlgorithm( SA );
+				comm.apply( dU, dNnt, 0, algoOptions );
+				comm.apply( dU, dNnt, 1, algoOptions );
+
+				for( int mic = 0; mic < options.getSaMicroupdates(); mic++ )
+				{
+					// set algorithm = micro step
+					algoOptions.setAlgorithm( MS );
+					comm.apply( dU, dNnt, 0, algoOptions );
+					comm.apply( dU, dNnt, 1, algoOptions );
+				}
+
+
+				if( i % options.getCheckPrecision() == 0 )
+				{
+// 					comm.projectSU3( dU );
+					comm.generateGaugeQuality( dU, dNnt );
+					if( comm.isMaster() ) printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, algoOptions.getTemperature(), comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
+				}
+				algoOptions.decreaseTemperature();
+			}
+// 			cudaThreadSynchronize();
+			if( comm.isMaster() ) kernelTimer.stop();
+			if( comm.isMaster() ) saTotalKernelTime += kernelTimer.getTime();
+
+			if( comm.isMaster() ) kernelTimer.reset();
+			if( comm.isMaster() ) kernelTimer.start();
+			
+			// overrelaxation
+			for( int i = 0; i < options.getOrMaxIter(); i++ )
+			{
+				// set algorithm = overrelaxation
+				algoOptions.setAlgorithm( OR );
+				comm.apply( dU, dNnt, 0, algoOptions );
+				comm.apply( dU, dNnt, 1, algoOptions );
+
+				if( i % options.getCheckPrecision() == 0 )
+				{
+// 					comm.projectSU3( dU );
+					comm.generateGaugeQuality( dU, dNnt );
+					if( comm.isMaster() ) printf( "%d\t\t%1.10f\t\t%e\n", i, comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );;
+				}
+
+				if( comm.isMaster() ) orTotalStepnumber++;
+			}
+
+// 			cudaThreadSynchronize();
+			if( comm.isMaster() ) kernelTimer.stop();
+			if( comm.isMaster() ) cout << "kernel time: " << kernelTimer.getTime() << " s"<< endl;
+			if( comm.isMaster() ) orTotalKernelTime += kernelTimer.getTime();
+
+
+
+
+			// reconstruct third line
+			comm.projectSU3( dU );
+
+			// check for best copy
+			if( comm.getCurrentGff() > bestGff )
+			{
+				if( comm.isMaster() ) cout << "FOUND BETTER COPY" << endl;
+				bestGff = comm.getCurrentGff();
+
+				// send back all timeslices to master
+				comm.collectGaugeField( dU, U );
+			}
+			else
+			{
+				if( comm.isMaster() ) cout << "NO BETTER COPY" << endl;
+			}
+			
+		} // end for copy
+		
+		
+		
+		
 		
 		// send back all timeslices to master
 		comm.collectGaugeField( dU, U );
-
 		
 		//saving file
 // 		if( comm.isMaster() )
@@ -253,13 +370,25 @@ int main(int argc, char* argv[])
 // 		}
 	} // end fileIterator
 
-	if( comm.isMaster() ) allTimer.stop();
-	if( comm.isMaster() ) cout << "total time: " << allTimer.getTime() << " s" << endl;
-	if( comm.isMaster() ) cout << "total kernel time: " << totalKernelTime << " s" << endl;
-	if( comm.isMaster() ) cout << (double)((long)2253*(long)s.getLatticeSize()*(long)totalStepNumber)/totalKernelTime/1.0e9 << " GFlops at "
-				<< (double)((long)192*(long)s.getLatticeSize()*(long)(totalStepNumber)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
+// 	if( comm.isMaster() ) allTimer.stop();
+// 	if( comm.isMaster() ) cout << "total time: " << allTimer.getTime() << " s" << endl;
+// 	if( comm.isMaster() ) cout << "total kernel time: " << totalKernelTime << " s" << endl;
+// 	if( comm.isMaster() ) cout << (double)((long)2253*(long)s.getLatticeSize()*(long)totalStepNumber)/totalKernelTime/1.0e9 << " GFlops at "
+// 				<< (double)((long)192*(long)s.getLatticeSize()*(long)(totalStepNumber)*(long)sizeof(Real))/totalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
+	if( comm.isMaster() )
+	{
+		long hbFlops = 2176;
+		long microFlops = 2118;
+		cout << "Simulated Annealing (HB+Micro): " << (double)((long)(hbFlops+microFlops*options.getSaMicroupdates())*(long)s.getLatticeSize()*(long)options.getSaSteps()*(long)options.getGaugeCopies())/saTotalKernelTime/1.0e9 << " GFlops at "
+						<< (double)((long)192*(long)s.getLatticeSize()*options.getSaSteps()*(options.getSaMicroupdates()+1)*(long)sizeof(Real))/saTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
+		long orFlops = 2253;
+// 		long orFlops = 2124; // HV 2012-12-03
+		cout << "Overrelaxation: " << (double)((long)orFlops*(long)s.getLatticeSize()*(long)orTotalStepnumber)/orTotalKernelTime/1.0e9 << " GFlops at "
+					<< (double)((long)192*(long)s.getLatticeSize()*(long)(orTotalStepnumber)*(long)sizeof(Real))/orTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
+	}
+				
 	return 0;
 
 }
