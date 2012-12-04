@@ -1,0 +1,148 @@
+/*
+ * SaUpdate.hxx
+ *
+ * This is the Kennedy-Pendleton heatbath update used in the SA algorithm
+ *
+ *  Created on: May 10, 2012
+ *      Author: vogt
+ */
+
+#ifndef SAUPDATE_HXX_
+#define SAUPDATE_HXX_
+
+#include "../../../util/datatype/datatypes.h"
+#include "../../../util/rng/PhiloxWrapper.hxx"
+
+class SaUpdate
+{
+public:
+	__device__ inline SaUpdate();
+	__device__ inline SaUpdate( float temperature, PhiloxWrapper *rng );
+	__device__ inline void calculateUpdate( volatile Real (&shA)[128], short id );
+	__device__ inline void setTemperature( float temperature );
+	__device__ inline float getTemperature();
+private:
+	float temperature;
+	PhiloxWrapper *rng;
+};
+
+__device__ SaUpdate::SaUpdate()
+{
+}
+
+__device__ SaUpdate::SaUpdate( float temperature, PhiloxWrapper *rng ) : temperature(temperature), rng(rng)
+{
+}
+
+__device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
+{
+#ifdef USE_DP_SAUPDATE
+	// TODO test the DP update in SP code
+	double e0,e1,e2,e3, dk, p0;
+	double r1,r2,r3,r4;
+	double a0,a1,a2,a3;
+	double delta, phi, sin_alpha, sin_theta, cos_theta;
+	e0=shA[id];
+	e1=-shA[id+32]; // the minus sign is for the hermitian of the input! be aware of this when reusing this code fragment
+	e2=-shA[id+64]; // "
+	e3=-shA[id+96]; // "
+	dk=rsqrt(e0*e0+e1*e1+e2*e2+e3*e3);
+	p0=(dk*temperature); // equals a*beta
+
+//	15 flop
+
+	do
+	{
+	  do; while ((r1 = rng->rand()) < 0.0001);
+	  r1 = -log(r1)*p0;
+	  do; while ((r2 = rng->rand()) < 0.0001);
+	  r2 = -log(r2)*p0;
+	  r3 = cospi(2.0*rng->rand());
+	  r3 = r3*r3;
+	  delta = r2+r1*r3;
+	  r4=rng->rand();
+	} while(r4*r4 > (1.0-0.5*delta));
+//	18 flop (if no loops, counting rand() as 1 operation)
+	a0=1.0-delta;
+	cos_theta=2.0*rng->rand()-1.0;
+	sin_theta=sqrt(1.0-cos_theta*cos_theta);
+	sin_alpha=sqrt(1-a0*a0);
+	phi=2.0*rng->rand();
+	a1=sin_alpha*sin_theta*cospi(phi);
+	a2=sin_alpha*sin_theta*sinpi(phi);
+	a3=sin_alpha*cos_theta;
+
+	e0 *= dk;
+	e1 *= dk;
+	e2 *= dk;
+	e3 *= dk;
+//	21 flop
+
+	shA[id] = a0*e0+a3*e3+a2*e2+e1*a1;
+	shA[id+96] = e0*a3-e3*a0+a1*e2-a2*e1;
+	shA[id+64] = a3*e1-a0*e2+a2*e0-a1*e3;
+	shA[id+32] = a2*e3+a1*e0-a3*e2-e1*a0;
+//	28 flop
+
+//	sum: 72 flop
+#else
+	Real e0,e1,e2,e3, dk, p0;
+	Real r1,r2,r3,r4;
+	Real a0,a1,a2,a3;
+	Real delta, phi, sin_alpha, sin_theta, cos_theta;
+	e0=shA[id];
+	e1=-shA[id+32]; // the minus sign is for the hermitian of the input! be aware of this when reusing this code fragment
+	e2=-shA[id+64]; // "
+	e3=-shA[id+96]; // "
+	dk=rsqrt(e0*e0+e1*e1+e2*e2+e3*e3);
+	p0=(dk*temperature); // equals a*beta
+
+//	15 flop
+
+	do
+	{
+	  do; while ((r1 = rng->rand()) < 0.0001);
+	  r1 = -log(r1)*p0;
+	  do; while ((r2 = rng->rand()) < 0.0001);
+	  r2 = -log(r2)*p0;
+	  r3 = cospi(2.0*rng->rand());
+	  r3 = r3*r3;
+	  delta = r2+r1*r3;
+	  r4=rng->rand();
+	} while(r4*r4 > (1.0-0.5*delta));
+//	18 flop (if no loops, counting rand() as 1 operation)
+	a0=1.0-delta;
+	cos_theta=2.0*rng->rand()-1.0;
+	sin_theta=sqrt(1.0-cos_theta*cos_theta);
+	sin_alpha=sqrt(1-a0*a0);
+	phi=2.0*rng->rand();
+	a1=sin_alpha*sin_theta*cospi(phi);
+	a2=sin_alpha*sin_theta*sinpi(phi);
+	a3=sin_alpha*cos_theta;
+
+	e0 *= dk;
+	e1 *= dk;
+	e2 *= dk;
+	e3 *= dk;
+//	21 flop
+
+	shA[id] = a0*e0+a3*e3+a2*e2+e1*a1;
+	shA[id+96] = e0*a3-e3*a0+a1*e2-a2*e1;
+	shA[id+64] = a3*e1-a0*e2+a2*e0-a1*e3;
+	shA[id+32] = a2*e3+a1*e0-a3*e2-e1*a0;
+//	28 flop
+
+//	sum: 72 flop
+#endif
+}
+
+__device__ void SaUpdate::setTemperature( float temperature )
+{
+	this->temperature = temperature;
+}
+
+__device__ float SaUpdate::getTemperature()
+{
+	return temperature;
+}
+#endif /* ORUPDATE_HXX_ */

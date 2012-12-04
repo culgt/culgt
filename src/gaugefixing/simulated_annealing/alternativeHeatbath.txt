@@ -1,0 +1,111 @@
+// TODO
+//	Real beta_eff = 1./temperature;
+//		Real e0,e1,e2,e3, dk, p0;
+//		e0=shA[id];
+//		e1=-shA[id+32]; // the minus sign is the hermitian of the input! be aware of this when reusing this code fragment
+//		e2=-shA[id+64]; // "
+//		e3=-shA[id+96]; // "
+//		dk=rsqrt(e0*e0+e1*e1+e2*e2+e3*e3);
+//		p0=(dk*temperature);  // entspricht abeta
+//
+//	float al = 1./p0;
+//
+//	float xr1, xr2, xr3, xr4, xl, xd, r, d, r2, rho;
+//	int k;
+//	float4 a;
+//	a.x = (float)0.0;
+//
+//	xr1 = rng->rand();
+//	xr1 = (log((xr1)));
+//
+//	xr2 = rng->rand();
+//	xr2 = (log((xr2)));
+//
+//	xr3 = rng->rand();
+//	xr4 = rng->rand();
+//
+//	xr3 = cospi(2.0*xr3);
+//
+//	d = -(xr2  + xr1 * xr3 * xr3 ) / al;
+//
+//	//now  beat each  site into submission
+//	int nacd = 0;
+//	int test;
+//	if ((1.00 - 0.5 * d) > xr4 * xr4) nacd=1;
+//
+//	if(nacd == 0 && al > 2.0){ //k-p algorithm
+//			test=0;
+////			for(k = 0; k < 20 && test == 0; k++){
+//			for(k = 0; k < 100000000 && test == 0; k++){
+//					//kp++;
+//					//get four random numbers (add a small increment to prevent taking log(0.)
+//					xr1 = rng->rand();
+//					xr1 = (log((xr1)));
+//
+//					xr2 = rng->rand();
+//					xr2 = (log((xr2)));
+//
+//					xr3 = rng->rand();
+//					xr4 = rng->rand();
+//
+//					xr3 = cospi(2.0 * xr3);
+//
+//					d = -(xr2 + xr1 * xr3 * xr3) / al;
+//					if((1.00 - 0.5 * d) > xr4 * xr4) test = 1;
+//			}
+//	} //endif nacd
+//
+//	if(nacd == 0 && al <= 2.0){ //creutz algorithm
+//			//cr++;
+//			xl = exp(-2.0 * al);
+//			xd = 1.0 - xl;
+//			test = 0;
+//			for(k = 0;k < 20 && test == 0  ; k++){
+//					//get two random numbers
+//					xr1 = rng->rand();
+//					xr2 = rng->rand();
+//
+//					r = xl + xd * xr1;
+//					a.x = 1.00 + log(r) / al;
+//					if((1.0 -a.x * a.x) > xr2 * xr2) test = 1;
+//					}
+//			d = 1.0 - a.x;
+//	} //endif nacd
+//
+//	//generate full su(2) matrix and update link matrix
+//	//find a0  = 1 - d
+//	a.x = 1.0 - d;
+//	//compute r
+//	r2 = 1.0 - a.x * a.x;
+//	r2 = fabs(r2);
+//	r = sqrt(r2);
+//
+//	//compute a3
+//	a.w = (2.0 * rng->rand() - 1.0) * r;
+//
+//	//compute a1 and a2
+//	rho = r2 - a.w * a.w;
+//	rho = fabs(rho);
+//	rho = sqrt(rho);
+//
+//	//xr2 is a random number between 0 and 2*pi
+//	xr2 = rng->rand();
+//	a.y = rho * cospi(2.0*xr2);
+//	a.z = rho * sinpi(2.0*xr2);
+//
+//
+//	Real a0,a1,a2,a3;
+//	a0 = a.x;
+//	a1 = a.y;
+//	a2 = a.z;
+//	a3 = a.w;
+//
+//	e0 *= dk;
+//	e1 *= dk;
+//	e2 *= dk;
+//	e3 *= dk;
+//
+//	shA[id] = a0*e0+a3*e3+a2*e2+e1*a1;
+//	shA[id+96] = e0*a3-e3*a0+a1*e2-a2*e1;
+//	shA[id+64] = a3*e1-a0*e2+a2*e0-a1*e3;
+//	shA[id+32] = a2*e3+a1*e0-a3*e2-e1*a0;
