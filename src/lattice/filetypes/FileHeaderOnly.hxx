@@ -15,7 +15,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "../gaugefixing/GlobalConstants.hxx"
+//#include "../gaugefixing/GlobalConstants.hxx"
 
 using namespace std;
 

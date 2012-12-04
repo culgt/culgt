@@ -31,7 +31,7 @@
 #include "../lattice/filetypes/FilePlain.hxx"
 #include "../lattice/filetypes/FileVogt.hxx"
 #include "../lattice/filetypes/filetype_typedefs.h"
-#include "../lattice/gaugefixing/GlobalConstants.hxx"
+#include "../lattice/gaugefixing/GlobalConstants.h"
 #include "../lattice/gaugefixing/LandauKernelsSU3.hxx"
 #include "../lattice/gaugefixing/CommonKernelsSU3.hxx"
 #include "program_options/ProgramOptions.hxx"

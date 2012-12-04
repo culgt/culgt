@@ -33,7 +33,7 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
-#include "../lattice/gaugefixing/GlobalConstants.hxx"
+#include "../lattice/gaugefixing/GlobalConstants.h"
 #include "program_options/ProgramOptions.hxx"
 #include "program_options/FileIterator.hxx"
 

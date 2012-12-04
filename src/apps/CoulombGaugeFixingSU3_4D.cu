@@ -11,6 +11,7 @@
 #ifndef OSX
 #include "malloc.h"
 #endif
+#include "../lattice/gaugefixing/GlobalConstants.h"
 #include "../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 #include "../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
@@ -37,7 +38,6 @@
 //#include <boost/program_options/options_description.hpp>
 #include "program_options/ProgramOptions.hxx"
 #include "program_options/FileIterator.hxx"
-#include "../lattice/gaugefixing/GlobalConstants.hxx"
 #include "../util/cuda/CudaError.hxx"
 #include "../lattice/gaugefixing/CoulombKernelsSU3.hxx"
 #include "../lattice/gaugefixing/CommonKernelsSU3.hxx"

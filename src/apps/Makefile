@@ -48,18 +48,22 @@ CCFLAGS = -O3
 
 CUFLAGS += $(CCFLAGS)
 
-$(APP): $(CUOBJ) Chronotimer.o
-	$(NVCC) -o $@ $(CUOBJ) Chronotimer.o $(LIBS)
+$(APP): $(CUOBJ) Chronotimer.o GlobalConstants.o
+	$(NVCC) -o $@ $(CUOBJ) Chronotimer.o GlobalConstants.o $(LIBS)
 
 %.o: %.cu
 	$(NVCC) -c $(CUFLAGS) $< $(CUDEFS) 
 
 %.o: %.cpp
 	$(CC) -c $(CCFLAGS) $< $(CCDEFS)
+#%.o: %.cc
+#	$(CC) -c $(CCFLAGS) $< $(CCDEFS)
 
 Chronotimer.o: ../util/timer/Chronotimer.cc
 	$(CC) -c $(CCFLAGS) ../util/timer/Chronotimer.cc
 
+GlobalConstants.o: ../lattice/gaugefixing/GlobalConstants.cc
+	$(CC) -c $(CCDEFS) $(CCFLAGS) -I/usr/local/cuda/include/ ../lattice/gaugefixing/GlobalConstants.cc
 
 clean: 
 	rm -f *.o $(APP)
