@@ -214,10 +214,6 @@ void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::initDevice( const i
 template< class MultiGPU_MPI_GaugeKernels >
 void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::scatterGaugeField( Real **dU, Real *U )
 {
-	static const int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
-	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
-	
-	
 	for( int t=0; t<Nt; t++ )
 	{
 		if( master && theProcess[t] == 0 )
@@ -240,10 +236,6 @@ void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::scatterGaugeField( 
 template< class MultiGPU_MPI_GaugeKernels >
 void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::collectGaugeField( Real **dU, Real *U )
 {
-	static const int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
-	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
-	
-	
 	// send back all timeslices to master
 	for( int t=0; t<Nt; t++ )
 	{
@@ -253,15 +245,15 @@ void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::collectGaugeField( 
 		}
 		else if( theProcess[t] == rank )
 		{
-			MPI_CHECK( MPI_Send( haloIn,  timesliceArraySize, MPI_FLOAT, 0, 0, MPI_COMM_WORLD ) );
-			cudaMemcpy( haloIn, dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+			cudaMemcpy( haloOut, dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
+			MPI_CHECK( MPI_Send( haloOut,  timesliceArraySize, MPI_FLOAT, 0, 0, MPI_COMM_WORLD ) );
 		}
 		else if( master )
 		{
 			MPI_CHECK( MPI_Recv( &U[t*timesliceArraySize], timesliceArraySize, MPI_FLOAT, theProcess[t], 0, MPI_COMM_WORLD, &status ) );
 		}
 		MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
-		}
+	}
 }
 
 template< class MultiGPU_MPI_GaugeKernels >

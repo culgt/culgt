@@ -344,10 +344,6 @@ int main(int argc, char* argv[])
 		
 		
 		
-		
-		// send back all timeslices to master
-		comm.collectGaugeField( dU, U );
-		
 		//saving file
 // 		if( comm.isMaster() )
 // 		{
