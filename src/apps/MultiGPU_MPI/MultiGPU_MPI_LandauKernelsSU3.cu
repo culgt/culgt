@@ -9,6 +9,8 @@
 #include "../../lattice/gaugefixing/GaugeFixingSubgroupStep.hxx"
 // #include "../../lattice/gaugefixing/GaugeFixingStats.hxx"
 #include "../../lattice/gaugefixing/overrelaxation/OrUpdate.hxx"
+#include "../../lattice/gaugefixing/overrelaxation/MicroUpdate.hxx"
+#include "../../lattice/gaugefixing/simulated_annealing/SaUpdate.hxx"
 #include "../../lattice/access_pattern/StandardPattern.hxx"
 #include "../../lattice/access_pattern/GpuCoulombPattern.hxx"
 #include "../../lattice/access_pattern/GpuLandauPatternParity.hxx"
@@ -18,7 +20,7 @@
 #include "../../lattice/SU3.hxx"
 #include "../../lattice/Matrix.hxx"
 #include "../../lattice/gaugefixing/GlobalConstants.hxx"
-// #include "../../util/rng/PhiloxWrapper.hxx"
+#include "../../util/rng/PhiloxWrapper.hxx"
 
 #include "./MultiGPU_MPI_LandauKernelsSU3.h"
 
@@ -29,13 +31,15 @@
 namespace MPILKSU3
 {
 
-template<class Algorithm> inline __global__ void __launch_bounds__(256,4) applyOneTimeslice( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, Algorithm algorithm  )
+template<class Algorithm> inline __device__ void applyOneTimeslice( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, Algorithm algorithm  )
 {
 	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
 	SiteIndex<4,FULL_SPLIT> s(size);
+// 	SiteIndex<4,FULL_SPLIT> s( DEVICE_CONSTANTS::SIZE_TIMESLICE );
+	
 	s.nn = nnt;
 
 	const bool updown = threadIdx.x / NSB4;
@@ -92,6 +96,8 @@ __global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
 	SiteIndex<4,FULL_SPLIT> s(size);
+// 	SiteIndex<4,FULL_SPLIT> s( DEVICE_CONSTANTS::SIZE_TIMESLICE);
+	
 	s.nn = nnt;
 	
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
@@ -165,7 +171,9 @@ __global__ void restoreThirdLine( Real* U, lat_index_t* nnt )
 // 	typedef Link<Gpu,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 // 
 // //	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-// 	SiteIndex<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
+// 	//SiteIndex<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
+// 	SiteIndex<4,FULL_SPLIT> s( HOST_CONSTANTS::SIZE_TIMESLICE);
+
 // 	s.nn = nnt;
 // 
 // 	int site = blockIdx.x * blockDim.x + threadIdx.x;
@@ -186,23 +194,23 @@ __global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int counter 
 	// TODO
 }
 
-__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter )
+__global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
 {
-// 	OrUpdate overrelax( orParameter );
-// 	apply( U, nnt, parity, overrelax );
+	OrUpdate overrelax( orParameter );
+	applyOneTimeslice( UtUp, UtDw, nnt, parity, overrelax  );
 }
 
-__global__ void __launch_bounds__(256,4) microStep( Real* U, lat_index_t* nnt, bool parity )
+__global__ void __launch_bounds__(256,4) microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity )
 {
-// 	MicroUpdate micro;
-// 	apply( U, nnt, parity, micro );
+	MicroUpdate micro;
+	applyOneTimeslice( UtUp, UtDw, nnt, parity, micro );
 }
 
-__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int counter )
+__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter )
 {
-// 	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
-// 	SaUpdate sa( temperature, &rng );
-// 	apply( U, nnt, parity, sa );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	SaUpdate sa( temperature, &rng );
+	applyOneTimeslice( UtUp, UtDw, nnt, parity, sa );
 }
 
 }
@@ -229,30 +237,29 @@ void MultiGPU_MPI_LandauKernelsSU3::initCacheConfig()
 }
 
 
-void MultiGPU_MPI_LandauKernelsSU3::applyOneTimeslice( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, enum AlgoType algorithm )
+void MultiGPU_MPI_LandauKernelsSU3::applyOneTimeslice( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, MultiGPU_MPI_AlgorithmOptions algoOptions )
 {
 	//TODO maybe somewhere else:
 // 	cudaFuncSetCacheConfig( MPILKSU3::applyOneTimeslice, cudaFuncCachePreferL1 );
 	
-	static OrUpdate overrelax(1.35); //TODO parameters!
+// 	static PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+// 	static SaUpdate sa( temperature, &rng );
+// 	OrUpdate overrelax( algoOptions.getOrParameter() );
+// 	static MicroUpdate micro;
 	
-	switch( algorithm )
+	switch( algoOptions.getAlgorithm() )
 	{
 	case OR:
-		MPILKSU3::applyOneTimeslice<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, overrelax  );
+		MPILKSU3::orStep<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, algoOptions.getOrParameter() );
 		break;
-	case SR:
-		//TODO SR
-		printf("Algorithm type not set to a known value. Exiting\n");
-		exit(1);
+	case MS:
+		MPILKSU3::microStep<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity );
 		break;
 	case SA:
-		//TODO SA
-		printf("Algorithm type not set to a known value. Exiting\n");
-		exit(1);
+		MPILKSU3::saStep<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, algoOptions.getTemperature(), PhiloxWrapper::getNextCounter() );
 		break;
 	default:
-		printf("Algorithm type not set to a known value. Exiting\n");
+		printf("Algorithm type not set to a known value [MultiGPU_MPI_AlgorithmOptions::setAlgorithm(enum AlgoType)]. Exiting\n");
 		exit(1);
 	}
 }

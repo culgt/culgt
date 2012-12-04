@@ -11,13 +11,14 @@
 #ifndef MULTIGPU_MPI_COMMUNICATOR_HXX_
 #define MULTIGPU_MPI_COMMUNICATOR_HXX_
 
+#include <stdio.h>
 #include "../../util/datatype/datatypes.h"
 #include "../../util/datatype/lattice_typedefs.h"
 #include "../../lattice/gaugefixing/GlobalConstants.hxx"
-#include "./MPI_ProcInfo.h"
+// #include "./MPI_ProcInfo.h"
 #include "./MultiGPU_MPI_LandauKernelsSU3.h"
 #include "./MultiGPU_MPI_Reduce.h"
-#include <stdio.h>
+#include "./MultiGPU_MPI_AlgorithmOptions.h"
 
 // MPI error handling macro
 #define MPI_CHECK( call) \
@@ -32,7 +33,7 @@ const int Nc = 3;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const size_t timesliceSize = timesliceArraySize*sizeof(Real); 
         
-
+template< class MultiGPU_MPI_GaugeKernels >
 class MultiGPU_MPI_Communicator
 {
 public:
@@ -65,7 +66,7 @@ public:
 	// get last slice of the six parts to hide the 6 parts of comm.
 	int getEndPart( int end );
 	// apply: applies algorithm, takes care of communication between devices
-	void apply( Real** dU, lat_index_t** dNnt, bool evenodd, enum AlgoType algorithm );
+	void apply( Real** dU, lat_index_t** dNnt, bool evenodd, MultiGPU_MPI_AlgorithmOptions algoOptions );
 	// generate the gauge quality
 	void generateGaugeQuality( Real** dU, lat_index_t** dNnt );
 	// get the current value of the gauge functional
@@ -94,7 +95,7 @@ private:
 	int endPart[6];
 	int theProcess[Nt];
 	
-	// device memory for collecting the parts of the gauge fixing functional and divA
+	// device memory to collect the gauge fixing quality
 	double *dGff;
 	double *dA;
 	double currentGff;
@@ -110,7 +111,9 @@ private:
 	cudaStream_t streamCpy;
 };
 
-MultiGPU_MPI_Communicator::MultiGPU_MPI_Communicator( int argc, char** argv )
+
+template< class MultiGPU_MPI_GaugeKernels >
+MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::MultiGPU_MPI_Communicator( int argc, char** argv )
 {
 	
 	// initialize MPI communication
@@ -170,13 +173,6 @@ MultiGPU_MPI_Communicator::MultiGPU_MPI_Communicator( int argc, char** argv )
 	cudaStreamCreate( &streamStd );
 	cudaStreamCreate( &streamCpy );
 	
-	// allocate memory for halo exchange
-	//TODO timesliceArraySize etc. somewhere else
-// 	static const int Ndim = 4;
-// 	static const int Nc = 3;
-// 	static const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
-// 	size_t timesliceSize = timesliceArraySize*sizeof(Real);
-		
 	// page-locked host memory for halo timeslices (two per thread)
  	cudaHostAlloc( &haloIn,  timesliceSize, 0 );
 	cudaHostAlloc( &haloOut, timesliceSize, 0 );
@@ -191,7 +187,8 @@ MultiGPU_MPI_Communicator::MultiGPU_MPI_Communicator( int argc, char** argv )
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 }
 
-MultiGPU_MPI_Communicator::~MultiGPU_MPI_Communicator()
+template< class MultiGPU_MPI_GaugeKernels >
+MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::~MultiGPU_MPI_Communicator()
 {
 	// free halo memory
  	cudaFreeHost( haloIn );
@@ -202,7 +199,8 @@ MultiGPU_MPI_Communicator::~MultiGPU_MPI_Communicator()
 	MPI_CHECK( MPI_Finalize() );
 }
 
-void MultiGPU_MPI_Communicator::initDevice( const int device )
+template< class MultiGPU_MPI_GaugeKernels >
+void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::initDevice( const int device )
 {
 	cudaSetDevice(device);
 	cudaDeviceProp deviceProp;
@@ -211,33 +209,11 @@ void MultiGPU_MPI_Communicator::initDevice( const int device )
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 }
 
-void MultiGPU_MPI_Communicator::scatterGaugeField( Real **dU, Real *U )
+template< class MultiGPU_MPI_GaugeKernels >
+void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::scatterGaugeField( Real **dU, Real *U )
 {
-// 	static const int Ndim = 4;
-// 	static const int Nc = 3;
-// 	static const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
-// 	static const size_t timesliceSize = timesliceArraySize*sizeof(Real);
-	
-	//TODO clear this
-	// page-locked host memory for halo timeslices (two per thread)
-// 	static Real* haloOut[32];
-// 	static Real* haloIn[32];
-	
-	// device memory for halo timeslice (one per device)
-// 	static Real* dHalo[32];
-	
-	
 	static const int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
 	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
-
-	// MPI comm.
-// 	static MPI_Request request1, request2;
-// 	static MPI_Status  status;
-
-	
-// 	cudaHostAlloc( &haloIn,  timesliceSize, 0 );
-// 	cudaHostAlloc( &haloOut, timesliceSize, 0 );
-// 	cudaMalloc( &dHalo, timesliceSize );
 	
 	
 	for( int t=0; t<Nt; t++ )
@@ -259,33 +235,11 @@ void MultiGPU_MPI_Communicator::scatterGaugeField( Real **dU, Real *U )
 	}
 }
 
-void MultiGPU_MPI_Communicator::collectGaugeField( Real **dU, Real *U )
+template< class MultiGPU_MPI_GaugeKernels >
+void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::collectGaugeField( Real **dU, Real *U )
 {
-// 	static const int Ndim = 4;
-// 	static const int Nc = 3;
-// 	static const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
-// 	static const size_t timesliceSize = timesliceArraySize*sizeof(Real);
-	
-	//TODO clear this
-	// page-locked host memory for halo timeslices (two per thread)
-// 	static Real* haloOut[32];
-// 	static Real* haloIn[32];
-	
-	// device memory for halo timeslice (one per device)
-// 	static Real* dHalo[32];
-	
-	
 	static const int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
 	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
-
-// 	// MPI comm.
-// 	static MPI_Request request1, request2;
-// 	static MPI_Status  status;
-
-	
-// 	cudaHostAlloc( &haloIn,  timesliceSize, 0 );
-// 	cudaHostAlloc( &haloOut, timesliceSize, 0 );
-// 	cudaMalloc( &dHalo, timesliceSize );
 	
 	
 	// send back all timeslices to master
@@ -308,84 +262,74 @@ void MultiGPU_MPI_Communicator::collectGaugeField( Real **dU, Real *U )
 		}
 }
 
-int MultiGPU_MPI_Communicator::getNumbProcs()
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getNumbProcs()
 {
 	return nprocs;
 }
 
-int MultiGPU_MPI_Communicator::getRank()
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getRank()
 {
 	return rank;
 }
 
-int MultiGPU_MPI_Communicator::getLeft()
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getLeft()
 {
 	return lRank;
 }
 
-int MultiGPU_MPI_Communicator::getRight()
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getRight()
 {
 	return rRank;
 }
 
-int MultiGPU_MPI_Communicator::getMinTimeslice()
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getMinTimeslice()
 {
 	return tmin;
 }
 
-int MultiGPU_MPI_Communicator::getMaxTimeslice()
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getMaxTimeslice()
 {
 	return tmax;
 }
 
-bool MultiGPU_MPI_Communicator::isMaster()
+template< class MultiGPU_MPI_GaugeKernels >
+bool MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::isMaster()
 {
 	return master;
 }
 
-int MultiGPU_MPI_Communicator::getNumbTimeslices()
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getNumbTimeslices()
 {
 	return numbSlices;
 }
 
-int MultiGPU_MPI_Communicator::getStartPart( int beg )
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getStartPart( int beg )
 {
 	return startPart[ beg ];
 }
 
-int MultiGPU_MPI_Communicator::getEndPart( int end )
+template< class MultiGPU_MPI_GaugeKernels >
+int MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getEndPart( int end )
 {
 	return endPart[ end ];
 }
 
-inline void MultiGPU_MPI_Communicator::apply( Real** dU, lat_index_t** dNnt, bool evenodd, enum AlgoType algorithm )
+template< class MultiGPU_MPI_GaugeKernels >
+inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::apply( Real** dU, lat_index_t** dNnt, bool evenodd, MultiGPU_MPI_AlgorithmOptions algoOptions )
 {
-// 	static const int Ndim = 4;
-// 	static const int Nc = 3;
-// 	static const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
-// 	static const size_t timesliceSize = timesliceArraySize*sizeof(Real);
-	
 	static const int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
 	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
-
-	// MPI comm.
-// 	static MPI_Request request1, request2;
-// 	static MPI_Status  status;
-
-// 	// cudaStreams 
-// 	static cudaStream_t streamStd;
-// 	static cudaStream_t streamCpy;
 	
 	// instantiate object of kernel wrapper class
-	static MultiGPU_MPI_LandauKernelsSU3 oneslicehitter;
-	
-// 	if( init )
-// 	{
-// 		cudaStreamCreate( &streamStd );
-// 		cudaStreamCreate( &streamCpy );
-// // 		oneslicehitter.initCacheConfig();
-// 	}
-	
+	static MultiGPU_MPI_GaugeKernels kernelWrapper;
 
 	
 	if( nprocs > 1 )
@@ -397,7 +341,7 @@ inline void MultiGPU_MPI_Communicator::apply( Real** dU, lat_index_t** dNnt, boo
 		for( int t = startPart[2]; t < endPart[2]; t++ )
 		{
 			// call wrapper for one timelice
-			oneslicehitter.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algorithm );
+			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );
 		}
 		cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 		
@@ -406,7 +350,7 @@ inline void MultiGPU_MPI_Communicator::apply( Real** dU, lat_index_t** dNnt, boo
 		MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
 		for( int t = startPart[0]; t < endPart[0]; t++ )
 		{
-			oneslicehitter.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algorithm );
+			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );
 		}
 		MPI_CHECK( MPI_Wait( &request1, &status ) );
 		MPI_CHECK( MPI_Wait( &request2, &status ) );
@@ -415,17 +359,17 @@ inline void MultiGPU_MPI_Communicator::apply( Real** dU, lat_index_t** dNnt, boo
 		cudaMemcpyAsync( dHalo+p_offset, haloIn+p_offset, timesliceSize/12, cudaMemcpyHostToDevice, streamCpy );
 		for( int t = startPart[3]; t < endPart[3]; t++ )
 		{
-			oneslicehitter.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algorithm );		
+			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );		
 		}
 		
 		// now call kernel wrapper for tmin with dU[t-1] replaced by dHalo
-		oneslicehitter.applyOneTimeslice( numBlocks,threadsPerBlock, streamCpy, dU[tmin], dHalo, dNnt[rank], evenodd ^ (tmin%2) , algorithm );
+		kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamCpy, dU[tmin], dHalo, dNnt[rank], evenodd ^ (tmin%2) , algoOptions );
 		
 		// halo exchange back step 1
 		cudaMemcpyAsync( haloOut+p_offset, dHalo+p_offset, timesliceSize/12, cudaMemcpyDeviceToHost, streamCpy );
 		for( int t = startPart[4]; t < endPart[4]; t++ )
 		{
-			oneslicehitter.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algorithm );
+			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );
 		}
 		cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 		
@@ -434,7 +378,7 @@ inline void MultiGPU_MPI_Communicator::apply( Real** dU, lat_index_t** dNnt, boo
 		MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request1) );
 		for( int t = startPart[1]; t < endPart[1]; t++ )
 		{
-			oneslicehitter.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algorithm );
+			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );
 		}
 		MPI_CHECK( MPI_Wait( &request1, &status ) );
 		MPI_CHECK( MPI_Wait( &request2, &status ) );
@@ -443,7 +387,7 @@ inline void MultiGPU_MPI_Communicator::apply( Real** dU, lat_index_t** dNnt, boo
 		cudaMemcpyAsync( dU[tmax-1]+p_offset, haloIn+p_offset, timesliceSize/12, cudaMemcpyHostToDevice, streamCpy );
 		for( int t = startPart[5]; t < endPart[5]; t++ )
 		{
-			oneslicehitter.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algorithm );
+			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );
 		}		
 		cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 		
@@ -454,49 +398,23 @@ inline void MultiGPU_MPI_Communicator::apply( Real** dU, lat_index_t** dNnt, boo
 		for( int t=tmin; t<tmax; t++ )
 		{
 			int tDw = ( t > 0 )?( t - 1 ):( Nt - 1 );
-			oneslicehitter.applyOneTimeslice( numBlocks, threadsPerBlock, streamStd, dU[t], dU[tDw], dNnt[rank], evenodd ^ (t%2), algorithm );
+			kernelWrapper.applyOneTimeslice( numBlocks, threadsPerBlock, streamStd, dU[t], dU[tDw], dNnt[rank], evenodd ^ (t%2), algoOptions );
 		}
 	} // end if nproc > 1
 }
 
 
-inline void MultiGPU_MPI_Communicator::generateGaugeQuality( Real** dU, lat_index_t** dNnt )
+template< class MultiGPU_MPI_GaugeKernels >
+inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::generateGaugeQuality( Real** dU, lat_index_t** dNnt )
 {
-// 	static const int Ndim = 4;
-// 	static const int Nc = 3;
-// 	static const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
-// 	static const size_t timesliceSize = timesliceArraySize*sizeof(Real);
-	
 	static const int threadsPerBlock = NSB; // NSB sites are updated within a block (8 threads are needed per site)
 	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
-
-// 	// MPI comm.
-// 	static MPI_Request request1, request2;
-// 	static MPI_Status  status;
-// 
-// 	// cudaStreams 
-// 	static cudaStream_t streamStd;
-// 	static cudaStream_t streamCpy;
 	
 	// instantiate object of kernel wrapper class
-	static MultiGPU_MPI_LandauKernelsSU3 oneslicehitter;
-	
-	// device memory for collecting the parts of the gauge fixing functional and divA
-// 	static double *dGff;
-// 	static double *dA;
+	static MultiGPU_MPI_GaugeKernels kernelWrapper;
 	
 	// reduce to collect dGff, dA
 	static Reduce reduce( Nx*Ny*Nz/2 );
-	
-// 	if( init )
-// 	{
-// // 		cudaStreamCreate( &streamStd );
-// // 		cudaStreamCreate( &streamCpy );
-// // 		oneslicehitter.initCacheConfig();
-// 		// TODO make half the size (parity)
-// 		cudaMalloc( &dGff, Nx*Ny*Nz*sizeof(double)/2 );
-// 		cudaMalloc( &dA,   Nx*Ny*Nz*sizeof(double)/2 );
-// 	}
 	
 	double tempGff = 0.0;
 	double tempA   = 0.0;
@@ -512,7 +430,7 @@ inline void MultiGPU_MPI_Communicator::generateGaugeQuality( Real** dU, lat_inde
 			for( int t = startPart[0]; t < endPart[1]; t++ )
 			{
 				// call wrapper for one timelice
-				oneslicehitter.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , dGff, dA );
+				kernelWrapper.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , dGff, dA );
 				tempGff += reduce.getReducedValue( streamStd, dGff );
 				tempA   += reduce.getReducedValue( streamStd, dA );
 			}
@@ -523,7 +441,7 @@ inline void MultiGPU_MPI_Communicator::generateGaugeQuality( Real** dU, lat_inde
 			MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
 			for( int t = startPart[2]; t < endPart[3]; t++ )
 			{
-				oneslicehitter.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , dGff, dA );
+				kernelWrapper.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , dGff, dA );
 				tempGff += reduce.getReducedValue( streamStd, dGff );
 				tempA   += reduce.getReducedValue( streamStd, dA );
 			}
@@ -534,13 +452,13 @@ inline void MultiGPU_MPI_Communicator::generateGaugeQuality( Real** dU, lat_inde
 			cudaMemcpyAsync( dHalo+p_offset, haloIn+p_offset, timesliceSize/12, cudaMemcpyHostToDevice, streamCpy );
 			for( int t = startPart[4]; t < endPart[5]; t++ )
 			{
-				oneslicehitter.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , dGff, dA );		
+				kernelWrapper.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , dGff, dA );		
 				tempGff += reduce.getReducedValue( streamStd, dGff );
 				tempA   += reduce.getReducedValue( streamStd, dA );
 			}
 			
 			// now call kernel wrapper for tmin with dU[t-1] replaced by dHalo
-			oneslicehitter.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamCpy, dU[tmin], dHalo, dNnt[rank], evenodd ^ (tmin%2) , dGff, dA );
+			kernelWrapper.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamCpy, dU[tmin], dHalo, dNnt[rank], evenodd ^ (tmin%2) , dGff, dA );
 			tempGff += reduce.getReducedValue( streamCpy, dGff );
 			tempA   += reduce.getReducedValue( streamCpy, dA );
 				
@@ -554,7 +472,7 @@ inline void MultiGPU_MPI_Communicator::generateGaugeQuality( Real** dU, lat_inde
 			for( int t=tmin; t<tmax; t++ )
 			{
 				int tDw = ( t > tmin )?( t - 1 ):( tmax - 1 );
-				oneslicehitter.generateGaugeQualityPerSite( numBlocks, threadsPerBlock, streamStd, dU[t], dU[tDw], dNnt[rank], evenodd ^ (t%2), dGff, dA );
+				kernelWrapper.generateGaugeQualityPerSite( numBlocks, threadsPerBlock, streamStd, dU[t], dU[tDw], dNnt[rank], evenodd ^ (t%2), dGff, dA );
 				tempGff += reduce.getReducedValue( streamStd, dGff );
 				tempA   += reduce.getReducedValue( streamStd, dA );
 			}
@@ -575,12 +493,14 @@ inline void MultiGPU_MPI_Communicator::generateGaugeQuality( Real** dU, lat_inde
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 }
 
-double MultiGPU_MPI_Communicator::getCurrentGff()
+template< class MultiGPU_MPI_GaugeKernels >
+double MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getCurrentGff()
 {
 	return currentGff;
 }
 
-double MultiGPU_MPI_Communicator::getCurrentA()
+template< class MultiGPU_MPI_GaugeKernels >
+double MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getCurrentA()
 {
 	return currentA;
 }

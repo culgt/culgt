@@ -12,7 +12,7 @@
 
 // #include "./OrUpdate.hxx"
 // #include "./MPI_ProcInfo.h"
-
+#include "./MultiGPU_MPI_AlgorithmOptions.h"
 
 // kernels as class members are not supported (even static): wrap the kernel calls and hide the kernels in namespace.
 
@@ -21,13 +21,13 @@ namespace MPILKSU3
 {
 static const int Ndim = 4;
 static const int Nc = 3;
-template<class Algorithm> inline __global__ void applyOneTimeslice( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, Algorithm algorithm  );
+template<class Algorithm> inline __device__ void applyOneTimeslice( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, Algorithm algorithm  );
 __global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA );
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt );
 __global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int counter );
-__global__ void orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter );
-__global__ void microStep( Real* U, lat_index_t* nnt, bool parity );
-__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int counter );
+__global__ void orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter );
+__global__ void microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity );
+__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter );
 }
 
 // wrappers:
@@ -42,7 +42,7 @@ public:
 	// TODO remove static and make the init in constructor
 	void initCacheConfig();
 	
-	void applyOneTimeslice( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, enum AlgoType algorithm  );
+	void applyOneTimeslice( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, MultiGPU_MPI_AlgorithmOptions algoOptions  );
 
 	void generateGaugeQualityPerSite( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA );
 // 	static double getGaugeQualityPrefactorA();
