@@ -169,7 +169,7 @@ MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::MultiGPU_MPI_Communicato
 	}
 	
 	// init. the device
-	initDevice( (rank%4)+1 );
+	initDevice( rank%4 );
 	
 	// init. cuda streams
 	cudaStreamCreate( &streamStd );
