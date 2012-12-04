@@ -7,7 +7,7 @@
  */
 
 #include "./MultiGPU_MPI_Reduce.h"
-#include "../../util/cuda/cuda_host_device.h"
+#include "../../../lattice/cuda/cuda_host_device.h"
 
 /**
  * TODO place somewhere else

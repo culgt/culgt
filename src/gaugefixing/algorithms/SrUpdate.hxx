@@ -48,14 +48,14 @@ __device__ void SrUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	shA[id+64] = (rand>=srParameter)*a2 + (rand<srParameter)*(2.0*a0*a2);
 	shA[id+96] = (rand>=srParameter)*a3 + (rand<srParameter)*(2.0*a0*a3);
 
-	c=rsqrt(shA[id]*shA[id]+shA[id+32]*shA[id+32]+shA[id+64]*shA[id+64]+shA[id+96]*shA[id+96]); // 8 flop
+	c=rsqrt(shA[id]*shA[id]+shA[id+32]*shA[id+32]+shA[id+64]*shA[id+64]+shA[id+96]*shA[id+96]); // 9 flop
 	shA[id]    *= c;
 	shA[id+32] *= c;
 	shA[id+64] *= c;
 	shA[id+96] *= c;
 	// 4 flop
 
-	// sum: 31 flop
+	// sum: 32 flop
 #else
 	Real rand = rng->rand();
 	Real a0,a1,a2,a3,c;

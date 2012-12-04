@@ -49,7 +49,7 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	dk=rsqrt(e0*e0+e1*e1+e2*e2+e3*e3);
 	p0=(dk*temperature); // equals a*beta
 
-//	15 flop
+//	16 flop
 
 	do
 	{
@@ -62,7 +62,7 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	  delta = r2+r1*r3;
 	  r4=rng->rand();
 	} while(r4*r4 > (1.0-0.5*delta));
-//	18 flop (if no loops, counting rand() as 1 operation)
+//	17 flop (if no loops, counting rand() as 1 operation, cospi/sinpi as 2)
 	a0=1.0-delta;
 	cos_theta=2.0*rng->rand()-1.0;
 	sin_theta=sqrt(1.0-cos_theta*cos_theta);
@@ -76,7 +76,7 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	e1 *= dk;
 	e2 *= dk;
 	e3 *= dk;
-//	21 flop
+//	25 flop
 
 	shA[id] = a0*e0+a3*e3+a2*e2+e1*a1;
 	shA[id+96] = e0*a3-e3*a0+a1*e2-a2*e1;
@@ -84,7 +84,7 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	shA[id+32] = a2*e3+a1*e0-a3*e2-e1*a0;
 //	28 flop
 
-//	sum: 72 flop
+//	sum: 86 flop
 #else
 	Real e0,e1,e2,e3, dk, p0;
 	Real r1,r2,r3,r4;
@@ -97,7 +97,6 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	dk=rsqrt(e0*e0+e1*e1+e2*e2+e3*e3);
 	p0=(dk*temperature); // equals a*beta
 
-//	15 flop
 
 	do
 	{
@@ -110,7 +109,6 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	  delta = r2+r1*r3;
 	  r4=rng->rand();
 	} while(r4*r4 > (1.0-0.5*delta));
-//	18 flop (if no loops, counting rand() as 1 operation)
 	a0=1.0-delta;
 	cos_theta=2.0*rng->rand()-1.0;
 	sin_theta=sqrt(1.0-cos_theta*cos_theta);
@@ -124,15 +122,12 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	e1 *= dk;
 	e2 *= dk;
 	e3 *= dk;
-//	21 flop
 
 	shA[id] = a0*e0+a3*e3+a2*e2+e1*a1;
 	shA[id+96] = e0*a3-e3*a0+a1*e2-a2*e1;
 	shA[id+64] = a3*e1-a0*e2+a2*e0-a1*e3;
 	shA[id+32] = a2*e3+a1*e0-a3*e2-e1*a0;
-//	28 flop
 
-//	sum: 72 flop
 #endif
 }
 

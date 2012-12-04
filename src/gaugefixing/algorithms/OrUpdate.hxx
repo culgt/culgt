@@ -55,6 +55,7 @@ __device__ void OrUpdate::calculateUpdate( volatile Real (&shA)[NSB4], short id 
 	shA[id+NSB]*=b*c;
 	shA[id+NSB2]*=b*c;
 	shA[id+NSB3]*=b*c;
+	// 22 flops
 #endif
 }
 

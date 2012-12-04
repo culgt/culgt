@@ -404,17 +404,17 @@ int main(int argc, char* argv[])
 	allTimer.stop();
 	cout << "total time: " << allTimer.getTime() << " s" << endl;
 
-	long hbFlops = 2176-8;
-	long microFlops = 2118-8;
+	long hbFlops = 2252+86-8;
+	long microFlops = 2252+14-8;
 	cout << "Simulated Annealing (HB+Micro): " << (double)((long)(hbFlops+microFlops*options.getSaMicroupdates())*(long)s.getLatticeSize()*(long)options.getSaSteps()*(long)options.getGaugeCopies())/saTotalKernelTime/1.0e9 << " GFlops at "
 					<< (double)((long)192*(long)s.getLatticeSize()*options.getSaSteps()*(options.getSaMicroupdates()+1)*(long)sizeof(Real))/saTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
-	long srFlops = 2135-8;
+	long srFlops = 2252+32-8;
 	cout << "Stochastic Relaxation: " << (double)((long)srFlops*(long)s.getLatticeSize()*(long)srTotalStepnumber)/srTotalKernelTime/1.0e9 << " GFlops at "
 				<< (double)((long)192*(long)s.getLatticeSize()*(long)(srTotalStepnumber)*(long)sizeof(Real))/srTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
 
-	long orFlops = 2124-8;
+	long orFlops = 2252+22-8;
 	cout << "Overrelaxation: " << (double)((long)orFlops*(long)s.getLatticeSize()*(long)orTotalStepnumber)/orTotalKernelTime/1.0e9 << " GFlops at "
 				<< (double)((long)192*(long)s.getLatticeSize()*(long)(orTotalStepnumber)*(long)sizeof(Real))/orTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
