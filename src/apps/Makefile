@@ -62,8 +62,8 @@ $(APP): $(CUOBJ) Chronotimer.o GlobalConstants.o
 Chronotimer.o: ../util/timer/Chronotimer.cc
 	$(CC) -c $(CCFLAGS) ../util/timer/Chronotimer.cc
 
-GlobalConstants.o: ../lattice/gaugefixing/GlobalConstants.cc
-	$(CC) -c $(CCDEFS) $(CCFLAGS) -I/usr/local/cuda/include/ ../lattice/gaugefixing/GlobalConstants.cc
+GlobalConstants.o: ../lattice/gaugefixing/GlobalConstants.cu
+	$(NVCC) -c $(CUDEFS) $(CUFLAGS) -I/usr/local/cuda/include/ ../lattice/gaugefixing/GlobalConstants.cu
 
 clean: 
 	rm -f *.o $(APP)
