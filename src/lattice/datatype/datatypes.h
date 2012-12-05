@@ -10,8 +10,10 @@
 
 #ifdef DOUBLEPRECISION
 	typedef double Real;
+	#define MPI_Real MPI_DOUBLE
 #else
 	typedef float Real;
+	#define MPI_Real MPI_FLOAT
 #endif
 	
 #endif /* DATATYPES_H_ */

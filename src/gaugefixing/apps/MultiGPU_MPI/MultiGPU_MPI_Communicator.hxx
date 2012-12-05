@@ -238,12 +238,12 @@ void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::scatterGaugeField( 
 		}
 		else if( theProcess[t] == rank )
 		{
-			MPI_CHECK( MPI_Recv( haloIn,  timesliceArraySize, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &status ) );
+			MPI_CHECK( MPI_Recv( haloIn,  timesliceArraySize, MPI_Real, 0, 0, MPI_COMM_WORLD, &status ) );
 			cudaMemcpy( dU[t], haloIn, timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
 		}
 		else if( master )
 		{
-			MPI_CHECK( MPI_Send( &U[t*timesliceArraySize], timesliceArraySize, MPI_FLOAT, theProcess[t], 0, MPI_COMM_WORLD ) );
+			MPI_CHECK( MPI_Send( &U[t*timesliceArraySize], timesliceArraySize, MPI_Real, theProcess[t], 0, MPI_COMM_WORLD ) );
 		}
 		MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 	}
@@ -262,11 +262,11 @@ void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::collectGaugeField( 
 		else if( theProcess[t] == rank )
 		{
 			cudaMemcpy( haloOut, dU[t], timesliceArraySize*sizeof(Real), cudaMemcpyDeviceToHost );
-			MPI_CHECK( MPI_Send( haloOut,  timesliceArraySize, MPI_FLOAT, 0, 0, MPI_COMM_WORLD ) );
+			MPI_CHECK( MPI_Send( haloOut,  timesliceArraySize, MPI_Real, 0, 0, MPI_COMM_WORLD ) );
 		}
 		else if( master )
 		{
-			MPI_CHECK( MPI_Recv( &U[t*timesliceArraySize], timesliceArraySize, MPI_FLOAT, theProcess[t], 0, MPI_COMM_WORLD, &status ) );
+			MPI_CHECK( MPI_Recv( &U[t*timesliceArraySize], timesliceArraySize, MPI_Real, theProcess[t], 0, MPI_COMM_WORLD, &status ) );
 		}
 		MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 	}
@@ -356,8 +356,8 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::apply( Real*
 		cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 		
 		// halo exchange forward step 2
-		MPI_CHECK( MPI_Irecv( haloIn+p_offset,  timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );	
-		MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
+		MPI_CHECK( MPI_Irecv( haloIn+p_offset,  timesliceArraySize/12, MPI_Real, lRank, 0, MPI_COMM_WORLD, &request2) );	
+		MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_Real, rRank, 0, MPI_COMM_WORLD, &request1) );
 		for( int t = startPart[0]; t < endPart[0]; t++ )
 		{
 			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );
@@ -384,8 +384,8 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::apply( Real*
 		cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 		
 		// halo exchange back step 2
-		MPI_CHECK( MPI_Irecv( haloIn+p_offset,  timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request2) );	
-		MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request1) );
+		MPI_CHECK( MPI_Irecv( haloIn+p_offset,  timesliceArraySize/12, MPI_Real, rRank, 0, MPI_COMM_WORLD, &request2) );	
+		MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_Real, lRank, 0, MPI_COMM_WORLD, &request1) );
 		for( int t = startPart[1]; t < endPart[1]; t++ )
 		{
 			kernelWrapper.applyOneTimeslice( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , algoOptions );
@@ -484,8 +484,8 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::generateGaug
 			cudaDeviceSynchronize(); // to ensure cudaMemcpyAsync finished
 			
 			// halo exchange forward step 2
-			MPI_CHECK( MPI_Irecv( haloIn+p_offset,  timesliceArraySize/12, MPI_FLOAT, lRank, 0, MPI_COMM_WORLD, &request2) );	
-			MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_FLOAT, rRank, 0, MPI_COMM_WORLD, &request1) );
+			MPI_CHECK( MPI_Irecv( haloIn+p_offset,  timesliceArraySize/12, MPI_Real, lRank, 0, MPI_COMM_WORLD, &request2) );	
+			MPI_CHECK( MPI_Isend( haloOut+p_offset, timesliceArraySize/12, MPI_Real, rRank, 0, MPI_COMM_WORLD, &request1) );
 			for( int t = startPart[2]; t < endPart[3]; t++ )
 			{
 				kernelWrapper.generateGaugeQualityPerSite( numBlocks,threadsPerBlock, streamStd, dU[t], dU[t-1], dNnt[rank], evenodd ^ (t%2) , dGff, dA );
