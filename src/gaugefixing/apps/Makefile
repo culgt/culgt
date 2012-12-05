@@ -63,7 +63,7 @@ Chronotimer.o: ../../util/timer/Chronotimer.cc
 	$(CC) -c $(CCFLAGS) ../../util/timer/Chronotimer.cc
 
 GlobalConstants.o: ../GlobalConstants.cu
-	$(NVCC) -c $(CUDEFS) $(CUFLAGS) -I/usr/local/cuda/include/ ../GlobalConstants.cu
+	$(NVCC) -c $(CUDEFS) $(CUFLAGS) ../GlobalConstants.cu
 
 clean: 
 	rm -f *.o $(APP)
