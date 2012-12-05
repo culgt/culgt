@@ -60,6 +60,10 @@ public:
 	int getGaugeCopies() const {
 		return gaugeCopies;
 	}
+	
+	bool randomGaugeField() const {
+		return setHot;
+	}
 
 	int getNconf() const {
 		return nconf;
@@ -143,6 +147,8 @@ private:
 	string fOutputAppendix;
 
 	ReinterpretReal reinterpret;
+	
+	bool setHot;
 
 	long seed;
 
@@ -192,6 +198,8 @@ int ProgramOptions::init( int argc, char* argv[] )
 			("fappendix", boost::program_options::value<string>(&fOutputAppendix)->default_value("gaugefixed_"), "appendix to be inserted beween (input-)filename and number")
 
 			("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpret)->default_value(STANDARD), "reinterpret Real datatype (STANDARD = do nothing, FLOAT = read input as float and cast to Real, DOUBLE = ...)")
+			
+			("hotgaugefield", boost::program_options::value<bool>(&setHot)->default_value(false), "don't load gauge field; fill with random SU(3).")
 
 			("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
 

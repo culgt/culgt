@@ -4,6 +4,13 @@
  *
  *  Created on: Nov 30, 2012
  *      Author: vogt&schroeck
+ * 
+ * This class contains the kernels and wrappers called
+ * by MultiGPU_MPI_Communicator.hxx.
+ * 
+ * kernels as class members are not supported (even static): 
+ * wrap the kernel calls and hide the kernels in namespace.
+ * 
  */
 
 #include "../../GlobalConstants.h"
@@ -24,8 +31,6 @@
 
 #include "./MultiGPU_MPI_LandauKernelsSU3.h"
 
-
-// kernels as class members are not supported (even static): wrap the kernel calls and hide the kernels in namespace.
 
 // kernels:
 namespace MPILKSU3
@@ -214,6 +219,45 @@ __global__ void projectSU3( Real* Ut )
 	}
 }
 
+__global__ void setHot( Real* Ut, int counter )
+{
+	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
+
+	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+	SiteIndex<4,FULL_SPLIT> s(size);
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+	s.setLatticeIndex( site );
+	
+	PhiloxWrapper rng( site, 123, counter );
+
+	Quaternion<Real> q;
+	
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		TLinkIndex linkUp( Ut, s, mu );
+		SU3<TLinkIndex> globUp( linkUp );
+
+		Matrix<Complex<Real>,Nc> locMat;
+		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
+
+		locU.identity();
+		
+		for( int i=0; i<2; i++ )
+			for( int j=i+1; j<3; j++ )
+			{
+				q[0] = rng.rand()*2.0-1.0;
+				q[1] = rng.rand()*2.0-1.0;
+				q[2] = rng.rand()*2.0-1.0;
+				q[3] = rng.rand()*2.0-1.0;
+				
+				q.projectSU2();
+				locU.rightSubgroupMult( i, j, &q );
+			}
+ 		globUp = locU;
+	}
+}
+
 }
 
 
@@ -261,6 +305,12 @@ void MultiGPU_MPI_LandauKernelsSU3::applyOneTimeslice( int a, int b, cudaStream_
 void MultiGPU_MPI_LandauKernelsSU3::projectSU3( int a, int b, cudaStream_t stream, Real* Ut )
 {
 	MPILKSU3::projectSU3<<<a,b,0,stream>>>( Ut );
+}
+
+void MultiGPU_MPI_LandauKernelsSU3::setHot( int a, int b, cudaStream_t stream, Real* Ut )
+{
+	
+	MPILKSU3::setHot<<<a,b,0,stream>>>( Ut, PhiloxWrapper::getNextCounter() );
 }
 
 void MultiGPU_MPI_LandauKernelsSU3::generateGaugeQualityPerSite( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA )

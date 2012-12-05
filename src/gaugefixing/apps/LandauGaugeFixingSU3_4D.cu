@@ -309,45 +309,49 @@ int main(int argc, char* argv[])
 
 	for( fi.reset(); fi.hasNext(); fi.next() )
 	{
-		cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl;
-
 		bool loadOk;
 
-		switch( options.getFType() )
+		if( !options.randomGaugeField() )
 		{
-		case VOGT:
-//			lfVogt.reinterpret = options.getReinterpret();
-			loadOk = lfVogt.load( s, fi.getFilename(), U );
-			break;
-		case PLAIN:
-//			lfPlain.reinterpret = options.getReinterpret();
-			loadOk = lfPlain.load( s, fi.getFilename(), U );
-			break;
-		case HEADERONLY:
-//			lfHeaderOnly.reinterpret = options.getReinterpret();
-			loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
-			break;
-		default:
-			cout << "Filetype not set to a known value. Exiting";
-			exit(1);
-		}
+			cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl;
+			switch( options.getFType() )
+			{
+			case VOGT:
+	//			lfVogt.reinterpret = options.getReinterpret();
+				loadOk = lfVogt.load( s, fi.getFilename(), U );
+				break;
+			case PLAIN:
+	//			lfPlain.reinterpret = options.getReinterpret();
+				loadOk = lfPlain.load( s, fi.getFilename(), U );
+				break;
+			case HEADERONLY:
+	//			lfHeaderOnly.reinterpret = options.getReinterpret();
+				loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
+				break;
+			default:
+				cout << "Filetype not set to a known value. Exiting";
+				exit(1);
+			}
 
-		if( !loadOk )
-		{
-			cout << "Error while loading. Trying next file." << endl;
-			break;
+			if( !loadOk )
+			{
+				cout << "Error while loading. Trying next file." << endl;
+				break;
+			}
+			else
+			{
+				cout << "File loaded." << endl;
+			}
 		}
-		else
-		{
-			cout << "File loaded." << endl;
-		}
+		else // options.randomGaugeField()
+			CommonKernelsSU3::setHot( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize(), PhiloxWrapper::getNextCounter() );
 
 
 		double bestGff = 0.0;
 		for( int copy = 0; copy < options.getGaugeCopies(); copy++ )
 		{
 			// we copy from host in every gaugecopy step to have a cleaner configuration (concerning numerical errors)
-			cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
+			if( !options.randomGaugeField() ) cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
 			if( !options.isNoRandomTrafo() ) // I'm an optimist! This should be called isRandomTrafo()!
 			{
@@ -440,22 +444,24 @@ int main(int argc, char* argv[])
 		}
 		
 		//saving file
-		cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
-
-		switch( options.getFType() )
+		if( !options.randomGaugeField() )
 		{
-		case VOGT:
-			loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
-			break;
-		case PLAIN:
-			loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
-			break;
-		case HEADERONLY:
-			loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
-			break;
-		default:
-			cout << "Filetype not set to a known value. Exiting";
-			exit(1);
+			cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
+			switch( options.getFType() )
+			{
+			case VOGT:
+				loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
+				break;
+			case PLAIN:
+				loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
+				break;
+			case HEADERONLY:
+				loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
+				break;
+			default:
+				cout << "Filetype not set to a known value. Exiting";
+				exit(1);
+			}
 		}
 	}
 

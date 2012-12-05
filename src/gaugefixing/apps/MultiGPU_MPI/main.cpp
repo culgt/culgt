@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 	{
 		// load file
 		bool loadOk;
-		if( comm.isMaster() )
+		if( comm.isMaster() && !options.randomGaugeField() )
 		{
 			cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl;
 			switch( options.getFType() )
@@ -171,9 +171,8 @@ int main(int argc, char* argv[])
 			}
 		}
 
-
 		// don't read gauge field, set hot:
-// 		comm.set_hot( dU );
+		if( options.randomGaugeField() ) comm.setHot( dU );
 
 
 		
@@ -181,7 +180,7 @@ int main(int argc, char* argv[])
 		for( int copy = 0; copy < options.getGaugeCopies(); copy++ )
 		{
 			// we copy from host in every gaugecopy step to have a cleaner configuration (concerning numerical errors)
-			comm.scatterGaugeField( dU, U );
+			if( !options.randomGaugeField() ) comm.scatterGaugeField( dU, U );
 
 			// random trafo
 			if( !options.isNoRandomTrafo() ) // I'm an optimist! This should be called isRandomTrafo()!
@@ -274,7 +273,7 @@ int main(int argc, char* argv[])
 				bestGff = comm.getCurrentGff();
 
 				// send back all timeslices to master
-				comm.collectGaugeField( dU, U );
+				if( !options.randomGaugeField() ) comm.collectGaugeField( dU, U );
 			}
 			else
 			{
@@ -287,7 +286,7 @@ int main(int argc, char* argv[])
 		
 		
 		//saving file
-		if( comm.isMaster() )
+		if( comm.isMaster() && !options.randomGaugeField() )
 		{
 			cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
 			switch( options.getFType() )

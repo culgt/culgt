@@ -19,6 +19,7 @@ namespace COMKSU3
 static const int Ndim = 4; // TODO why here?
 static const int Nc = 3;
 __global__ void projectSU3( Real *U, lat_coord_t* ptrToDeviceSize );
+__global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int counter );
 }
 
 class CommonKernelsSU3
@@ -35,6 +36,11 @@ public:
 	static void projectSU3( int a, int b, Real *U, lat_coord_t* ptrToDeviceSize )
 	{
 		COMKSU3::projectSU3<<<a,b>>>( U, ptrToDeviceSize );
+	};
+	
+	static void setHot( int a, int b, Real *U, lat_coord_t* ptrToDeviceSize, int counter )
+	{
+		COMKSU3::setHot<<<a,b>>>( U, ptrToDeviceSize, counter );
 	};
 
 private:
@@ -65,6 +71,46 @@ __global__ void projectSU3( Real *U, lat_coord_t* ptrToDeviceSize )
 		SU3<TLink> globUp( linkUp );
 
 		globUp.projectSU3(); // IMPORTANT: Currently this kernel is used for reconstructing third line in the end. Be aware of this when changing something.
+	}
+}
+
+__global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int counter )
+{
+	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
+	typedef Link<GpuTimeslice,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
+
+//	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
+	SiteIndex<4,FULL_SPLIT> s(ptrToDeviceSize );
+	int site = blockIdx.x * blockDim.x + threadIdx.x;
+
+	s.setLatticeIndex( site );
+
+	PhiloxWrapper rng( site, 123, counter );
+
+	Quaternion<Real> q;
+	
+	for( int mu = 0; mu < 4; mu++ )
+	{
+		TLink linkUp( U, s, mu );
+		SU3<TLink> globUp( linkUp );
+
+		Matrix<Complex<Real>,Nc> locMat;
+		SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
+
+		locU.identity();
+		
+		for( int i=0; i<2; i++ )
+			for( int j=i+1; j<3; j++ )
+			{
+				q[0] = rng.rand()*2.0-1.0;
+				q[1] = rng.rand()*2.0-1.0;
+				q[2] = rng.rand()*2.0-1.0;
+				q[3] = rng.rand()*2.0-1.0;
+				
+				q.projectSU2();
+				locU.rightSubgroupMult( i, j, &q );
+			}
+ 		globUp = locU;
 	}
 }
 

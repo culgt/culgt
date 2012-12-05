@@ -31,6 +31,7 @@ __global__ void orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, f
 __global__ void microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity );
 __global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter );
 __global__ void projectSU3( Real* Ut );
+__global__ void setHot( Real* Ut, int counter );
 }
 
 // wrappers:
@@ -45,6 +46,8 @@ public:
 	void applyOneTimeslice( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, MultiGPU_MPI_AlgorithmOptions algoOptions  );
 	// projects all SU(3) matrices in a timeslice back to the group
 	void projectSU3( int a, int b, cudaStream_t stream, Real* Ut );
+	// fill gauge field on the devices with random SU(3) matrices
+	void setHot( int a, int b, cudaStream_t stream, Real* Ut );
 	// generates the gauge quality on a timesclice for all sites, no reduction
 	void generateGaugeQualityPerSite( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA );
 	

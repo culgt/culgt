@@ -13,7 +13,7 @@
  * -it applies an algorithm and takes care of the communication at 
  * the boundaries while hiding the time for the latter behind calculations
  * in the inner part of the domain.
- * -it offers methods set_hot and projectSU3 that iterated over all
+ * -it offers methods setHot and projectSU3 that iterated over all
  * timeslices (no comm. necessary).
  * -it takes care of generating the gauge quality.
  * 
@@ -81,7 +81,7 @@ public:
 	// projectSU3: iterates over the timeslices, no comm. needed.
 	void projectSU3( Real** dU );
 	// set dU to a random gauge field
-	void set_hot( Real** dU );
+	void setHot( Real** dU );
 	// generate the gauge quality
 	void generateGaugeQuality( Real** dU, lat_index_t** dNnt );
 	// get the current value of the gauge functional
@@ -434,7 +434,7 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::projectSU3( 
 
 
 template< class MultiGPU_MPI_GaugeKernels >
-inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::set_hot( Real** dU )
+inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::setHot( Real** dU )
 {
 	int threadsPerBlock = 32;
 	int numBlocks = Nx*Ny*Nz/32;
@@ -444,7 +444,7 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::set_hot( Rea
 
 	for( int t=tmin; t<tmax; t++ )
 	{
-		kernelWrapper.set_hot( numBlocks, threadsPerBlock, streamStd, dU[t] );
+		kernelWrapper.setHot( numBlocks, threadsPerBlock, streamStd, dU[t] );
 	}
 	cudaDeviceSynchronize();
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
