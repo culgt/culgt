@@ -3,29 +3,15 @@
  *
  *  Created on: Nov. 30, 2012
  *      Author: schroeck
+ * 
+ * This class and the kernels in the namespace
+ * reduces (sums over) an array Ar of doubles to a single double
+ * by calling three levels of tree-like reducers.
  *
- * TODO can this go in one file .hxx ?
  */
 
 #ifndef MULTIGPU_MPI_REDUCE_HXX_
 #define MULTIGPU_MPI_REDUCE_HXX_
-
-// #include "GlobalConstants.hxx"
-// #include "../../util/datatype/datatypes.h"
-// #include "../../util/cuda/cuda_host_device.h"
-// #include "../access_pattern/StandardPattern.hxx"
-// #include "../access_pattern/GpuCoulombPattern.hxx"
-// #include "../access_pattern/GpuLandauPattern.hxx"
-// #include "../SiteCoord.hxx"
-// #include "../SiteIndex.hxx"
-// #include "../Link.hxx"
-// #include "../SU3.hxx"
-// #include "../SU2.hxx"
-// #include "../Matrix.hxx"
-// #include "../LinkFile.hxx"
-
-// #include <iostream>
-
 
 
 // kernels: hide in namespace

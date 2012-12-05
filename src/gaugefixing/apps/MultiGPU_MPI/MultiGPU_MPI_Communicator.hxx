@@ -6,6 +6,17 @@
  * 
  *  compile with mpicc
  * 
+ * This class takes care of the complete MPI communication:
+ * 
+ * -it offers methods to scatter and collect the gauge field from/to
+ * the master host process to all process's devices.
+ * -it applies an algorithm and takes care of the communication at 
+ * the boundaries while hiding the time for the latter behind calculations
+ * in the inner part of the domain.
+ * -it offers methods set_hot and projectSU3 that iterated over all
+ * timeslices (no comm. necessary).
+ * -it takes care of generating the gauge quality.
+ * 
  */
 
 #ifndef MULTIGPU_MPI_COMMUNICATOR_HXX_
@@ -15,7 +26,6 @@
 #include "../../../lattice/datatype/datatypes.h"
 #include "../../../lattice/datatype/lattice_typedefs.h"
 #include "../../GlobalConstants.h"
-// #include "./MPI_ProcInfo.h"
 #include "./MultiGPU_MPI_LandauKernelsSU3.h"
 #include "./MultiGPU_MPI_Reduce.h"
 #include "./MultiGPU_MPI_AlgorithmOptions.h"
@@ -33,6 +43,7 @@ const int Nc = 3;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const size_t timesliceSize = timesliceArraySize*sizeof(Real); 
         
+
 template< class MultiGPU_MPI_GaugeKernels >
 class MultiGPU_MPI_Communicator
 {
@@ -69,6 +80,8 @@ public:
 	void apply( Real** dU, lat_index_t** dNnt, bool evenodd, MultiGPU_MPI_AlgorithmOptions algoOptions );
 	// projectSU3: iterates over the timeslices, no comm. needed.
 	void projectSU3( Real** dU );
+	// set dU to a random gauge field
+	void set_hot( Real** dU );
 	// generate the gauge quality
 	void generateGaugeQuality( Real** dU, lat_index_t** dNnt );
 	// get the current value of the gauge functional
@@ -169,23 +182,25 @@ MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::MultiGPU_MPI_Communicato
 	}
 	
 	// init. the device
-//	initDevice( rank%4 );
-	initDevice( 0 );
+	initDevice( (rank%4)+1 );
 	
 	// init. cuda streams
 	cudaStreamCreate( &streamStd );
 	cudaStreamCreate( &streamCpy );
 	
 	// page-locked host memory for halo timeslices (two per thread)
- 	cudaHostAlloc( &haloIn,  timesliceSize, 0 );
-	cudaHostAlloc( &haloOut, timesliceSize, 0 );
+ 	if( nprocs > 1 ) cudaHostAlloc( &haloIn,  timesliceSize, 0 );
+	if( nprocs > 1 ) cudaHostAlloc( &haloOut, timesliceSize, 0 );
 	
 	// device memory for halo timeslice (one per device)
-	cudaMalloc( &dHalo, timesliceSize );
+	if( nprocs > 1 ) cudaMalloc( &dHalo, timesliceSize );
 	
 	// device memory for gauge quality
 	cudaMalloc( &dGff, Nx*Ny*Nz*sizeof(double)/2 );
 	cudaMalloc( &dA,   Nx*Ny*Nz*sizeof(double)/2 );
+	
+	// tell CUDA to prefer the L1 cache
+	MultiGPU_MPI_GaugeKernels::initCacheConfig();
 	
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 }
@@ -395,6 +410,7 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::apply( Real*
 			int tDw = ( t > 0 )?( t - 1 ):( Nt - 1 );
 			kernelWrapper.applyOneTimeslice( numBlocks, threadsPerBlock, streamStd, dU[t], dU[tDw], dNnt[rank], evenodd ^ (t%2), algoOptions );
 		}
+		cudaDeviceSynchronize();
 	} // end if nproc > 1
 }
 
@@ -402,8 +418,8 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::apply( Real*
 template< class MultiGPU_MPI_GaugeKernels >
 inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::projectSU3( Real** dU )
 {
-	static const int threadsPerBlock = NSB; // NSB sites are updated within a block (8 threads are needed per site)
-	static const int numBlocks = Nx*Ny*Nz/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
+	int threadsPerBlock = 32;
+	int numBlocks = Nx*Ny*Nz/32;
 	
 	// instantiate object of kernel wrapper class
 	static MultiGPU_MPI_GaugeKernels kernelWrapper;
@@ -412,6 +428,25 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::projectSU3( 
 	{
 		kernelWrapper.projectSU3( numBlocks, threadsPerBlock, streamStd, dU[t] );
 	}
+	cudaDeviceSynchronize();
+	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+}
+
+
+template< class MultiGPU_MPI_GaugeKernels >
+inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::set_hot( Real** dU )
+{
+	int threadsPerBlock = 32;
+	int numBlocks = Nx*Ny*Nz/32;
+
+	// instantiate object of kernel wrapper class
+	static MultiGPU_MPI_GaugeKernels kernelWrapper;
+
+	for( int t=tmin; t<tmax; t++ )
+	{
+		kernelWrapper.set_hot( numBlocks, threadsPerBlock, streamStd, dU[t] );
+	}
+	cudaDeviceSynchronize();
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 }
 
@@ -481,6 +516,7 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::generateGaug
 	else // nproc == 1
 	{
 		for( int evenodd=0; evenodd<2; evenodd++ )
+		{
 			for( int t=tmin; t<tmax; t++ )
 			{
 				int tDw = ( t > tmin )?( t - 1 ):( tmax - 1 );
@@ -488,6 +524,8 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::generateGaug
 				tempGff += reduce.getReducedValue( streamStd, dGff );
 				tempA   += reduce.getReducedValue( streamStd, dA );
 			}
+			cudaDeviceSynchronize();
+		}
 	} // end if nproc > 1
 	
 

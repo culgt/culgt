@@ -1,9 +1,9 @@
 /*
- * CoulombKernelsSU3.hxx
+ * MultiGPU_MPI_LandauKernelsSU3.cu
  *
  *
- *  Created on: Oct 26, 2012
- *      Author: vogt
+ *  Created on: Nov 30, 2012
+ *      Author: vogt&schroeck
  */
 
 #include "../../GlobalConstants.h"
@@ -165,28 +165,6 @@ __global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t
 
 }
 
-__global__ void restoreThirdLine( Real* U, lat_index_t* nnt )
-{
-// 	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
-// 	typedef Link<Gpu,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
-// 
-// //	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-// 	//SiteIndex<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
-// 	SiteIndex<4,FULL_SPLIT> s( HOST_CONSTANTS::SIZE_TIMESLICE);
-
-// 	s.nn = nnt;
-// 
-// 	int site = blockIdx.x * blockDim.x + threadIdx.x;
-// 
-// 	s.setLatticeIndex( site );
-// 
-// 	for( int mu = 0; mu < 4; mu++ )
-// 	{
-// 		TLink link( U, s, mu );
-// 		SU3<TLink> glob( link );
-// 		glob.projectSU3();
-// 	}
-}
 
 
 __global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
@@ -239,8 +217,6 @@ __global__ void projectSU3( Real* Ut )
 }
 
 
-//	__global__ static void heatbathStep( Real* UtDw, Real* Ut, Real* UtUp, lat_index_t* nnt, float beta, bool parity, int counter );
-
 
 // wrappers:
 // constructor
@@ -251,25 +227,17 @@ MultiGPU_MPI_LandauKernelsSU3::MultiGPU_MPI_LandauKernelsSU3()
 // TODO call this function in main or somewhere appropriate
 void MultiGPU_MPI_LandauKernelsSU3::initCacheConfig()
 {
-// 	cudaFuncSetCacheConfig( MPILKSU3::generateGaugeQualityPerSite, cudaFuncCachePreferL1 );
-// 	cudaFuncSetCacheConfig( MPILKSU3::restoreThirdLine, cudaFuncCachePreferL1 );
-// 	cudaFuncSetCacheConfig( MPILKSU3::randomTrafo, cudaFuncCachePreferL1 );
-// 	cudaFuncSetCacheConfig( MPILKSU3::orStep, cudaFuncCachePreferL1 );
-// 	cudaFuncSetCacheConfig( MPILKSU3::microStep, cudaFuncCachePreferL1 );
-// 	cudaFuncSetCacheConfig( MPILKSU3::saStep, cudaFuncCachePreferL1 );
+	cudaFuncSetCacheConfig( MPILKSU3::generateGaugeQualityPerSite, cudaFuncCachePreferL1 );
+	cudaFuncSetCacheConfig( MPILKSU3::randomTrafo, cudaFuncCachePreferL1 );
+	cudaFuncSetCacheConfig( MPILKSU3::orStep, cudaFuncCachePreferL1 );
+	cudaFuncSetCacheConfig( MPILKSU3::microStep, cudaFuncCachePreferL1 );
+	cudaFuncSetCacheConfig( MPILKSU3::saStep, cudaFuncCachePreferL1 );
+	cudaFuncSetCacheConfig( MPILKSU3::projectSU3, cudaFuncCachePreferL1 );
 }
 
 
 void MultiGPU_MPI_LandauKernelsSU3::applyOneTimeslice( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, MultiGPU_MPI_AlgorithmOptions algoOptions )
 {
-	//TODO maybe somewhere else:
-// 	cudaFuncSetCacheConfig( MPILKSU3::applyOneTimeslice, cudaFuncCachePreferL1 );
-	
-// 	static PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
-// 	static SaUpdate sa( temperature, &rng );
-// 	OrUpdate overrelax( algoOptions.getOrParameter() );
-// 	static MicroUpdate micro;
-	
 	switch( algoOptions.getAlgorithm() )
 	{
 	case OR:
@@ -300,35 +268,7 @@ void MultiGPU_MPI_LandauKernelsSU3::generateGaugeQualityPerSite( int a, int b, c
 	MPILKSU3::generateGaugeQualityPerSite<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, dGff, dA );
 }
 
-// double MultiGPU_MPI_LandauKernelsSU3::getGaugeQualityPrefactorA()
-// {
-// 	return 1./(double)MPILKSU3::Nc;
-// };
-// double MultiGPU_MPI_LandauKernelsSU3::getGaugeQualityPrefactorGff()
-// {
-// 	return 1./(double)(MPILKSU3::Nc*MPILKSU3::Ndim);
-// };
-// 
-// void MultiGPU_MPI_LandauKernelsSU3::restoreThirdLine( int a, int b, Real* U, lat_index_t* nnt )
-// {
-// 	MPILKSU3::restoreThirdLine<<<a,b>>>(U,nnt);
-// };
-// void MultiGPU_MPI_LandauKernelsSU3::randomTrafo( int a, int b, Real* U,lat_index_t* nnt, bool parity, int counter )
-// {
-// 	MPILKSU3::randomTrafo<<<a,b>>>( U, nnt, parity, counter );
-// };
-// void MultiGPU_MPI_LandauKernelsSU3::orStep( int a, int b,  Real* U, lat_index_t* nnt, bool parity, float orParameter )
-// {
-// 	MPILKSU3::orStep<<<a,b>>>( U, nnt, parity, orParameter );
-// };
-// void MultiGPU_MPI_LandauKernelsSU3::microStep( int a, int b, Real* U, lat_index_t* nnt, bool parity )
-// {
-// 	MPILKSU3::microStep<<<a,b>>>( U, nnt, parity );
-// };
-// void MultiGPU_MPI_LandauKernelsSU3::saStep( int a, int b, Real* U, lat_index_t* nnt, bool parity, float temperature, int counter )
-// {
-// 	MPILKSU3::saStep<<<a,b>>>( U, nnt, parity, temperature, counter);
-// };
+
 
 
 
