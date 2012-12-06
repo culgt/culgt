@@ -221,10 +221,13 @@ int main(int argc, char* argv[])
 					comm.apply( dU, dNnt, 1, algoOptions );
 				}
 
+				if( i % options.getReproject() == 0 )
+				{
+					comm.projectSU3( dU );
+				}
 
 				if( i % options.getCheckPrecision() == 0 )
 				{
-// 					comm.projectSU3( dU );
 					comm.generateGaugeQuality( dU, dNnt );
 					if( comm.isMaster() ) printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, algoOptions.getTemperature(), comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
 				}
@@ -245,9 +248,13 @@ int main(int argc, char* argv[])
 				comm.apply( dU, dNnt, 0, algoOptions );
 				comm.apply( dU, dNnt, 1, algoOptions );
 
+				if( i % options.getReproject() == 0 )
+				{
+					comm.projectSU3( dU );
+				}
+
 				if( i % options.getCheckPrecision() == 0 )
 				{
-// 					comm.projectSU3( dU );
 					comm.generateGaugeQuality( dU, dNnt );
 					if( comm.isMaster() ) printf( "%d\t\t%1.10f\t\t%e\n", i, comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );;
 				}

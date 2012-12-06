@@ -357,6 +357,10 @@ int main(int argc, char* argv[])
 			gaugeStats.generateGaugeQuality();
 			printf( "   \t\t%1.10f\t\t%e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
+
+
+
+			// SIMULATED ANNEALING
 			float temperature = options.getSaMax();
 			float tempStep = (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps();
 
@@ -373,13 +377,14 @@ int main(int argc, char* argv[])
 					LandauKernelsSU3::microStep(numBlocks,threadsPerBlock,dU, dNn, 1 );
 				}
 
+				if( i % options.getReproject() == 0 )
+				{
+					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+				}
 
 				if( i % options.getCheckPrecision() == 0 )
 				{
-					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
-
 					gaugeStats.generateGaugeQuality();
-	//				CudaError::getLastError( "generateGaugeQuality error" );
 					printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 				}
 				temperature -= tempStep;
@@ -388,6 +393,8 @@ int main(int argc, char* argv[])
 			kernelTimer.stop();
 			saTotalKernelTime += kernelTimer.getTime();
 
+
+			// OVERRELAXATION
 			kernelTimer.reset();
 			kernelTimer.start();
 			for( int i = 0; i < options.getOrMaxIter(); i++ )
@@ -396,15 +403,17 @@ int main(int argc, char* argv[])
 				LandauKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 0, options.getOrParameter() );
 				LandauKernelsSU3::orStep(numBlocks,threadsPerBlock,dU, dNn, 1, options.getOrParameter() );
 
-				if( i % options.getCheckPrecision() == 0 )
+				if( i % options.getReproject() == 0 )
 				{
 					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
-					gaugeStats.generateGaugeQuality();
-					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
-
-					if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
 				}
 
+				if( i % options.getCheckPrecision() == 0 )
+				{
+					gaugeStats.generateGaugeQuality();
+					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+					if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
+				}
 				orTotalStepnumber++;
 			}
 

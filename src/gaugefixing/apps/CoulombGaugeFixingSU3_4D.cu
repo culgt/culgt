@@ -323,6 +323,8 @@ int main(int argc, char* argv[])
 				gaugeStats.generateGaugeQuality();
 
 
+
+				// SIMUALTED ANNEALING
 				float temperature = options.getSaMax();
 				float tempStep = (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps();
 
@@ -330,8 +332,6 @@ int main(int argc, char* argv[])
 				kernelTimer.start();
 				for( int i = 0; i < options.getSaSteps(); i++ )
 				{
-
-
 					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
 					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
 
@@ -341,14 +341,15 @@ int main(int argc, char* argv[])
 						CoulombKernelsSU3::microStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1 );
 					}
 
-
-					if( i % options.getCheckPrecision() == 0 )
+					if( i % options.getReproject() == 0 )
 					{
 						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+					}
 
+					if( i % options.getCheckPrecision() == 0 )
+					{
 						gaugeStats.generateGaugeQuality();
-//						CudaError::getLastError( "generateGaugeQuality error" );
 						printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 					}
 					temperature -= tempStep;
@@ -358,6 +359,7 @@ int main(int argc, char* argv[])
 				saTotalKernelTime += kernelTimer.getTime();
 
 
+				// OVERRELAXATION
 				kernelTimer.reset();
 				kernelTimer.start();
 				for( int i = 0; i < options.getOrMaxIter(); i++ )
@@ -366,14 +368,16 @@ int main(int argc, char* argv[])
 					CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, options.getOrParameter() );
 					CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, options.getOrParameter() );
 
-					if( i % options.getCheckPrecision() == 0 )
+					if( i % options.getReproject() == 0 )
 					{
 						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+					}
 
+					if( i % options.getCheckPrecision() == 0 )
+					{
 						gaugeStats.generateGaugeQuality();
 						printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
-
 						if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
 					}
 
