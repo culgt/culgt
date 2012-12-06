@@ -31,11 +31,11 @@ static const int Ndim = 4;
 static const int Nc = 3;
 __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA );
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt );
-__global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int counter );
+__global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter );
 __global__ void orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter );
-__global__ void srStep( Real* U, lat_index_t* nnt, bool parity, float srParameter, int counter );
+__global__ void srStep( Real* U, lat_index_t* nnt, bool parity, float srParameter, int rngSeed, int rngCounter );
 __global__ void microStep( Real* U, lat_index_t* nnt, bool parity );
-__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int counter );
+__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter );
 }
 
 class MAGKernelsSU3
@@ -72,25 +72,25 @@ public:
 	{
 		MAGKSU3::restoreThirdLine<<<a,b>>>(U,nnt);
 	};
-	static void randomTrafo( int a, int b, Real* U,lat_index_t* nnt, bool parity, int counter )
+	static void randomTrafo( int a, int b, Real* U,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter )
 	{
-		MAGKSU3::randomTrafo<<<a,b>>>( U, nnt, parity, counter );
+		MAGKSU3::randomTrafo<<<a,b>>>( U, nnt, parity, rngSeed, rngCounter );
 	};
 	static void orStep( int a, int b,  Real* U, lat_index_t* nnt, bool parity, float orParameter )
 	{
 		MAGKSU3::orStep<<<a,b>>>( U, nnt, parity, orParameter );
 	};
-	static void srStep( int a, int b,  Real* U, lat_index_t* nnt, bool parity, float srParameter, int counter )
+	static void srStep( int a, int b,  Real* U, lat_index_t* nnt, bool parity, float srParameter, int rngSeed, int rngCounter )
 	{
-		MAGKSU3::srStep<<<a,b>>>( U, nnt, parity, srParameter, counter );
+		MAGKSU3::srStep<<<a,b>>>( U, nnt, parity, srParameter, rngSeed, rngCounter );
 	};
 	static void microStep( int a, int b, Real* U, lat_index_t* nnt, bool parity )
 	{
 		MAGKSU3::microStep<<<a,b>>>( U, nnt, parity );
 	};
-	static void saStep( int a, int b, Real* U, lat_index_t* nnt, bool parity, float temperature, int counter )
+	static void saStep( int a, int b, Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 	{
-		MAGKSU3::saStep<<<a,b>>>( U, nnt, parity, temperature, counter);
+		MAGKSU3::saStep<<<a,b>>>( U, nnt, parity, temperature, rngSeed, rngCounter );
 	};
 private:
 };
@@ -320,23 +320,23 @@ __global__ void __launch_bounds__(256,4) microStep( Real* U, lat_index_t* nnt, b
 	apply( U, nnt, parity, micro );
 }
 
-__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int counter )
+__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	SaUpdate sa( temperature, &rng );
 	apply( U, nnt, parity, sa );
 }
 
-__global__ void __launch_bounds__(256,4) srStep( Real* U, lat_index_t* nnt, bool parity, float srParameter, int counter )
+__global__ void __launch_bounds__(256,4) srStep( Real* U, lat_index_t* nnt, bool parity, float srParameter, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	SrUpdate sr( srParameter, &rng );
 	apply( U, nnt, parity, sr );
 }
 
-__global__ void __launch_bounds__(256,4) randomTrafo( Real* U,lat_index_t* nnt, bool parity, int counter )
+__global__ void __launch_bounds__(256,4) randomTrafo( Real* U,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	RandomUpdate random( &rng );
 	apply( U, nnt, parity, random );
 }
