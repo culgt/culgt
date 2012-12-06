@@ -182,8 +182,8 @@ int main(int argc, char* argv[])
 				}
 				else // randomize the timeslices
 				{
-					CommonKernelsSU3::setHot( numBlocks*2,32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice(), options.getSeed(), PhiloxWrapper::getNextCounter() );
-					CommonKernelsSU3::setHot( numBlocks*2,32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice(), options.getSeed(), PhiloxWrapper::getNextCounter() );
+					CommonKernelsSU3::setHot( s.getLatticeSizeTimeslice()/32,32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice(), options.getSeed(), PhiloxWrapper::getNextCounter() );
+					CommonKernelsSU3::setHot( s.getLatticeSizeTimeslice()/32,32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice(), options.getSeed(), PhiloxWrapper::getNextCounter() );
 				}
 
 
@@ -219,8 +219,8 @@ int main(int argc, char* argv[])
 
 					if( i % options.getReproject() == 0 )
 					{
-						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
-						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+						CommonKernelsSU3::projectSU3( s.getLatticeSizeTimeslice()/32, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+						CommonKernelsSU3::projectSU3( s.getLatticeSizeTimeslice()/32, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 					}
 
 					if( i % options.getCheckPrecision() == 0 )
@@ -246,8 +246,8 @@ int main(int argc, char* argv[])
 
 					if( i % options.getReproject() == 0 )
 					{
-						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
-						CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+						CommonKernelsSU3::projectSU3( s.getLatticeSizeTimeslice()/32, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+						CommonKernelsSU3::projectSU3( s.getLatticeSizeTimeslice()/32, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 					}
 
 					if( i % options.getCheckPrecision() == 0 )
@@ -266,8 +266,8 @@ int main(int argc, char* argv[])
 
 
 				// reconstruct third line before copy back
-				CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
-				CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+				CommonKernelsSU3::projectSU3( s.getLatticeSizeTimeslice()/32, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
+				CommonKernelsSU3::projectSU3( s.getLatticeSizeTimeslice()/32, 32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
 
 				if( gaugeStats.getCurrentGff() > bestGff )
 				{

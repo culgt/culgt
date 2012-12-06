@@ -18,7 +18,7 @@ class SaUpdate
 public:
 	__device__ inline SaUpdate();
 	__device__ inline SaUpdate( float temperature, PhiloxWrapper *rng );
-	__device__ inline void calculateUpdate( volatile Real (&shA)[128], short id );
+	__device__ inline void calculateUpdate( volatile Real (&shA)[4*NSB], short id );
 	__device__ inline void setTemperature( float temperature );
 	__device__ inline float getTemperature();
 private:
@@ -34,7 +34,7 @@ __device__ SaUpdate::SaUpdate( float temperature, PhiloxWrapper *rng ) : tempera
 {
 }
 
-__device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
+__device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[4*NSB], short id )
 {
 #ifdef USE_DP_SAUPDATE
 	// TODO test the DP update in SP code
@@ -43,9 +43,9 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	double a0,a1,a2,a3;
 	double delta, phi, sin_alpha, sin_theta, cos_theta;
 	e0=shA[id];
-	e1=-shA[id+32]; // the minus sign is for the hermitian of the input! be aware of this when reusing this code fragment
-	e2=-shA[id+64]; // "
-	e3=-shA[id+96]; // "
+	e1=-shA[id+NSB]; // the minus sign is for the hermitian of the input! be aware of this when reusing this code fragment
+	e2=-shA[id+2*NSB]; // "
+	e3=-shA[id+3*NSB]; // "
 	dk=rsqrt(e0*e0+e1*e1+e2*e2+e3*e3);
 	p0=(dk*temperature); // equals a*beta
 
@@ -79,9 +79,9 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 //	25 flop
 
 	shA[id] = a0*e0+a3*e3+a2*e2+e1*a1;
-	shA[id+96] = e0*a3-e3*a0+a1*e2-a2*e1;
-	shA[id+64] = a3*e1-a0*e2+a2*e0-a1*e3;
-	shA[id+32] = a2*e3+a1*e0-a3*e2-e1*a0;
+	shA[id+3*NSB] = e0*a3-e3*a0+a1*e2-a2*e1;
+	shA[id+2*NSB] = a3*e1-a0*e2+a2*e0-a1*e3;
+	shA[id+NSB] = a2*e3+a1*e0-a3*e2-e1*a0;
 //	28 flop
 
 //	sum: 86 flop
@@ -91,9 +91,9 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	Real a0,a1,a2,a3;
 	Real delta, phi, sin_alpha, sin_theta, cos_theta;
 	e0=shA[id];
-	e1=-shA[id+32]; // the minus sign is for the hermitian of the input! be aware of this when reusing this code fragment
-	e2=-shA[id+64]; // "
-	e3=-shA[id+96]; // "
+	e1=-shA[id+NSB]; // the minus sign is for the hermitian of the input! be aware of this when reusing this code fragment
+	e2=-shA[id+2*NSB]; // "
+	e3=-shA[id+3*NSB]; // "
 	dk=rsqrt(e0*e0+e1*e1+e2*e2+e3*e3);
 	p0=(dk*temperature); // equals a*beta
 
@@ -124,9 +124,9 @@ __device__ void SaUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
 	e3 *= dk;
 
 	shA[id] = a0*e0+a3*e3+a2*e2+e1*a1;
-	shA[id+96] = e0*a3-e3*a0+a1*e2-a2*e1;
-	shA[id+64] = a3*e1-a0*e2+a2*e0-a1*e3;
-	shA[id+32] = a2*e3+a1*e0-a3*e2-e1*a0;
+	shA[id+3*NSB] = e0*a3-e3*a0+a1*e2-a2*e1;
+	shA[id+2*NSB] = a3*e1-a0*e2+a2*e0-a1*e3;
+	shA[id+NSB] = a2*e3+a1*e0-a3*e2-e1*a0;
 
 #endif
 }

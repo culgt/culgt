@@ -207,9 +207,9 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 	SiteIndex<4,FULL_SPLIT> s(size);
 	s.nn = nn;
 
-	const bool updown = threadIdx.x / NSB4;
-	const short mu = (threadIdx.x % NSB4) / NSB;
-	const short id = (threadIdx.x % NSB4) % NSB;
+	const bool updown = threadIdx.x / (4*NSB);
+	const short mu = (threadIdx.x % (4*NSB)) / NSB;
+	const short id = (threadIdx.x % (4*NSB)) % NSB;
 
 	int site = blockIdx.x * blockDim.x/8 + id;
 	if( parity == 1 ) site += s.getLatticeSize()/2;

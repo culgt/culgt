@@ -244,9 +244,9 @@ template<class Algorithm> inline __device__ void apply( Real* UtUp, Real* UtDw, 
 	SiteIndex<4,FULL_SPLIT> s( size ); // If i give DEVICE_CONSTANTS::SIZE_TIMESLICE instead, register spilling is much higher! Why?
 	s.nn = nnt;
 
-	const bool updown = threadIdx.x / 128;
-	const short mu = (threadIdx.x % 128) / 32;
-	const short id = (threadIdx.x % 128) % 32;
+	const bool updown = threadIdx.x / (4*NSB);
+	const short mu = (threadIdx.x % (4*NSB)) / NSB;
+	const short id = (threadIdx.x % (4*NSB)) % NSB;
 
 	int site = blockIdx.x * blockDim.x/8 + id;
 

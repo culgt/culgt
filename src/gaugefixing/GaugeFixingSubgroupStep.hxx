@@ -44,9 +44,9 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 {
 	Quaternion<Real> q;
 #ifdef USEATOMIC
-	__shared__ Real shA[128];
+	__shared__ Real shA[4*NSB];
 #else
-	volatile __shared__ Real shA[128];
+	volatile __shared__ Real shA[4*NSB];
 #endif
 
 	__syncthreads();
@@ -56,8 +56,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		{
 			shA[id]	= 0;
 			shA[id+NSB] = 0;
-			shA[id+NSB2] = 0;
-			shA[id+NSB3] = 0;
+			shA[id+2*NSB] = 0;
+			shA[id+3*NSB] = 0;
 		}
 	}
 	__syncthreads();
@@ -74,8 +74,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			{
 				atomicAdd( &shA[id], q[0] );
 				atomicAdd( &shA[id+NSB], -q[1] );
-				atomicAdd( &shA[id+NSB2], -q[2] );
-				atomicAdd( &shA[id+NSB3], -q[3] );
+				atomicAdd( &shA[id+2*NSB], -q[2] );
+				atomicAdd( &shA[id+3*NSB], -q[3] );
 			}
 		}
 		else
@@ -84,8 +84,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			{
 				atomicAdd( &shA[id], q[0] );
 				atomicAdd( &shA[id+NSB], q[1] );
-				atomicAdd( &shA[id+NSB2], q[2] );
-				atomicAdd( &shA[id+NSB3], q[3] );
+				atomicAdd( &shA[id+2*NSB], q[2] );
+				atomicAdd( &shA[id+3*NSB], q[3] );
 			}
 		}
 
@@ -101,8 +101,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 				q = U->getSubgroupQuaternion( i, j );
 					shA[id] += q[0];
 					shA[id+NSB] -= q[1];
-					shA[id+NSB2] -= q[2];
-					shA[id+NSB3] -= q[3];
+					shA[id+2*NSB] -= q[2];
+					shA[id+3*NSB] -= q[3];
 				}
 				__syncthreads();
 			}
@@ -112,8 +112,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
 				shA[id+NSB] -= q[1];
-				shA[id+NSB2] -= q[2];
-				shA[id+NSB3] -= q[3];
+				shA[id+2*NSB] -= q[2];
+				shA[id+3*NSB] -= q[3];
 			}
 			__syncthreads();
 			if( updown == 0 && mu == 2 )
@@ -121,8 +121,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
 				shA[id+NSB] -= q[1];
-				shA[id+NSB2] -= q[2];
-				shA[id+NSB3] -= q[3];
+				shA[id+2*NSB] -= q[2];
+				shA[id+3*NSB] -= q[3];
 			}
 			__syncthreads();
 			if( updown == 0 && mu == 3 )
@@ -130,8 +130,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
 				shA[id+NSB] -= q[1];
-				shA[id+NSB2] -= q[2];
-				shA[id+NSB3] -= q[3];
+				shA[id+2*NSB] -= q[2];
+				shA[id+3*NSB] -= q[3];
 			}
 			__syncthreads();
 
@@ -143,8 +143,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 				q = U->getSubgroupQuaternion( i, j );
 					shA[id] += q[0];
 					shA[id+NSB] += q[1];
-					shA[id+NSB2] += q[2];
-					shA[id+NSB3] += q[3];
+					shA[id+2*NSB] += q[2];
+					shA[id+3*NSB] += q[3];
 				}
 				__syncthreads();
 			}
@@ -154,8 +154,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
 				shA[id+NSB] += q[1];
-				shA[id+NSB2] += q[2];
-				shA[id+NSB3] += q[3];
+				shA[id+2*NSB] += q[2];
+				shA[id+3*NSB] += q[3];
 			}
 			__syncthreads();
 			if( updown == 1 && mu == 2 )
@@ -163,8 +163,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
 				shA[id+NSB] += q[1];
-				shA[id+NSB2] += q[2];
-				shA[id+NSB3] += q[3];
+				shA[id+2*NSB] += q[2];
+				shA[id+3*NSB] += q[3];
 			}
 			__syncthreads();
 			if( updown == 1 && mu == 3 )
@@ -172,8 +172,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
 				shA[id+NSB] += q[1];
-				shA[id+NSB2] += q[2];
-				shA[id+NSB3] += q[3];
+				shA[id+2*NSB] += q[2];
+				shA[id+3*NSB] += q[3];
 			}
 #endif
 
@@ -190,8 +190,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 
 		q[0] = shA[id];
 		q[1] = shA[id+NSB];
-		q[2] = shA[id+NSB2];
-		q[3] = shA[id+NSB3];
+		q[2] = shA[id+2*NSB];
+		q[3] = shA[id+3*NSB];
 
 
 //	q[0] = 1./2.;
@@ -260,8 +260,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //		Real q2[4];
 //		q2[0] = shA[id];
 //		q2[1] = shA[id+NSB];
-//		q2[2] = shA[id+NSB2];
-//		q2[3] = shA[id+NSB3];
+//		q2[2] = shA[id+2*NSB];
+//		q2[3] = shA[id+3*NSB];
 //		U->leftSubgroupMult( i, j, q2 );
 //		Real temp = q2[0]*q2[0]-q2[3]*q2[3]+q2[2]*q2[2]-q2[1]*q2[1];
 //
@@ -275,8 +275,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //		Real q2[4];
 //		q2[0] = shA[id];
 //		q2[1] = -shA[id+NSB];
-//		q2[2] = -shA[id+NSB2];
-//		q2[3] = -shA[id+NSB3];
+//		q2[2] = -shA[id+2*NSB];
+//		q2[3] = -shA[id+3*NSB];
 //		Real temp = q2[0]*q2[0]-q2[3]*q2[3]+q2[2]*q2[2]-q2[1]*q2[1];
 //
 //		if( temp > 1.1 || temp < .9 )
@@ -299,8 +299,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] -= q[1];
-// 			shA[id+NSB2] -= q[2];
-			shA[id+NSB3] -= q[3];
+// 			shA[id+2*NSB] -= q[2];
+			shA[id+3*NSB] -= q[3];
 		}
 		__syncthreads();
 		if( updown == 0 && mu == 1 )
@@ -308,8 +308,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] -= q[1];
-// 			shA[id+NSB2] -= q[2];
-			shA[id+NSB3] -= q[3];
+// 			shA[id+2*NSB] -= q[2];
+			shA[id+3*NSB] -= q[3];
 		}
 		__syncthreads();
 		if( updown == 0 && mu == 2 )
@@ -317,8 +317,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] -= q[1];
-// 			shA[id+NSB2] -= q[2];
-			shA[id+NSB3] -= q[3];
+// 			shA[id+2*NSB] -= q[2];
+			shA[id+3*NSB] -= q[3];
 		}
 		__syncthreads();
 		if( updown == 0 && mu == 3 )
@@ -326,8 +326,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] -= q[1];
-// 			shA[id+NSB2] -= q[2];
-			shA[id+NSB3] -= q[3];
+// 			shA[id+2*NSB] -= q[2];
+			shA[id+3*NSB] -= q[3];
 		}
 		__syncthreads();
 
@@ -337,8 +337,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] += q[1];
-// 			shA[id+NSB2] += q[2];
-			shA[id+NSB3] += q[3];
+// 			shA[id+2*NSB] += q[2];
+			shA[id+3*NSB] += q[3];
 		}
 		__syncthreads();
 		if( updown == 1 && mu == 1 )
@@ -346,8 +346,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] += q[1];
-// 			shA[id+NSB2] += q[2];
-			shA[id+NSB3] += q[3];
+// 			shA[id+2*NSB] += q[2];
+			shA[id+3*NSB] += q[3];
 		}
 		__syncthreads();
 		if( updown == 1 && mu == 2 )
@@ -355,8 +355,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] += q[1];
-// 			shA[id+NSB2] += q[2];
-			shA[id+NSB3] += q[3];
+// 			shA[id+2*NSB] += q[2];
+			shA[id+3*NSB] += q[3];
 		}
 		__syncthreads();
 		if( updown == 1 && mu == 3 )
@@ -364,8 +364,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q = U->getSubgroupQuaternion( i, j );
 			shA[id] += q[0];
 // 			shA[id+NSB] += q[1];
-// 			shA[id+NSB2] += q[2];
-			shA[id+NSB3] += q[3];
+// 			shA[id+2*NSB] += q[2];
+			shA[id+3*NSB] += q[3];
 		}
 		__syncthreads();
 
@@ -375,7 +375,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			if( updown == 0 )
 			{
 				shA[id+NSB]=0.0;
-				shA[id+NSB2]=0.0;
+				shA[id+2*NSB]=0.0;
 				algo.calculateUpdate( shA, id );
 			}
 		}
@@ -383,8 +383,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 
 		q[0] = shA[id];
 		q[1] = 0.0;//shA[id+NSB];
-		q[2] = 0.0;//shA[id+NSB2];
-		q[3] = shA[id+NSB3];
+		q[2] = 0.0;//shA[id+2*NSB];
+		q[3] = shA[id+3*NSB];
 
 
 		if( updown == 0 )
@@ -407,7 +407,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    +=  q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2]; //=D
 			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3]; //=E
-			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3]; //=F
+			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3]; //=F
 		}
 		__syncthreads();
 		if( updown == 0 && mu == 1 )
@@ -416,7 +416,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    +=  q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2];
 			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3];
-			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3];
+			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3];
 		}
 		__syncthreads();
 		if( updown == 0 && mu == 2 )
@@ -425,7 +425,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    +=  q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2];
 			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3];
-			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3];
+			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3];
 		}
 		__syncthreads();
 		if( updown == 0 && mu == 3 )
@@ -434,7 +434,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    +=  q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2];
 			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3];
-			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3];
+			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3];
 		}
 		__syncthreads();
 
@@ -445,7 +445,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    += q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2];
 			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 		}
 		__syncthreads();
 		if( updown == 1 && mu == 1 )
@@ -454,7 +454,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    += q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2];
 			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 		}
 		__syncthreads();
 		if( updown == 1 && mu == 2 )
@@ -463,7 +463,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    += q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2];
 			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 		}
 		__syncthreads();
 		if( updown == 1 && mu == 3 )
@@ -472,7 +472,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 			shA[id]    += q[0]*q[0]+q[3]*q[3]-q[1]*q[1]-q[2]*q[2];
 			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 		}
 		__syncthreads();
 
@@ -485,8 +485,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //				shA[id] *= .5;
 //				shA[id] -= 1./(Real)4.0;
 				shA[id+NSB] *= 2.;
-				shA[id+NSB2] *= 2.;
-				shA[id] = shA[id]+sqrt(shA[id]*shA[id]+shA[id+NSB]*shA[id+NSB]+shA[id+NSB2]*shA[id+NSB2]);
+				shA[id+2*NSB] *= 2.;
+				shA[id] = shA[id]+sqrt(shA[id]*shA[id]+shA[id+NSB]*shA[id+NSB]+shA[id+2*NSB]*shA[id+2*NSB]);
 
 				algo.calculateUpdate( shA, id );
 			}
@@ -495,8 +495,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 
 		q[0] = shA[id];
 		q[1] = shA[id+NSB];
-		q[2] = shA[id+NSB2];
-		q[3] = 0; // should be zero here (because it was zero before) but it is not (if we use shA[id+NSB3]! why?)
+		q[2] = shA[id+2*NSB];
+		q[3] = 0; // should be zero here (because it was zero before) but it is not (if we use shA[id+3*NSB]! why?)
 
 		if( updown == 0 )
 		{
@@ -519,7 +519,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    +=  q[0]*q[0]+q[3]*q[3]; //=D
 //			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3]; //=E
-//			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3]; //=F
+//			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3]; //=F
 //		}
 //		__syncthreads();
 //		if( updown == 0 && mu == 1 )
@@ -528,7 +528,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    +=  q[0]*q[0]+q[3]*q[3];
 //			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3];
-//			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3];
+//			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3];
 //		}
 //		__syncthreads();
 //		if( updown == 0 && mu == 2 )
@@ -537,7 +537,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    +=  q[0]*q[0]+q[3]*q[3];
 //			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3];
-//			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3];
+//			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3];
 //		}
 //		__syncthreads();
 //		if( updown == 0 && mu == 3 )
@@ -546,7 +546,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    +=  q[0]*q[0]+q[3]*q[3];
 //			shA[id+NSB] += -q[0]*q[1]-q[2]*q[3];
-//			shA[id+NSB2] += -q[0]*q[2]+q[1]*q[3];
+//			shA[id+2*NSB] += -q[0]*q[2]+q[1]*q[3];
 //		}
 //		__syncthreads();
 //
@@ -557,7 +557,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    += q[0]*q[0]+q[3]*q[3];
 //			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-//			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+//			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 //		}
 //		__syncthreads();
 //		if( updown == 1 && mu == 1 )
@@ -566,7 +566,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    += q[0]*q[0]+q[3]*q[3];
 //			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-//			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+//			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 //		}
 //		__syncthreads();
 //		if( updown == 1 && mu == 2 )
@@ -575,7 +575,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    += q[0]*q[0]+q[3]*q[3];
 //			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-//			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+//			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 //		}
 //		__syncthreads();
 //		if( updown == 1 && mu == 3 )
@@ -584,7 +584,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //			q.projectSU2();
 //			shA[id]    += q[0]*q[0]+q[3]*q[3];
 //			shA[id+NSB] += q[0]*q[1]-q[2]*q[3];
-//			shA[id+NSB2] += q[0]*q[2]+q[1]*q[3];
+//			shA[id+2*NSB] += q[0]*q[2]+q[1]*q[3];
 //		}
 //		__syncthreads();
 //
@@ -596,9 +596,9 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //				//g0 -> D+sqrt(D*D+E*E+F*F):
 //				shA[id] /= 2.;
 //				shA[id] -= 1./(Real)4.0;
-//				shA[id] = shA[id]+sqrt(shA[id]*shA[id]+shA[id+NSB]*shA[id+NSB]+shA[id+NSB2]*shA[id+NSB2]);
+//				shA[id] = shA[id]+sqrt(shA[id]*shA[id]+shA[id+NSB]*shA[id+NSB]+shA[id+2*NSB]*shA[id+2*NSB]);
 ////				shA[id+NSB] *= 2.;
-////				shA[id+NSB2] *= 2.;
+////				shA[id+2*NSB] *= 2.;
 //				algo.calculateUpdate( shA, id );
 //			}
 //		}
@@ -606,7 +606,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //
 //		q[0] = shA[id];
 //		q[1] = shA[id+NSB];
-//		q[2] = shA[id+NSB2];
+//		q[2] = shA[id+2*NSB];
 //		q[3] = 0.0;
 //
 //		if( updown == 0 )

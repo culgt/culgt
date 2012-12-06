@@ -16,7 +16,7 @@ class SrUpdate
 public:
 	__device__ inline SrUpdate();
 	__device__ inline SrUpdate( float param, PhiloxWrapper *rng );
-	__device__ inline void calculateUpdate( volatile Real (&shA)[128], short id );
+	__device__ inline void calculateUpdate( volatile Real (&shA)[4*NSB], short id );
 	__device__ inline void setParameter( float param );
 	__device__ inline float getParameter();
 private:
@@ -32,48 +32,48 @@ __device__ SrUpdate::SrUpdate( float param, PhiloxWrapper *rng  ) : srParameter(
 {
 }
 
-__device__ void SrUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
+__device__ void SrUpdate::calculateUpdate( volatile Real (&shA)[4*NSB], short id )
 {
 //stochastic overrelaxation
 #ifdef USE_DP_SRUPDATE
 	double rand = rng->rand();
 	double a0,a1,a2,a3,c;
 	a0 = shA[id];
-	a1 = shA[id+32];
-	a2 = shA[id+64];
-	a3 = shA[id+96];
+	a1 = shA[id+NSB];
+	a2 = shA[id+2*NSB];
+	a3 = shA[id+3*NSB];
 
 	shA[id]    = (rand>=srParameter)*a0 + (rand<srParameter)*(a0*a0-a1*a1-a2*a2-a3*a3); // 12 flop
-	shA[id+32] = (rand>=srParameter)*a1 + (rand<srParameter)*(2.0*a0*a1); // 7 flop
-	shA[id+64] = (rand>=srParameter)*a2 + (rand<srParameter)*(2.0*a0*a2);
-	shA[id+96] = (rand>=srParameter)*a3 + (rand<srParameter)*(2.0*a0*a3);
+	shA[id+NSB] = (rand>=srParameter)*a1 + (rand<srParameter)*(2.0*a0*a1); // 7 flop
+	shA[id+2*NSB] = (rand>=srParameter)*a2 + (rand<srParameter)*(2.0*a0*a2);
+	shA[id+3*NSB] = (rand>=srParameter)*a3 + (rand<srParameter)*(2.0*a0*a3);
 
-	c=rsqrt(shA[id]*shA[id]+shA[id+32]*shA[id+32]+shA[id+64]*shA[id+64]+shA[id+96]*shA[id+96]); // 9 flop
+	c=rsqrt(shA[id]*shA[id]+shA[id+NSB]*shA[id+NSB]+shA[id+2*NSB]*shA[id+2*NSB]+shA[id+3*NSB]*shA[id+3*NSB]); // 9 flop
 	shA[id]    *= c;
-	shA[id+32] *= c;
-	shA[id+64] *= c;
-	shA[id+96] *= c;
+	shA[id+NSB] *= c;
+	shA[id+2*NSB] *= c;
+	shA[id+3*NSB] *= c;
 	// 4 flop
 
-	// sum: 32 flop
+	// sum: NSB flop
 #else
 	Real rand = rng->rand();
 	Real a0,a1,a2,a3,c;
 	a0 = shA[id];
-	a1 = shA[id+32];
-	a2 = shA[id+64];
-	a3 = shA[id+96];
+	a1 = shA[id+NSB];
+	a2 = shA[id+2*NSB];
+	a3 = shA[id+3*NSB];
 	
 	shA[id]    = (rand>=srParameter)*a0 + (rand<srParameter)*(a0*a0-a1*a1-a2*a2-a3*a3);
-	shA[id+32] = (rand>=srParameter)*a1 + (rand<srParameter)*(2.0*a0*a1);
-	shA[id+64] = (rand>=srParameter)*a2 + (rand<srParameter)*(2.0*a0*a2);
-	shA[id+96] = (rand>=srParameter)*a3 + (rand<srParameter)*(2.0*a0*a3);
+	shA[id+NSB] = (rand>=srParameter)*a1 + (rand<srParameter)*(2.0*a0*a1);
+	shA[id+2*NSB] = (rand>=srParameter)*a2 + (rand<srParameter)*(2.0*a0*a2);
+	shA[id+3*NSB] = (rand>=srParameter)*a3 + (rand<srParameter)*(2.0*a0*a3);
 
-	c=rsqrt(shA[id]*shA[id]+shA[id+32]*shA[id+32]+shA[id+64]*shA[id+64]+shA[id+96]*shA[id+96]);
+	c=rsqrt(shA[id]*shA[id]+shA[id+NSB]*shA[id+NSB]+shA[id+2*NSB]*shA[id+2*NSB]+shA[id+3*NSB]*shA[id+3*NSB]);
 	shA[id]    *= c;
-	shA[id+32] *= c;
-	shA[id+64] *= c;
-	shA[id+96] *= c;
+	shA[id+NSB] *= c;
+	shA[id+2*NSB] *= c;
+	shA[id+3*NSB] *= c;
 #endif
 }
 

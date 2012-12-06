@@ -16,7 +16,7 @@ class RandomUpdate
 public:
 	__device__ inline RandomUpdate();
 	__device__ inline RandomUpdate( PhiloxWrapper *rng );
-	__device__ inline void calculateUpdate( volatile Real (&shA)[128], short id );
+	__device__ inline void calculateUpdate( volatile Real (&shA)[4*NSB], short id );
 private:
 	PhiloxWrapper *rng;
 };
@@ -29,7 +29,7 @@ __device__ RandomUpdate::RandomUpdate( PhiloxWrapper *rng ) : rng(rng)
 {
 }
 
-__device__ void RandomUpdate::calculateUpdate( volatile Real (&shA)[128], short id )
+__device__ void RandomUpdate::calculateUpdate( volatile Real (&shA)[4*NSB], short id )
 {
 	Real alpha, phi, cos_theta, sin_theta, sin_alpha;
 	alpha = rng->rand();
@@ -39,7 +39,7 @@ __device__ void RandomUpdate::calculateUpdate( volatile Real (&shA)[128], short 
 	sin_alpha = sinpi(alpha);
 	shA[id] = cospi(alpha);
 	shA[id+NSB] = sin_alpha * sin_theta * cospi(phi);
-	shA[id+NSB2] = sin_alpha * sin_theta * sinpi(phi);
-	shA[id+NSB3] = sin_alpha * cos_theta;
+	shA[id+2*NSB] = sin_alpha * sin_theta * sinpi(phi);
+	shA[id+3*NSB] = sin_alpha * cos_theta;
 }
 #endif /* ORUPDATE_HXX_ */

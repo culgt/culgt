@@ -38,14 +38,8 @@ const lat_coord_t Nt = _T_;
 // number of sites per block
 #ifdef _NSB_
 const int NSB = _NSB_;
-const int NSB2= 2*NSB;
-const int NSB3= 3*NSB;
-const int NSB4= 4*NSB;
 #else
 const int NSB = 32;
-const int NSB2= 2*NSB;
-const int NSB3= 3*NSB;
-const int NSB4= 4*NSB;
 //#error "Define NSB (number of lattice sites per ThreadBlock (e.g. 32))"
 #endif
 

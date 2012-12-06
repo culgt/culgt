@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
 		}
 		else // or initialize with a hot configuration (ignore file options)
 		{
-			CommonKernelsSU3::setHot( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize(), options.getSeed(), PhiloxWrapper::getNextCounter() );
+			CommonKernelsSU3::setHot( s.getLatticeSize()/32,32, dU, HOST_CONSTANTS::getPtrToDeviceSize(), options.getSeed(), PhiloxWrapper::getNextCounter() );
 		}
 
 		double bestGff = 0.0;
@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
 
 				if( i % options.getReproject() == 0 )
 				{
-					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+					CommonKernelsSU3::projectSU3( s.getLatticeSize()/32,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
 				}
 
 				if( i % options.getCheckPrecision() == 0 )
@@ -227,7 +227,7 @@ int main(int argc, char* argv[])
 
 				if( i % options.getReproject() == 0 )
 				{
-					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+					CommonKernelsSU3::projectSU3( s.getLatticeSize()/32,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
 				}
 
 				if( i % options.getCheckPrecision() == 0 )
@@ -256,7 +256,7 @@ int main(int argc, char* argv[])
 
 				if( i % options.getReproject() == 0 )
 				{
-					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+					CommonKernelsSU3::projectSU3( s.getLatticeSize()/32,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
 				}
 
 				if( i % options.getCheckPrecision() == 0 )
@@ -274,7 +274,7 @@ int main(int argc, char* argv[])
 			orTotalKernelTime += kernelTimer.getTime();
 
 			// reconstruct third line
-			CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
+			CommonKernelsSU3::projectSU3( s.getLatticeSize()/32,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
 
 			// check for best copy
 			if( gaugeStats.getCurrentGff() > bestGff )
