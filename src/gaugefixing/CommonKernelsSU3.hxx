@@ -19,7 +19,7 @@ namespace COMKSU3
 static const int Ndim = 4; // TODO why here?
 static const int Nc = 3;
 __global__ void projectSU3( Real *U, lat_coord_t* ptrToDeviceSize );
-__global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int counter );
+__global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int rngSeed, int rngCounter );
 }
 
 class CommonKernelsSU3
@@ -38,9 +38,9 @@ public:
 		COMKSU3::projectSU3<<<a,b>>>( U, ptrToDeviceSize );
 	};
 	
-	static void setHot( int a, int b, Real *U, lat_coord_t* ptrToDeviceSize, int counter )
+	static void setHot( int a, int b, Real *U, lat_coord_t* ptrToDeviceSize, int rngSeed, int rngCounter )
 	{
-		COMKSU3::setHot<<<a,b>>>( U, ptrToDeviceSize, counter );
+		COMKSU3::setHot<<<a,b>>>( U, ptrToDeviceSize, rngSeed, rngCounter );
 	};
 
 private:
@@ -74,7 +74,7 @@ __global__ void projectSU3( Real *U, lat_coord_t* ptrToDeviceSize )
 	}
 }
 
-__global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int counter )
+__global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int rngSeed, int rngCounter )
 {
 	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
 	typedef Link<GpuTimeslice,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
@@ -85,7 +85,7 @@ __global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int counter )
 
 	s.setLatticeIndex( site );
 
-	PhiloxWrapper rng( site, 123, counter );
+	PhiloxWrapper rng( site, rngSeed, rngCounter );
 
 	Quaternion<Real> q;
 	

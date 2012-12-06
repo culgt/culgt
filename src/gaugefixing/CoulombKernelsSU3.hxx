@@ -31,10 +31,10 @@ static const int Ndim = 4; // TODO why here?
 static const int Nc = 3;
 __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA );
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt );
-__global__ void randomTrafo( Real* UtUp, Real* UtDw,lat_index_t* nnt, bool parity, int counter );
+__global__ void randomTrafo( Real* UtUp, Real* UtDw,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter );
 __global__ void orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter );
 __global__ void microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity );
-__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter );
+__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter );
 }
 
 class CoulombKernelsSU3
@@ -70,9 +70,9 @@ public:
 	{
 		CKSU3::restoreThirdLine<<<a,b>>>(U,nnt);
 	};
-	static void randomTrafo( int a, int b, Real* UtUp, Real* UtDw,lat_index_t* nnt, bool parity, int counter )
+	static void randomTrafo( int a, int b, Real* UtUp, Real* UtDw,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter )
 	{
-		CKSU3::randomTrafo<<<a,b>>>( UtUp, UtDw, nnt, parity, counter );
+		CKSU3::randomTrafo<<<a,b>>>( UtUp, UtDw, nnt, parity, rngSeed, rngCounter );
 	};
 	static void orStep( int a, int b,  Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
 	{
@@ -82,9 +82,9 @@ public:
 	{
 		CKSU3::microStep<<<a,b>>>( UtUp, UtDw, nnt, parity );
 	};
-	static void saStep( int a, int b, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter )
+	static void saStep( int a, int b, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 	{
-		CKSU3::saStep<<<a,b>>>( UtUp, UtDw, nnt, parity, temperature, counter);
+		CKSU3::saStep<<<a,b>>>( UtUp, UtDw, nnt, parity, temperature, rngSeed, rngCounter);
 	};
 private:
 };
@@ -294,16 +294,16 @@ __global__ void __launch_bounds__(256,4) microStep( Real* UtUp, Real* UtDw, lat_
 }
 
 
-__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter )
+__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	SaUpdate sa( temperature, &rng );
 	apply( UtUp, UtDw, nnt, parity, sa );
 }
 
-__global__ void randomTrafo( Real* UtUp, Real* UtDw,lat_index_t* nnt, bool parity, int counter )
+__global__ void randomTrafo( Real* UtUp, Real* UtDw,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	RandomUpdate random( &rng );
 	apply( UtUp, UtDw, nnt, parity, random );
 }

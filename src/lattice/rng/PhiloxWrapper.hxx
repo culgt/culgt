@@ -23,6 +23,7 @@
  *
  *
  * TODO: get rid of the preprocessor statements: float/double has to be template argument (in all classes).
+ * 		Because now there is no code possible that uses both single and double precision random numbers.
  */
 
 #ifndef PHILOXWRAPPER_HXX_

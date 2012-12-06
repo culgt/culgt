@@ -30,10 +30,10 @@ static const int Ndim = 4;
 static const int Nc = 3;
 __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA );
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt );
-__global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int counter );
+__global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter );
 __global__ void orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter );
 __global__ void microStep( Real* U, lat_index_t* nnt, bool parity );
-__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int counter );
+__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter );
 }
 
 class LandauKernelsSU3
@@ -69,9 +69,9 @@ public:
 	{
 		LKSU3::restoreThirdLine<<<a,b>>>(U,nnt);
 	};
-	static void randomTrafo( int a, int b, Real* U,lat_index_t* nnt, bool parity, int counter )
+	static void randomTrafo( int a, int b, Real* U,lat_index_t* nnt, bool parity, int rngSeed, int rngCounter )
 	{
-		LKSU3::randomTrafo<<<a,b>>>( U, nnt, parity, counter );
+		LKSU3::randomTrafo<<<a,b>>>( U, nnt, parity, rngSeed, rngCounter );
 	};
 	static void orStep( int a, int b,  Real* U, lat_index_t* nnt, bool parity, float orParameter )
 	{
@@ -81,9 +81,9 @@ public:
 	{
 		LKSU3::microStep<<<a,b>>>( U, nnt, parity );
 	};
-	static void saStep( int a, int b, Real* U, lat_index_t* nnt, bool parity, float temperature, int counter )
+	static void saStep( int a, int b, Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 	{
-		LKSU3::saStep<<<a,b>>>( U, nnt, parity, temperature, counter);
+		LKSU3::saStep<<<a,b>>>( U, nnt, parity, temperature, rngSeed, rngCounter);
 	};
 private:
 };
@@ -254,9 +254,9 @@ __global__ void __launch_bounds__(256,4) microStep( Real* U, lat_index_t* nnt, b
 	apply( U, nnt, parity, micro );
 }
 
-__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int counter )
+__global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	SaUpdate sa( temperature, &rng );
 	apply( U, nnt, parity, sa );
 }
@@ -265,9 +265,9 @@ __global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperatur
  *  We do a lot of useless stuff here (gather a local functional value)
  *  but the random trafo is applied only once, so we don't care.
  */
-__global__ void randomTrafo( Real* U, lat_index_t* nnt, bool parity, int counter )
+__global__ void randomTrafo( Real* U, lat_index_t* nnt, bool parity, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	RandomUpdate random( &rng );
 	apply( U, nnt, parity, random );
 }

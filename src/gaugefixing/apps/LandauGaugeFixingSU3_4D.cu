@@ -13,16 +13,10 @@
 #include "malloc.h"
 #endif
 #include "../GaugeFixingStats.hxx"
-//#include "../lattice/gaugefixing/overrelaxation/SrUpdate.hxx"
 #include "../../lattice/access_pattern/StandardPattern.hxx"
 #include "../../lattice/access_pattern/GpuLandauPattern.hxx"
 #include "../../lattice/SiteCoord.hxx"
 #include "../../lattice/SiteIndex.hxx"
-//#include "../lattice/Link.hxx"
-//#include "../lattice/SU3.hxx"
-//#include "../lattice/Matrix.hxx"
-//#include "../lattice/LinkFile.hxx"
-//#include "../lattice/gaugefixing/overrelaxation/OrSubgroupStep.hxx"
 #include "../../util/timer/Chronotimer.h"
 #include "../../lattice/filetypes/FileHeaderOnly.hxx"
 #include "../../lattice/filetypes/FilePlain.hxx"
@@ -311,21 +305,18 @@ int main(int argc, char* argv[])
 	{
 		bool loadOk;
 
-		if( !options.randomGaugeField() )
+		if( !options.isSetHot() ) // load a file
 		{
 			cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl;
 			switch( options.getFType() )
 			{
 			case VOGT:
-	//			lfVogt.reinterpret = options.getReinterpret();
 				loadOk = lfVogt.load( s, fi.getFilename(), U );
 				break;
 			case PLAIN:
-	//			lfPlain.reinterpret = options.getReinterpret();
 				loadOk = lfPlain.load( s, fi.getFilename(), U );
 				break;
 			case HEADERONLY:
-	//			lfHeaderOnly.reinterpret = options.getReinterpret();
 				loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
 				break;
 			default:
@@ -343,20 +334,22 @@ int main(int argc, char* argv[])
 				cout << "File loaded." << endl;
 			}
 		}
-		else // options.randomGaugeField()
-			CommonKernelsSU3::setHot( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize(), PhiloxWrapper::getNextCounter() );
+		else // or initialize with a hot configuration (ignore file options)
+		{
+			CommonKernelsSU3::setHot( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize(), options.getSeed(), PhiloxWrapper::getNextCounter() );
+		}
 
 
 		double bestGff = 0.0;
 		for( int copy = 0; copy < options.getGaugeCopies(); copy++ )
 		{
 			// we copy from host in every gaugecopy step to have a cleaner configuration (concerning numerical errors)
-			if( !options.randomGaugeField() ) cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
+			if( !options.isSetHot() ) cudaMemcpy( dU, U, arraySize*sizeof(Real), cudaMemcpyHostToDevice );
 
-			if( !options.isNoRandomTrafo() ) // I'm an optimist! This should be called isRandomTrafo()!
+			if( options.isRandomTrafo() )
 			{
-				LandauKernelsSU3::randomTrafo(numBlocks,threadsPerBlock,dU, dNn, 0, PhiloxWrapper::getNextCounter() );
-				LandauKernelsSU3::randomTrafo(numBlocks,threadsPerBlock,dU, dNn, 1, PhiloxWrapper::getNextCounter() );
+				LandauKernelsSU3::randomTrafo(numBlocks,threadsPerBlock,dU, dNn, 0, options.getSeed(), PhiloxWrapper::getNextCounter() );
+				LandauKernelsSU3::randomTrafo(numBlocks,threadsPerBlock,dU, dNn, 1, options.getSeed(), PhiloxWrapper::getNextCounter() );
 			}
 
 			// calculate and print the gauge quality
@@ -371,8 +364,8 @@ int main(int argc, char* argv[])
 			kernelTimer.start();
 			for( int i = 0; i < options.getSaSteps(); i++ )
 			{
-				LandauKernelsSU3::saStep(numBlocks,threadsPerBlock,dU, dNn, 0, temperature, PhiloxWrapper::getNextCounter() );
-				LandauKernelsSU3::saStep(numBlocks,threadsPerBlock,dU, dNn, 1, temperature, PhiloxWrapper::getNextCounter() );
+				LandauKernelsSU3::saStep(numBlocks,threadsPerBlock,dU, dNn, 0, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
+				LandauKernelsSU3::saStep(numBlocks,threadsPerBlock,dU, dNn, 1, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
 
 				for( int mic = 0; mic < options.getSaMicroupdates(); mic++ )
 				{
@@ -384,7 +377,6 @@ int main(int argc, char* argv[])
 				if( i % options.getCheckPrecision() == 0 )
 				{
 					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
-	//				projectSU3<<<numBlocks*2,32>>>( dU );
 
 					gaugeStats.generateGaugeQuality();
 	//				CudaError::getLastError( "generateGaugeQuality error" );
@@ -392,7 +384,7 @@ int main(int argc, char* argv[])
 				}
 				temperature -= tempStep;
 			}
-			cudaThreadSynchronize();
+			cudaDeviceSynchronize();
 			kernelTimer.stop();
 			saTotalKernelTime += kernelTimer.getTime();
 
@@ -407,7 +399,6 @@ int main(int argc, char* argv[])
 				if( i % options.getCheckPrecision() == 0 )
 				{
 					CommonKernelsSU3::projectSU3( numBlocks*2,32, dU, HOST_CONSTANTS::getPtrToDeviceSize() );
-	//				projectSU3<<<numBlocks*2,32>>>( dU );
 					gaugeStats.generateGaugeQuality();
 					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
@@ -417,11 +408,10 @@ int main(int argc, char* argv[])
 				orTotalStepnumber++;
 			}
 
-			cudaThreadSynchronize();
+			cudaDeviceSynchronize();
 			kernelTimer.stop();
 			cout << "kernel time: " << kernelTimer.getTime() << " s"<< endl;
 			orTotalKernelTime += kernelTimer.getTime();
-
 
 
 
@@ -444,7 +434,7 @@ int main(int argc, char* argv[])
 		}
 		
 		//saving file
-		if( !options.randomGaugeField() )
+		if( !options.isSetHot() )
 		{
 			cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
 			switch( options.getFType() )
@@ -467,18 +457,13 @@ int main(int argc, char* argv[])
 
 	allTimer.stop();
 	cout << "total time: " << allTimer.getTime() << " s" << endl;
-//	cout << "total kernel time: " << orTotalKernelTime << " s" << endl;
-
-
 
 	long hbFlops = 2252+86;
 	long microFlops = 2252+14;
 	cout << "Simulated Annealing (HB+Micro): " << (double)((long)(hbFlops+microFlops*options.getSaMicroupdates())*(long)s.getLatticeSize()*(long)options.getSaSteps()*(long)options.getGaugeCopies())/saTotalKernelTime/1.0e9 << " GFlops at "
 					<< (double)((long)192*(long)s.getLatticeSize()*options.getSaSteps()*(options.getSaMicroupdates()+1)*(long)sizeof(Real))/saTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 
-
 	long orFlops = 2252+22;
-//	long orFlops = 2124; // HV 2012-12-03
 	cout << "Overrelaxation: " << (double)((long)orFlops*(long)s.getLatticeSize()*(long)orTotalStepnumber)/orTotalKernelTime/1.0e9 << " GFlops at "
 				<< (double)((long)192*(long)s.getLatticeSize()*(long)(orTotalStepnumber)*(long)sizeof(Real))/orTotalKernelTime/1.0e9 << "GB/s memory throughput." << endl;
 

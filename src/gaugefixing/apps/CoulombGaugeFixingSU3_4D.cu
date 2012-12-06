@@ -258,34 +258,36 @@ int main(int argc, char* argv[])
 
 	for( fi.reset(); fi.hasNext(); fi.next() )
 	{
-		cout << "loading " << fi.getFilename() << " as " << options.getFType() << endl; // TODO why is FileType printed as a number (not as text according to filetype_typedefs.h)
-
 		bool loadOk;
 
-		switch(  options.getFType() )
+		if( !options.isSetHot() ) // load a file
 		{
-		case VOGT:
-			loadOk = lfVogt.load( s, fi.getFilename(), U );
-			break;
-		case PLAIN:
-			loadOk = lfPlain.load( s, fi.getFilename(), U );
-			break;
-		case HEADERONLY:
-			loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
-			break;
-		default:
-			cout << "Filetype not set to a known value. Exiting";
-			exit(1);
-		}
 
-		if( !loadOk )
-		{
-			cout << "Error while loading. Trying next file." << endl;
-			break;
-		}
-		else
-		{
-			cout << "File loaded." << endl;
+			switch(  options.getFType() )
+			{
+			case VOGT:
+				loadOk = lfVogt.load( s, fi.getFilename(), U );
+				break;
+			case PLAIN:
+				loadOk = lfPlain.load( s, fi.getFilename(), U );
+				break;
+			case HEADERONLY:
+				loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
+				break;
+			default:
+				cout << "Filetype not set to a known value. Exiting";
+				exit(1);
+			}
+
+			if( !loadOk )
+			{
+				cout << "Error while loading. Trying next file." << endl;
+				break;
+			}
+			else
+			{
+				cout << "File loaded." << endl;
+			}
 		}
 
 		for( int t = 0; t < s.size[0]; t++ )
@@ -295,16 +297,25 @@ int main(int argc, char* argv[])
 			double bestGff = 0.0;
 			for( int copy = 0; copy < options.getGaugeCopies(); copy++ )
 			{
-				// copying timeslice t ...
-				cudaMemcpy( dUtUp, &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-				// ... and t-1 to device
-				cudaMemcpy( dUtDw, &U[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-				// TODO it is not necessary to copy the (t-1) again for t>0, simply swap pointers on device side...
-
-				if( !options.isNoRandomTrafo() ) // I'm an optimist! This should be called isRandomTrafo()!
+				if( !options.isSetHot() ) // if we want a hot random configuration we do not need to copy
 				{
-					CoulombKernelsSU3::randomTrafo(numBlocks,threadsPerBlock, dUtUp, dUtDw, dNnt, 0, PhiloxWrapper::getNextCounter() );
-					CoulombKernelsSU3::randomTrafo(numBlocks,threadsPerBlock, dUtUp, dUtDw, dNnt, 1, PhiloxWrapper::getNextCounter() );
+					// copying timeslice t ...
+					cudaMemcpy( dUtUp, &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+					// ... and t-1 to device
+					cudaMemcpy( dUtDw, &U[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
+					// TODO it is not necessary to copy the (t-1) again for t>0, simply swap pointers on device side...
+				}
+				else // randomize the timeslices
+				{
+					CommonKernelsSU3::setHot( numBlocks*2,32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice(), options.getSeed(), PhiloxWrapper::getNextCounter() );
+					CommonKernelsSU3::setHot( numBlocks*2,32, dUtDw, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice(), options.getSeed(), PhiloxWrapper::getNextCounter() );
+				}
+
+
+				if( options.isRandomTrafo() )
+				{
+					CoulombKernelsSU3::randomTrafo(numBlocks,threadsPerBlock, dUtUp, dUtDw, dNnt, 0, options.getSeed(), PhiloxWrapper::getNextCounter() );
+					CoulombKernelsSU3::randomTrafo(numBlocks,threadsPerBlock, dUtUp, dUtDw, dNnt, 1, options.getSeed(), PhiloxWrapper::getNextCounter() );
 				}
 
 				// calculate and print the gauge quality
@@ -321,8 +332,8 @@ int main(int argc, char* argv[])
 				{
 
 
-					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, temperature, PhiloxWrapper::getNextCounter() );
-					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, temperature, PhiloxWrapper::getNextCounter() );
+					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
+					CoulombKernelsSU3::saStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
 
 					for( int mic = 0; mic < options.getSaMicroupdates(); mic++ )
 					{
@@ -342,7 +353,7 @@ int main(int argc, char* argv[])
 					}
 					temperature -= tempStep;
 				}
-				cudaThreadSynchronize();
+				cudaDeviceSynchronize();
 				kernelTimer.stop();
 				saTotalKernelTime += kernelTimer.getTime();
 
@@ -369,7 +380,7 @@ int main(int argc, char* argv[])
 					orTotalStepnumber++;
 				}
 
-				cudaThreadSynchronize();
+				cudaDeviceSynchronize();
 				kernelTimer.stop();
 				orTotalKernelTime += kernelTimer.getTime();
 
@@ -393,24 +404,26 @@ int main(int argc, char* argv[])
 			}
 		}
 
-
 		//saving file
-		cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
-
-		switch( options.getFType() )
+		if( !options.isSetHot() )
 		{
-		case VOGT:
-			loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
-			break;
-		case PLAIN:
-			loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
-			break;
-		case HEADERONLY:
-			loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
-			break;
-		default:
-			cout << "Filetype not set to a known value. Exiting";
-			exit(1);
+			cout << "saving " << fi.getOutputFilename() << " as " << options.getFType() << endl;
+
+			switch( options.getFType() )
+			{
+			case VOGT:
+				loadOk = lfVogt.save( s, fi.getOutputFilename(), U );
+				break;
+			case PLAIN:
+				loadOk = lfPlain.save( s, fi.getOutputFilename(), U );
+				break;
+			case HEADERONLY:
+				loadOk = lfHeaderOnly.save( s, fi.getOutputFilename(), U );
+				break;
+			default:
+				cout << "Filetype not set to a known value. Exiting";
+				exit(1);
+			}
 		}
 	}
 

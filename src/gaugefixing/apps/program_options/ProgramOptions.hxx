@@ -61,7 +61,7 @@ public:
 		return gaugeCopies;
 	}
 	
-	bool randomGaugeField() const {
+	bool isSetHot() const {
 		return setHot;
 	}
 
@@ -69,8 +69,8 @@ public:
 		return nconf;
 	}
 
-	bool isNoRandomTrafo() const {
-		return noRandomTrafo;
+	bool isRandomTrafo() const {
+		return randomTrafo;
 	}
 
 	int getCheckPrecision() const {
@@ -153,7 +153,7 @@ private:
 	long seed;
 
 	int gaugeCopies;
-	bool noRandomTrafo;
+	bool randomTrafo;
 	int reproject;
 
 	int saSteps;
@@ -204,7 +204,7 @@ int ProgramOptions::init( int argc, char* argv[] )
 			("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
 
 			("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "Number of gauge copies")
-			("norandomtrafo", boost::program_options::value<bool>(&noRandomTrafo)->default_value(false), "no random gauge trafo" )
+			("randomtrafo", boost::program_options::value<bool>(&randomTrafo)->default_value(true), "do a random trafo before each gf run" )
 			("reproject", boost::program_options::value<int>(&reproject)->default_value(100), "reproject every arg-th step")
 
 			("sasteps", boost::program_options::value<int>(&saSteps)->default_value(1000), "number of SA steps")
