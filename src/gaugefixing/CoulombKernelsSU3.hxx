@@ -280,7 +280,7 @@ template<class Algorithm> inline __device__ void apply( Real* UtUp, Real* UtDw, 
 	globU.assignWithoutThirdLine(locU);
 }
 
-__global__ void __launch_bounds__(256,OR_MINBLOCKS) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
+__global__ void __launch_bounds__(8*NSB,OR_MINBLOCKS) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
 {
 	OrUpdate overrelax( orParameter );
 	apply( UtUp, UtDw, nnt, parity, overrelax );
@@ -288,14 +288,14 @@ __global__ void __launch_bounds__(256,OR_MINBLOCKS) orStep( Real* UtUp, Real* Ut
 
 
 
-__global__ void __launch_bounds__(256,MS_MINBLOCKS) microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity )
+__global__ void __launch_bounds__(8*NSB,MS_MINBLOCKS) microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity )
 {
 	MicroUpdate micro;
 	apply( UtUp, UtDw, nnt, parity, micro );
 }
 
 
-__global__ void __launch_bounds__(256,SA_MINBLOCKS) saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
+__global__ void __launch_bounds__(8*NSB,SA_MINBLOCKS) saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 {
 	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	SaUpdate sa( temperature, &rng );

@@ -18,17 +18,21 @@
 #ifndef KERNEL_LAUNCH_BOUNDS_H_
 #define KERNEL_LAUNCH_BOUNDS_H_
 
+#include "GlobalConstants.h"
 
 #ifdef DOUBLEPRECISION
-	#define OR_MINBLOCKS 1
-	#define MS_MINBLOCKS 1
-	#define SA_MINBLOCKS 1
-	#define SR_MINBLOCKS 1
+	const int OR_MINBLOCKS = 1;
+	const int MS_MINBLOCKS = 1;
+	const int SA_MINBLOCKS = 1;
+	const int SR_MINBLOCKS = 1;
 #else
-	#define OR_MINBLOCKS 4
-	#define MS_MINBLOCKS 4
-	#define SA_MINBLOCKS 4
-	#define SR_MINBLOCKS 4
+// 32 registers is optimal for OR.
+// with NSB = 32 this results in launch_bounds( threadsPerBlock=8*NSB=256, minBlocksPerSM=4 )
+// to keep register usage constant while changing threadsPerBlock, we have to adjust minBlocksPerSM
+	const int OR_MINBLOCKS = 128/NSB;
+	const int MS_MINBLOCKS = 128/NSB;
+	const int SA_MINBLOCKS = 128/NSB;
+	const int SR_MINBLOCKS = 128/NSB;
 #endif
 	
 	

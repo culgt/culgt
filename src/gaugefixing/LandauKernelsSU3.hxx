@@ -243,19 +243,19 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 	globU.assignWithoutThirdLine(locU);
 }
 
-__global__ void __launch_bounds__(256,OR_MINBLOCKS) orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter )
+__global__ void __launch_bounds__(8*NSB,OR_MINBLOCKS) orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter )
 {
 	OrUpdate overrelax( orParameter );
 	apply( U, nnt, parity, overrelax );
 }
 
-__global__ void __launch_bounds__(256,MS_MINBLOCKS) microStep( Real* U, lat_index_t* nnt, bool parity )
+__global__ void __launch_bounds__(8*NSB,MS_MINBLOCKS) microStep( Real* U, lat_index_t* nnt, bool parity )
 {
 	MicroUpdate micro;
 	apply( U, nnt, parity, micro );
 }
 
-__global__ void __launch_bounds__(256,SA_MINBLOCKS) saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
+__global__ void __launch_bounds__(8*NSB,SA_MINBLOCKS) saStep( Real* U, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 {
 	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	SaUpdate sa( temperature, &rng );
