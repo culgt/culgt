@@ -1,14 +1,28 @@
-/*
- * test_gaugefixing.cpp
+/**
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
  *
- *  Created on: Sep. 10, 2012
- *      Author: vogt & schroeck
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <iostream>
 #include <math.h>
 #include <sstream>
-#include <malloc.h>
+#ifndef OSX
+#include "malloc.h"
+#endif
 #include "../GlobalConstants.h"
 #include "../GaugeFixingStats.hxx"
 #include "../MAGKernelsSU3.hxx"
@@ -38,132 +52,6 @@ const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
 typedef GpuLandauPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 
-
-typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
-
-
-void initNeighbourTable( lat_index_t* nnt )
-{
-//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteIndex<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
-	s.calculateNeighbourTable( nnt );
-}
-
-//
-//__global__ void projectSU3( Real* U )
-//{
-//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-//	SiteCoord<4,FULL_SPLIT> s(size);
-//	int site = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	s.setLatticeIndex( site );
-//
-//	for( int mu = 0; mu < 4; mu++ )
-//	{
-//		TLink linkUp( U, s, mu );
-//		SU3<TLink> globUp( linkUp );
-//
-//		globUp.projectSU3();
-//	}
-//}
-//
-//
-//__global__ void __launch_bounds__(256,4) orStep( Real* U, lat_index_t* nn, bool parity, float orParameter, int counter=0  )
-//{
-//	typedef GpuLandauPattern< SiteIndex<Ndim,true>,Ndim,Nc> GpuIndex;
-//	typedef Link<GpuIndex,SiteIndex<Ndim,true>,Ndim,Nc> TLinkIndex;
-//
-//	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-//	SiteIndex<4,true> s(size);
-//	s.nn = nn;
-//
-//	const bool updown = threadIdx.x / 128;
-//	const short mu = (threadIdx.x % 128) / 32;
-//	const short id = (threadIdx.x % 128) % 32;
-//
-//	int site = blockIdx.x * blockDim.x/8 + id;
-//	if( parity == 1 ) site += s.getLatticeSize()/2;
-//
-//	s.setLatticeIndex( site );
-//	if( updown==1 )
-//	{
-//		s.setNeighbour(mu,false);
-//	}
-//
-////	if(id == 0) printf("bin in or\n");
-//
-//	Matrix<complex,Nc> locMat;
-//	SU3<Matrix<complex,Nc> > locU(locMat);
-//
-//	TLinkIndex link( U, s, mu );
-//
-//	SU3<TLinkIndex> globU( link );
-//
-//	// make link local
-//	locU.assignWithoutThirdLine(globU);
-//	locU.reconstructThirdLine();
-//
-//	// define the update algorithm
-//	SrUpdate overrelax( orParameter );
-//	GaugeFixingSubgroupStep<SU3<Matrix<complex,Nc> >, SrUpdate, MAG> subgroupStep( &locU, overrelax, id, mu, updown, counter );
-//
-//	// do the subgroup iteration
-//	SU3<Matrix<complex,Nc> >::perSubgroup( subgroupStep );
-//
-//	// copy link back
-//	globU=locU;
-//
-//	// project back
-////	globU.projectSU3withoutThirdRow();
-//}
-
-
-
-
-//Real calculatePolyakovLoopAverage( Real *U )
-//{
-//	Matrix<complex,3> tempMat;
-//	SU3<Matrix<complex,3> > temp( tempMat );
-//	Matrix<complex,3> temp2Mat;
-//	SU3<Matrix<complex,3> > temp2( temp2Mat );
-//
-//	SiteCoord<Ndim,true> s( HOST_CONSTANTS::SIZE );
-//
-//	complex result(0,0);
-//
-//	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
-//	{
-//		for( s[2] = 0; s[2] < s.size[2]; s[2]++ )
-//		{
-//			for( s[3] = 0; s[3] < s.size[3]; s[3]++ )
-//			{
-//				temp.identity();
-//				temp2.zero();
-//
-//				for( s[0] = 0; s[0] < s.size[0]; s[0]++ )
-//				{
-//
-//					TLink link( U, s, 0 );
-//					SU3<TLink> globU( link );
-//
-//					temp2 = temp2 + temp*globU;
-//
-//					temp = temp2;
-//					temp2.zero();
-//				}
-//				result += temp.trace();
-//			}
-//		}
-//	}
-//
-//	return sqrt(result.x*result.x+result.y*result.y) / (Real)(s.getLatticeSizeTimeslice()*Nc);
-//}
-
-
-
-
-
-
 int main(int argc, char* argv[])
 {
 	Chronotimer allTimer;
@@ -177,21 +65,16 @@ int main(int argc, char* argv[])
 	int returncode = options.init( argc, argv );
 	if( returncode != 0 ) return returncode;
 
+	cudaSetDevice(options.getDeviceNumber());
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties(&deviceProp, options.getDeviceNumber() );
-	cudaSetDevice(options.getDeviceNumber());
 
 	printf("\nDevice %d: \"%s\"\n", options.getDeviceNumber(), deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 
+	// SiteCoord is faster than SiteIndex when loading files
 	SiteCoord<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
-
-
-	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly( options.getReinterpret() );
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt( options.getReinterpret() );
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain( options.getReinterpret() );
 
 
 	// allocate Memory
@@ -209,20 +92,25 @@ int main(int argc, char* argv[])
 	lat_index_t *dNn;
 	cudaMalloc( &dNn, s.getLatticeSize()*(2*(Ndim))*sizeof( lat_index_t ) );
 
-
-
 	// initialise the timeslice neighbour table
-	initNeighbourTable( nn );
+	SiteIndex<4,FULL_SPLIT> sTemp(HOST_CONSTANTS::SIZE);
+	sTemp.calculateNeighbourTable( nn );
 	// copy neighbour table to device
 	cudaMemcpy( dNn, nn, s.getLatticeSize()*(2*(Ndim))*sizeof( lat_index_t ), cudaMemcpyHostToDevice );
 
-	int threadsPerBlock = 32*8; // 32 sites are updated within a block (8 threads are needed per site)
-	int numBlocks = s.getLatticeSize()/2/32; // // half of the lattice sites (a parity) are updated in a kernel call
 
+
+	// TODO maybe we should choose the filetype on compile time
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly( options.getReinterpret() );
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt( options.getReinterpret() );
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain( options.getReinterpret() );
+
+
+	int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
+	int numBlocks = s.getLatticeSize()/2/NSB; // // half of the lattice sites (a parity) are updated in a kernel call
 
 	
 	GaugeFixingStats<Ndim,Nc,MAGKernelsSU3,AVERAGE> gaugeStats( dU, HOST_CONSTANTS::SIZE );
-
 
 	// timer to measure kernel times
 	Chronotimer kernelTimer;
@@ -285,12 +173,15 @@ int main(int argc, char* argv[])
 				MAGKernelsSU3::randomTrafo(numBlocks,threadsPerBlock,dU, dNn, 1, options.getSeed(), PhiloxWrapper::getNextCounter() );
 			}
 
+
 			// calculate and print the gauge quality
 			printf( "i:\t\tgff:\t\tdA:\n");
 			gaugeStats.generateGaugeQuality();
 			printf( "   \t\t%1.10f\t\t%e\n", gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
+
 			// SIMULATED ANNEALING
+			if( options.getSaSteps() > 0 ) printf( "SIMULATED ANNEALING\n" );
 			float temperature = options.getSaMax();
 			float tempStep = (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps();
 
@@ -298,8 +189,6 @@ int main(int argc, char* argv[])
 			kernelTimer.start();
 			for( int i = 0; i < options.getSaSteps(); i++ )
 			{
-
-
 				MAGKernelsSU3::saStep(numBlocks,threadsPerBlock,dU, dNn, 0, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
 				MAGKernelsSU3::saStep(numBlocks,threadsPerBlock,dU, dNn, 1, temperature, options.getSeed(), PhiloxWrapper::getNextCounter() );
 
@@ -317,7 +206,7 @@ int main(int argc, char* argv[])
 				if( i % options.getCheckPrecision() == 0 )
 				{
 					gaugeStats.generateGaugeQuality();
-					printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+					printf( "%d\t\t%1.10f\t\t%e\n", 0, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 				}
 				temperature -= tempStep;
 			}
@@ -327,6 +216,7 @@ int main(int argc, char* argv[])
 
 
 			// STOCHASTIC RELAXATION
+			if( options.getOrMaxIter() > 0 ) printf( "STOCHASTIC RELAXATION\n" );
 			kernelTimer.reset();
 			kernelTimer.start();
 			for( int i = 0; i < options.getSrMaxIter(); i++ )
@@ -355,6 +245,7 @@ int main(int argc, char* argv[])
 
 
 			// OVERRELAXATION
+			if( options.getOrMaxIter() > 0 ) printf( "OVERRELAXATION\n" );
 			kernelTimer.reset();
 			kernelTimer.start();
 			for( int i = 0; i < options.getOrMaxIter(); i++ )

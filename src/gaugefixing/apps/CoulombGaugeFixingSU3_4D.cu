@@ -1,8 +1,20 @@
-/*
- * test_gaugefixing.cpp
+/**
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
  *
- *  Created on: Apr 18, 2012
- *      Author: vogt
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <iostream>
@@ -26,12 +38,8 @@
 #include "../../lattice/filetypes/filetype_typedefs.h"
 #include "../../lattice/datatype/lattice_typedefs.h"
 #include "../../lattice/rng/PhiloxWrapper.hxx"
-//#include <boost/program_options/parsers.hpp>
-//#include <boost/program_options/variables_map.hpp>
-//#include <boost/program_options/options_description.hpp>
 #include "program_options/ProgramOptions.hxx"
 #include "program_options/FileIterator.hxx"
-//#include "../util/cuda/CudaError.hxx"
 #include "../CoulombKernelsSU3.hxx"
 #include "../CommonKernelsSU3.hxx"
 
@@ -40,149 +48,12 @@ using namespace std;
 const lat_dim_t Ndim = 4;
 const short Nc = 3;
 
-
-
-// lattice setup
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
 typedef GpuCoulombPattern<SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
 typedef GpuLandauPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
-
-//typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
-//typedef Link<GpuTimeslice,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink3;
-
-void initNeighbourTable( lat_index_t* nnt )
-{
-//	const lat_coord_t size[Ndim] = {Nx,Ny,Nz};
-	SiteIndex<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE_TIMESLICE);
-	s.calculateNeighbourTable( nnt );
-}
-
-//__global__ void projectSU3DP( Real* U )
-//{
-//	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
-//	SiteCoord<4,FULL_SPLIT> s(size);
-//	int site = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	s.setLatticeIndex( site );
-//
-//	for( int mu = 0; mu < 4; mu++ )
-//	{
-//		TLink3 linkUp( U, s, mu );
-//		SU3<TLink3> globUp( linkUp );
-//
-//		Matrix<complex,Nc> locMat;
-//		SU3<Matrix<complex,Nc> > temp(locMat);
-//
-//		temp.assignWithoutThirdLine( globUp );
-//
-//		Matrix<Complex<double>,Nc > doubleMat;
-//
-//		for( int i = 0; i < 2; i++ )
-//			for(int j = 0; j < 3; j++ )
-//			{
-//				Complex<double> a;
-//				a.x = (double)temp.get( i, j ).x;
-//				a.y = (double)temp.get( i, j ).y;
-//				doubleMat.set( i,j, a);
-//			}
-//		double abs_u = 0, abs_v = 0;
-//		Complex<double> sp(0.,0.);
-//
-//		// normalize first row
-//		for( lat_group_dim_t i = 0; i < 3; i++ )
-//		{
-//			abs_u += doubleMat.get( 0, i ).abs_squared();
-//		}
-//
-//		abs_u = sqrt(abs_u);
-//
-//		for( lat_group_dim_t i = 0; i < 3; i++ )
-//		{
-//			doubleMat.set( 0, i, doubleMat.get(0,i)/abs_u );
-//		}
-//
-//		// orthogonalize second row
-//		for( lat_group_dim_t i = 0; i < 3; i++ )
-//		{
-//			sp += doubleMat.get( 1,i ) * doubleMat.get( 0, i ).conj();
-//		}
-//		for( lat_group_dim_t i = 0; i < 3; i++ )
-//		{
-//			doubleMat.set( 1, i, doubleMat.get(1,i) - doubleMat.get( 0, i)*sp );
-//		}
-//
-//		// normalize second row
-//		for( lat_group_dim_t i = 0; i < 3; i++ )
-//		{
-//			abs_v += doubleMat.get( 1, i ).abs_squared();
-//		}
-//		abs_v = sqrt(abs_v);
-//		for( lat_group_dim_t i = 0; i < 3; i++ )
-//		{
-//			doubleMat.set( 1, i, doubleMat.get(1,i)/abs_v );
-//		}
-//
-//
-//		for( int i = 0; i < 2; i++ )
-//			for(int j = 0; j < 3; j++ )
-//			{
-//				Complex<Real> a;
-//				a.x = (Real)doubleMat.get( i, j ).x;
-//				a.y = (Real)doubleMat.get( i, j ).y;
-//				temp.set( i,j, a);
-//			}
-//
-//		globUp.assignWithoutThirdLine( temp );
-//	}
-//}
-
-
-//Real calculatePolyakovLoopAverage( Real *U )
-//{
-//	Matrix<Complex<Real>,3> tempMat;
-//	SU3<Matrix<Complex<Real>,3> > temp( tempMat );
-//	Matrix<Complex<Real>,3> temp2Mat;
-//	SU3<Matrix<Complex<Real>,3> > temp2( temp2Mat );
-//
-//	SiteCoord<Ndim,FULL_SPLIT> s( HOST_CONSTANTS::SIZE );
-//
-//	Complex<Real> result(0,0);
-//
-//	for( s[1] = 0; s[1] < s.size[1]; s[1]++ )
-//	{
-//		for( s[2] = 0; s[2] < s.size[2]; s[2]++ )
-//		{
-//			for( s[3] = 0; s[3] < s.size[3]; s[3]++ )
-//			{
-//				temp.identity();
-//				temp2.zero();
-//
-//				for( s[0] = 0; s[0] < s.size[0]; s[0]++ )
-//				{
-//
-//					TLink link( U, s, 0 );
-//					SU3<TLink> globU( link );
-//
-//					temp2 = temp2 + temp*globU;
-//
-//					temp = temp2;
-//					temp2.zero();
-//				}
-//				result += temp.trace();
-//			}
-//		}
-//	}
-//
-//	return sqrt(result.x*result.x+result.y*result.y) / (Real)(s.getLatticeSizeTimeslice()*Nc);
-//}
-
-
-
-
-
 
 int main(int argc, char* argv[])
 {
@@ -198,19 +69,17 @@ int main(int argc, char* argv[])
 	if( returncode != 0 ) return returncode;
 
 	// Choose device and print device infos
+	cudaSetDevice( options.getDeviceNumber() );
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, 0);
+	cudaGetDeviceProperties(&deviceProp, options.getDeviceNumber() );
 
 	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 
-	SiteCoord<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
 
-	// TODO maybe we should choose the filetype on compile time
-	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly( options.getReinterpret() );
-	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt( options.getReinterpret() );
-	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain( options.getReinterpret() );
+	// SiteCoord is faster than SiteIndex when loading files
+	SiteCoord<4,FULL_SPLIT> s(HOST_CONSTANTS::SIZE);
 
 
 	// allocate Memory
@@ -225,22 +94,30 @@ int main(int argc, char* argv[])
 	Real* dUtDw;
 	cudaMalloc( &dUtDw, timesliceArraySize*sizeof(Real) );
 
-	// host memory for the timeslice neighbour table
+	// host memory for the timeslice neighbour table (since we are working on timeslices, this is enough on device side)
 	lat_index_t* nnt = (lat_index_t*)malloc( s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof(lat_index_t) );
 
 	// device memory for the timeslice neighbour table
 	lat_index_t *dNnt;
 	cudaMalloc( &dNnt, s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof( lat_index_t ) );
 
-
-
 	// initialise the timeslice neighbour table
-	initNeighbourTable( nnt );
+	SiteIndex<4,FULL_SPLIT> sTemp(HOST_CONSTANTS::SIZE_TIMESLICE);
+	sTemp.calculateNeighbourTable( nnt );
+
 	// copy neighbour table to device
 	cudaMemcpy( dNnt, nnt, s.getLatticeSizeTimeslice()*(2*(Ndim))*sizeof( lat_index_t ), cudaMemcpyHostToDevice );
 
-	int threadsPerBlock = 32*8; // 32 sites are updated within a block (8 threads are needed per site)
-	int numBlocks = s.getLatticeSizeTimeslice()/2/32; // // half of the lattice sites (a parity) are updated in a kernel call
+
+
+	// TODO maybe we should choose the filetype on compile time
+	LinkFile<FileHeaderOnly, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfHeaderOnly( options.getReinterpret() );
+	LinkFile<FileVogt, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfVogt( options.getReinterpret() );
+	LinkFile<FilePlain, Standard, Gpu, SiteCoord<4,FULL_SPLIT> > lfPlain( options.getReinterpret() );
+
+
+	int threadsPerBlock = NSB*8; // NSB sites are updated within a block (8 threads are needed per site)
+	int numBlocks = s.getLatticeSizeTimeslice()/2/NSB; // half of the lattice sites (a parity) are updated in a kernel call
 
 
 	GaugeFixingStats<Ndim,Nc,CoulombKernelsSU3,AVERAGE> gaugeStats( dUtUp, HOST_CONSTANTS::SIZE_TIMESLICE );
@@ -255,7 +132,6 @@ int main(int argc, char* argv[])
 	double saTotalKernelTime = 0;
 
 	FileIterator fi( options );
-
 	for( fi.reset(); fi.hasNext(); fi.next() )
 	{
 		bool loadOk;
@@ -275,7 +151,7 @@ int main(int argc, char* argv[])
 				loadOk = lfHeaderOnly.load( s, fi.getFilename(), U );
 				break;
 			default:
-				cout << "Filetype not set to a known value. Exiting";
+				cout << "Filetype not set to a known value. Exiting...";
 				exit(1);
 			}
 
@@ -303,7 +179,6 @@ int main(int argc, char* argv[])
 					cudaMemcpy( dUtUp, &U[t*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
 					// ... and t-1 to device
 					cudaMemcpy( dUtDw, &U[tDw*timesliceArraySize], timesliceArraySize*sizeof(Real), cudaMemcpyHostToDevice );
-					// TODO it is not necessary to copy the (t-1) again for t>0, simply swap pointers on device side...
 				}
 				else // randomize the timeslices
 				{
@@ -318,13 +193,14 @@ int main(int argc, char* argv[])
 					CoulombKernelsSU3::randomTrafo(numBlocks,threadsPerBlock, dUtUp, dUtDw, dNnt, 1, options.getSeed(), PhiloxWrapper::getNextCounter() );
 				}
 
+
 				// calculate and print the gauge quality
 				printf( "i:\t\tgff:\t\tdA:\n");
 				gaugeStats.generateGaugeQuality();
 
 
-
 				// SIMUALTED ANNEALING
+				if( options.getSaSteps() > 0 ) printf( "SIMULATED ANNEALING\n" );
 				float temperature = options.getSaMax();
 				float tempStep = (options.getSaMax()-options.getSaMin())/(float)options.getSaSteps();
 
@@ -350,7 +226,7 @@ int main(int argc, char* argv[])
 					if( i % options.getCheckPrecision() == 0 )
 					{
 						gaugeStats.generateGaugeQuality();
-						printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+						printf( "%d\t\t%1.10f\t\t%e\n", 0, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 					}
 					temperature -= tempStep;
 				}
@@ -360,11 +236,11 @@ int main(int argc, char* argv[])
 
 
 				// OVERRELAXATION
+				if( options.getOrMaxIter() > 0 ) printf( "OVERRELAXATION\n" );
 				kernelTimer.reset();
 				kernelTimer.start();
 				for( int i = 0; i < options.getOrMaxIter(); i++ )
 				{
-
 					CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 0, options.getOrParameter() );
 					CoulombKernelsSU3::orStep(numBlocks,threadsPerBlock,dUtUp, dUtDw, dNnt, 1, options.getOrParameter() );
 
@@ -387,6 +263,7 @@ int main(int argc, char* argv[])
 				cudaDeviceSynchronize();
 				kernelTimer.stop();
 				orTotalKernelTime += kernelTimer.getTime();
+
 
 				// reconstruct third line before copy back
 				CommonKernelsSU3::projectSU3( numBlocks*2, 32, dUtUp, HOST_CONSTANTS::getPtrToDeviceSizeTimeslice() );
