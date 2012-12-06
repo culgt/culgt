@@ -40,6 +40,7 @@ public:
 	float getSaMin() const;
 	int getSaSteps() const;
 	enum AlgoType getAlgorithm() const;
+	long getSeed() const;
 	// set methods
 	void setOrParameter( float );
 	void setSrParameter( float );
@@ -51,6 +52,7 @@ public:
 	void setSaSteps( int );
 	// set an algorithm to active
 	void setAlgorithm( enum AlgoType );
+	void setSeed( long );
 	// temperature -= tempStep:
 	void decreaseTemperature();
 private:
@@ -63,6 +65,7 @@ private:
 	float orParameter;
 	float srParameter;
 	enum AlgoType algo;
+	long seed;
 };
 
 

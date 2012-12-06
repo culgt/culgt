@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
 	algoOptions.setSaMicroupdates( options.getSaMicroupdates() );
 	algoOptions.setOrParameter( options.getOrParameter() );
 	algoOptions.setSrParameter( options.getSrParameter() );
+	algoOptions.setSeed( options.getSeed() + comm.getRank() );
 
 	Chronotimer allTimer;
 	if( comm.isMaster() ) allTimer.reset();
@@ -172,7 +173,7 @@ int main(int argc, char* argv[])
 		}
 
 		// don't read gauge field, set hot:
-		if( options.isSetHot() ) comm.setHot( dU );
+		if( options.isSetHot() ) comm.setHot( dU, algoOptions );
 
 
 		

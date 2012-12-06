@@ -53,6 +53,10 @@ enum AlgoType MultiGPU_MPI_AlgorithmOptions::getAlgorithm() const {
 	return algo;
 }
 
+long MultiGPU_MPI_AlgorithmOptions::getSeed() const {
+	return seed;
+}
+
 void MultiGPU_MPI_AlgorithmOptions::setOrParameter( float _orParameter ) {
 	orParameter = _orParameter;
 }
@@ -87,6 +91,10 @@ void MultiGPU_MPI_AlgorithmOptions::setSaSteps( int _saSteps ) {
 
 void MultiGPU_MPI_AlgorithmOptions::setAlgorithm( enum AlgoType _algo ) {
 	algo = _algo;
+}
+
+void MultiGPU_MPI_AlgorithmOptions::setSeed( long _seed ) {
+	seed = _seed;
 }
 
 void MultiGPU_MPI_AlgorithmOptions::decreaseTemperature() {

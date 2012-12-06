@@ -185,16 +185,16 @@ __global__ void __launch_bounds__(256,MS_MINBLOCKS) microStep( Real* UtUp, Real*
 	applyOneTimeslice( UtUp, UtDw, nnt, parity, micro );
 }
 
-__global__ void __launch_bounds__(256,SA_MINBLOCKS)  saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter )
+__global__ void __launch_bounds__(256,SA_MINBLOCKS)  saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	SaUpdate sa( temperature, &rng );
 	applyOneTimeslice( UtUp, UtDw, nnt, parity, sa );
 }
 
-__global__ void randomTrafo( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, int counter )
+__global__ void randomTrafo( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, int rngSeed, int rngCounter )
 {
-	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
+	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 	RandomUpdate random( &rng );
 	applyOneTimeslice( UtUp, UtDw, nnt, parity, random );
 }
@@ -220,7 +220,7 @@ __global__ void projectSU3( Real* Ut )
 	}
 }
 
-__global__ void setHot( Real* Ut, int counter )
+__global__ void setHot( Real* Ut, int rngSeed, int rngCounter )
 {
 	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
@@ -230,7 +230,7 @@ __global__ void setHot( Real* Ut, int counter )
 	int site = blockIdx.x * blockDim.x + threadIdx.x;
 	s.setLatticeIndex( site );
 	
-	PhiloxWrapper rng( site, 123, counter );
+	PhiloxWrapper rng( site, rngSeed, rngCounter );
 
 	Quaternion<Real> q;
 	
@@ -292,10 +292,10 @@ void MultiGPU_MPI_LandauKernelsSU3::applyOneTimeslice( int a, int b, cudaStream_
 		MPILKSU3::microStep<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity );
 		break;
 	case SA:
-		MPILKSU3::saStep<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, algoOptions.getTemperature(), PhiloxWrapper::getNextCounter() );
+		MPILKSU3::saStep<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, algoOptions.getTemperature(), PhiloxWrapper::getNextCounter(), algoOptions.getSeed() );
 		break;
 	case RT:
-		MPILKSU3::randomTrafo<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, PhiloxWrapper::getNextCounter() );
+		MPILKSU3::randomTrafo<<<a,b,0,stream>>>( UtUp, UtDw, nnt, parity, PhiloxWrapper::getNextCounter(), algoOptions.getSeed() );
 		break;
 	default:
 		printf("Algorithm type not set to a known value [MultiGPU_MPI_AlgorithmOptions::setAlgorithm(enum AlgoType)]. Exiting\n");
@@ -308,10 +308,10 @@ void MultiGPU_MPI_LandauKernelsSU3::projectSU3( int a, int b, cudaStream_t strea
 	MPILKSU3::projectSU3<<<a,b,0,stream>>>( Ut );
 }
 
-void MultiGPU_MPI_LandauKernelsSU3::setHot( int a, int b, cudaStream_t stream, Real* Ut )
+void MultiGPU_MPI_LandauKernelsSU3::setHot( int a, int b, cudaStream_t stream, Real* Ut, MultiGPU_MPI_AlgorithmOptions algoOptions )
 {
 	
-	MPILKSU3::setHot<<<a,b,0,stream>>>( Ut, PhiloxWrapper::getNextCounter() );
+	MPILKSU3::setHot<<<a,b,0,stream>>>( Ut, PhiloxWrapper::getNextCounter(), algoOptions.getSeed() );
 }
 
 void MultiGPU_MPI_LandauKernelsSU3::generateGaugeQualityPerSite( int a, int b, cudaStream_t stream, Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA )

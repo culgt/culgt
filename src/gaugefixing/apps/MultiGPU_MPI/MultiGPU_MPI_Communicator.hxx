@@ -81,7 +81,7 @@ public:
 	// projectSU3: iterates over the timeslices, no comm. needed.
 	void projectSU3( Real** dU );
 	// set dU to a random gauge field
-	void setHot( Real** dU );
+	void setHot( Real** dU, MultiGPU_MPI_AlgorithmOptions algoOptions );
 	// generate the gauge quality
 	void generateGaugeQuality( Real** dU, lat_index_t** dNnt );
 	// get the current value of the gauge functional
@@ -182,7 +182,7 @@ MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::MultiGPU_MPI_Communicato
 	}
 	
 	// init. the device
-	initDevice( (rank%4)+1 );
+	initDevice( rank%4 );
 	
 	// init. cuda streams
 	cudaStreamCreate( &streamStd );
@@ -434,7 +434,7 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::projectSU3( 
 
 
 template< class MultiGPU_MPI_GaugeKernels >
-inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::setHot( Real** dU )
+inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::setHot( Real** dU, MultiGPU_MPI_AlgorithmOptions algoOptions )
 {
 	int threadsPerBlock = 32;
 	int numBlocks = Nx*Ny*Nz/32;
@@ -444,7 +444,7 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::setHot( Real
 
 	for( int t=tmin; t<tmax; t++ )
 	{
-		kernelWrapper.setHot( numBlocks, threadsPerBlock, streamStd, dU[t] );
+		kernelWrapper.setHot( numBlocks, threadsPerBlock, streamStd, dU[t], algoOptions );
 	}
 	cudaDeviceSynchronize();
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
