@@ -21,13 +21,13 @@ const lat_coord_t Nx = _X_;
 const lat_coord_t Ny = _Y_;
 #else
 const lat_coord_t Ny = _X_;
-#warning "Size in y-direction not set. Using size of x."
+//#warning "Size in y-direction not set. Using size of x."
 #endif
 #ifdef _Z_
 const lat_coord_t Nz = _Z_;
 #else
 const lat_coord_t Nz = _X_;
-#warning "Size in z-direction not set. Using size of x."
+//#warning "Size in z-direction not set. Using size of x."
 #endif
 #ifdef _T_
 const lat_coord_t Nt = _T_;

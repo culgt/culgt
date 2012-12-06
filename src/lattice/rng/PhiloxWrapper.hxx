@@ -24,6 +24,8 @@
  *
  * TODO: get rid of the preprocessor statements: float/double has to be template argument (in all classes).
  * 		Because now there is no code possible that uses both single and double precision random numbers.
+ * TODO: In CUDA5.0 a lot of stack-frame is used when Philox is involved (~ 200 bytes for the single precision SA kernel)
+ *
  */
 
 #ifndef PHILOXWRAPPER_HXX_
@@ -87,29 +89,29 @@ __device__ PhiloxWrapper::~PhiloxWrapper()
 __device__ Real PhiloxWrapper::rand()
 {
 #ifdef DOUBLEPRECISION
-	if( localCounter == 0 ) // we have another double available.
+	if( localCounter == 0 )// we have to calculate two new doubles
 	{
-		localCounter++;
-		return u01_open_open_64_53( u.i[localCounter] );
-	}
-	else // we have to calculate two new doubles
-	{
-		localCounter = 0;
+		localCounter = 1;
 		c[0]++; // inkrement the kernel counter
 		u.res = philox4x32(c,k);
+		return u01_open_open_64_53( u.i[localCounter] );
+	}
+	else  // we have another double available.
+	{
+		localCounter--;
 		return u01_open_open_64_53( u.i[localCounter] );
 	}
 #else
-	if( localCounter < 3 ) // we have another float available.
+	if( localCounter == 0 ) // we have to calculate 4 new floats
 	{
-		localCounter++;
-		return u01_open_open_32_24( u.i[localCounter] );
-	}
-	else // we have to calculate 4 new floats
-	{
-		localCounter = 0;
+		localCounter = 3;
 		c[0]++; // inkrement the kernel counter
 		u.res = philox4x32(c,k);
+		return u01_open_open_32_24( u.i[localCounter] );
+	}
+	else // we have another float available.
+	{
+		localCounter--;
 		return u01_open_open_32_24( u.i[localCounter] );
 	}
 #endif
