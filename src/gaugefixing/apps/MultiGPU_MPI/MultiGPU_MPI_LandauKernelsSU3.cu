@@ -13,6 +13,7 @@
  * 
  */
 
+#include "../../kernel_lauch_bounds.h"
 #include "../../GlobalConstants.h"
 #include "../../GaugeFixingSubgroupStep.hxx"
 #include "../../algorithms/OrUpdate.hxx"
@@ -172,19 +173,19 @@ __global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t
 
 
 
-__global__ void __launch_bounds__(256,4) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
+__global__ void __launch_bounds__(256,OR_MINBLOCKS) orStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float orParameter )
 {
 	OrUpdate overrelax( orParameter );
 	applyOneTimeslice( UtUp, UtDw, nnt, parity, overrelax  );
 }
 
-__global__ void __launch_bounds__(256,4) microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity )
+__global__ void __launch_bounds__(256,MS_MINBLOCKS) microStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity )
 {
 	MicroUpdate micro;
 	applyOneTimeslice( UtUp, UtDw, nnt, parity, micro );
 }
 
-__global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter )
+__global__ void __launch_bounds__(256,SA_MINBLOCKS)  saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, float temperature, int counter )
 {
 	PhiloxWrapper rng( blockIdx.x * blockDim.x + threadIdx.x, 12345, counter );
 	SaUpdate sa( temperature, &rng );
