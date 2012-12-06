@@ -17,9 +17,6 @@ T=32
 X=32
 NSB=32
 
-# default app
-APP = CoulombGaugeFixingSU3_4D
-
 # double precision?
 ifeq ($(PREC),DP)
 DPREC = -DDOUBLEPRECISION
