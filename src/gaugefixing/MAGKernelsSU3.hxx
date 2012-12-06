@@ -10,7 +10,7 @@
 #define MAGKERNELSSU3_HXX_
 
 #include "GlobalConstants.h"
-#include "kernel_lauch_bounds.h"
+#include "kernel_launch_bounds.h"
 #include "../lattice/datatype/datatypes.h"
 #include "../lattice/datatype/lattice_typedefs.h"
 #include "../lattice/rng/PhiloxWrapper.hxx"

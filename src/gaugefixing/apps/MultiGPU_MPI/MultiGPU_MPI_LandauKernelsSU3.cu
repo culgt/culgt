@@ -13,7 +13,7 @@
  * 
  */
 
-#include "../../kernel_lauch_bounds.h"
+#include "../../kernel_launch_bounds.h"
 #include "../../GlobalConstants.h"
 #include "../../GaugeFixingSubgroupStep.hxx"
 #include "../../algorithms/OrUpdate.hxx"
