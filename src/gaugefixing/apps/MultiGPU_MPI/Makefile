@@ -15,10 +15,18 @@ NSB=32
 # name of the output program
 PROG = MultiGPU_MPI_LandauGaugeFixingSU3_4D
 
+# double precision?
+ifeq ($(PREC),DP)
+DPREC = -DDOUBLEPRECISION
+endif
 
+# do the updates in DP even if links are stored in SP
+ifeq ($(DPUPDATES),true)
+DPREC += -DUSE_DP_ORUPDATE -DUSE_DP_MICROUPDATE -DUSE_DP_SAUPDATE # TODO add the flags for SA,SR
+endif
 
 # the lattice size and ThreadBlock size
-CCDEFS = -D_T_=$(T) -D_X_=$(X) -D_NSB_=$(NSB)
+CCDEFS = $(DPREC) -D_T_=$(T) -D_X_=$(X) -D_NSB_=$(NSB)
 CUDEFS = $(CCDEFS)
 # mpi compiler
 MPICC = mpicxx
