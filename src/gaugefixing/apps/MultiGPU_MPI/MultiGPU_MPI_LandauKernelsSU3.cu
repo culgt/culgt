@@ -48,9 +48,9 @@ template<class Algorithm> inline __device__ void applyOneTimeslice( Real* UtUp, 
 	
 	s.nn = nnt;
 
-	const bool updown = threadIdx.x / NSB4;
-	const short mu = (threadIdx.x % NSB4) / NSB;
-	const short id = (threadIdx.x % NSB4) % NSB;
+	const bool updown = threadIdx.x / (NSB*4);
+	const short mu = (threadIdx.x % (NSB*4)) / NSB;
+	const short id = (threadIdx.x % (NSB*4)) % NSB;
 
 	int site = blockIdx.x * blockDim.x/8 + id;
 	if( parity == 1 ) site += s.getLatticeSize()/2;
