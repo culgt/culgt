@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
 				if( i % options.getCheckPrecision() == 0 )
 				{
 					gaugeStats.generateGaugeQuality();
-					printf( "%d\t\t%1.10f\t\t%e\n", 0, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 				}
 				temperature -= tempStep;
 			}
