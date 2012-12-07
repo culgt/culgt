@@ -20,6 +20,21 @@
 
 #define USEATOMIC
 #ifdef DOUBLEPRECISION
+// // this implementation of DP atomic add is slower than the explicit technique with syncthreads().
+//__device__ double atomicAdd(double* address, double val)
+//{
+//    unsigned long long int* address_as_ull =
+//                              (unsigned long long int*)address;
+//    unsigned long long int old = *address_as_ull, assumed;
+//    do {
+//        assumed = old;
+//        old = atomicCAS(address_as_ull, assumed,
+//                        __double_as_longlong(val +
+//                               __longlong_as_double(assumed)));
+//    } while (assumed != old);
+//    return __longlong_as_double(old);
+//}
+
 #undef USEATOMIC
 #endif
 
@@ -91,23 +106,9 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 
 
 	#else
-
-	// TODO atomic_add and volatile did not work properly... can't say why... induced a race condition in an earlier version (earlier compiler?)
-
-			if( lc == LANDAU )
-			{
-				if( updown == 0 && mu == 0 )
-				{
-				q = U->getSubgroupQuaternion( i, j );
-					shA[id] += q[0];
-					shA[id+NSB] -= q[1];
-					shA[id+2*NSB] -= q[2];
-					shA[id+3*NSB] -= q[3];
-				}
-				__syncthreads();
-			}
-
-			if( updown == 0 && mu == 1 )
+		if( lc == LANDAU )
+		{
+			if( updown == 0 && mu == 0 )
 			{
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
@@ -116,40 +117,40 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 				shA[id+3*NSB] -= q[3];
 			}
 			__syncthreads();
-			if( updown == 0 && mu == 2 )
-			{
-			q = U->getSubgroupQuaternion( i, j );
-				shA[id] += q[0];
-				shA[id+NSB] -= q[1];
-				shA[id+2*NSB] -= q[2];
-				shA[id+3*NSB] -= q[3];
-			}
-			__syncthreads();
-			if( updown == 0 && mu == 3 )
-			{
-			q = U->getSubgroupQuaternion( i, j );
-				shA[id] += q[0];
-				shA[id+NSB] -= q[1];
-				shA[id+2*NSB] -= q[2];
-				shA[id+3*NSB] -= q[3];
-			}
-			__syncthreads();
+		}
+
+		if( updown == 0 && mu == 1 )
+		{
+		q = U->getSubgroupQuaternion( i, j );
+			shA[id] += q[0];
+			shA[id+NSB] -= q[1];
+			shA[id+2*NSB] -= q[2];
+			shA[id+3*NSB] -= q[3];
+		}
+		__syncthreads();
+		if( updown == 0 && mu == 2 )
+		{
+		q = U->getSubgroupQuaternion( i, j );
+			shA[id] += q[0];
+			shA[id+NSB] -= q[1];
+			shA[id+2*NSB] -= q[2];
+			shA[id+3*NSB] -= q[3];
+		}
+		__syncthreads();
+		if( updown == 0 && mu == 3 )
+		{
+		q = U->getSubgroupQuaternion( i, j );
+			shA[id] += q[0];
+			shA[id+NSB] -= q[1];
+			shA[id+2*NSB] -= q[2];
+			shA[id+3*NSB] -= q[3];
+		}
+		__syncthreads();
 
 
-			if( lc == LANDAU )
-			{
-				if( updown == 1 && mu == 0 )
-				{
-				q = U->getSubgroupQuaternion( i, j );
-					shA[id] += q[0];
-					shA[id+NSB] += q[1];
-					shA[id+2*NSB] += q[2];
-					shA[id+3*NSB] += q[3];
-				}
-				__syncthreads();
-			}
-
-			if( updown == 1 && mu == 1 )
+		if( lc == LANDAU )
+		{
+			if( updown == 1 && mu == 0 )
 			{
 			q = U->getSubgroupQuaternion( i, j );
 				shA[id] += q[0];
@@ -158,81 +159,51 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 				shA[id+3*NSB] += q[3];
 			}
 			__syncthreads();
-			if( updown == 1 && mu == 2 )
-			{
-			q = U->getSubgroupQuaternion( i, j );
-				shA[id] += q[0];
-				shA[id+NSB] += q[1];
-				shA[id+2*NSB] += q[2];
-				shA[id+3*NSB] += q[3];
-			}
-			__syncthreads();
-			if( updown == 1 && mu == 3 )
-			{
-			q = U->getSubgroupQuaternion( i, j );
-				shA[id] += q[0];
-				shA[id+NSB] += q[1];
-				shA[id+2*NSB] += q[2];
-				shA[id+3*NSB] += q[3];
-			}
+		}
+
+		if( updown == 1 && mu == 1 )
+		{
+		q = U->getSubgroupQuaternion( i, j );
+			shA[id] += q[0];
+			shA[id+NSB] += q[1];
+			shA[id+2*NSB] += q[2];
+			shA[id+3*NSB] += q[3];
+		}
+		__syncthreads();
+		if( updown == 1 && mu == 2 )
+		{
+		q = U->getSubgroupQuaternion( i, j );
+			shA[id] += q[0];
+			shA[id+NSB] += q[1];
+			shA[id+2*NSB] += q[2];
+			shA[id+3*NSB] += q[3];
+		}
+		__syncthreads();
+		if( updown == 1 && mu == 3 )
+		{
+		q = U->getSubgroupQuaternion( i, j );
+			shA[id] += q[0];
+			shA[id+NSB] += q[1];
+			shA[id+2*NSB] += q[2];
+			shA[id+3*NSB] += q[3];
+		}
 #endif
 
 
-			__syncthreads();
-			if( mu == 0 )
+		__syncthreads();
+		if( mu == 0 )
+		{
+			if( updown == 0 )
 			{
-				if( updown == 0 )
-				{
-					algo.calculateUpdate( shA, id );
-				}
+				algo.calculateUpdate( shA, id );
 			}
+		}
 		__syncthreads();
 
 		q[0] = shA[id];
 		q[1] = shA[id+NSB];
 		q[2] = shA[id+2*NSB];
 		q[3] = shA[id+3*NSB];
-
-
-//	q[0] = 1./2.;
-//	q[1] = 1./2.;
-//	q[2] = 1./2.;
-//	q[3] = 1./2.;
-
-//	q[0] = 1.;
-//	q[1] = 0.;
-//	q[2] = 0.;
-//	q[3] = 0.;
-
-
-//			if( id == 0 ) printf( "update: %f, %f\n", q[0], q[1] );
-
-//
-
-//	for( int i = 0; i < 3; i++ )
-//	{
-//		for( int j = 0; j < 3; j++ )
-//		{
-//			U->set(i,j,complex(0,0));
-//		}
-//	}
-
-//	if( q.det().x > 1.1 || q.det().x < .9 )
-//	{
-//		printf( "q.det: %f; id=%d; mu=%d; updown=%d; site=%d; speicherstelle:%d\n", q.det().x, id, mu, updown, blockIdx.x * blockDim.x/8 + (threadIdx.x % NSB4) % NSB, &q[0]);
-//	}
-
-
-//	(*q)[0] = 1./2.;
-//	(*q)[1] = 1./2.;
-//	(*q)[2] = 1./2.;
-//	(*q)[3] = 1./2.;
-//	(*q)[0] = 1.;
-//	(*q)[1] = .0;
-//	(*q)[2] = .0;
-//	(*q)[3] = .0;
-
-
 
 		if( updown == 0 )
 		{
@@ -243,54 +214,6 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 			q.hermitian();
 			U->rightSubgroupMult( i, j, &q );
 		}
-//		__syncthreads();
-
-//	if( U->det().x > 1.1 || U->det().x < .9 )
-//	{
-//		printf( "U.det: %f; id=%d; mu=%d; updown=%d; site=%d; speicherstelle:%d\n", U->det().x, id, mu, updown, blockIdx.x * blockDim.x/8 + (threadIdx.x % NSB4) % NSB, &q[0]);
-//	}
-
-
-
-
-
-
-//	if( updown == 0 )
-//	{
-//		Real q2[4];
-//		q2[0] = shA[id];
-//		q2[1] = shA[id+NSB];
-//		q2[2] = shA[id+2*NSB];
-//		q2[3] = shA[id+3*NSB];
-//		U->leftSubgroupMult( i, j, q2 );
-//		Real temp = q2[0]*q2[0]-q2[3]*q2[3]+q2[2]*q2[2]-q2[1]*q2[1];
-//
-//		if( temp > 1.1 || temp < .9 )
-//		{
-//			printf( "q.det: %f; id=%d; mu=%d; updown=%d; site=%d;\n", temp, id, mu, updown, blockIdx.x * blockDim.x/8 + (threadIdx.x % NSB4) % NSB );
-//		}
-//	}
-//	else
-//	{
-//		Real q2[4];
-//		q2[0] = shA[id];
-//		q2[1] = -shA[id+NSB];
-//		q2[2] = -shA[id+2*NSB];
-//		q2[3] = -shA[id+3*NSB];
-//		Real temp = q2[0]*q2[0]-q2[3]*q2[3]+q2[2]*q2[2]-q2[1]*q2[1];
-//
-//		if( temp > 1.1 || temp < .9 )
-//		{
-//			printf( "q.det: %f; id=%d; mu=%d; updown=%d; site=%d;\n", temp, id, mu, updown, blockIdx.x * blockDim.x/8 + (threadIdx.x % NSB4) % NSB );
-//		}
-//
-//		U->rightSubgroupMult( i, j, q2 );
-//	}
-//
-//	if( U->det().x > 1.01 )
-//	{
-//		printf( "det > 1: %f\n", U->det().x );
-//	}
 	}
 	else if( lc == U1xU1 )
 	{

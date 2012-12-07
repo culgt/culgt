@@ -14,7 +14,7 @@
  *  - Implement all mathematical operations: like operator*
  *  - We have to introduce a compatible and clear way to switch between full 18 parameter matrices
  *    and 12 parameter (third-line-reconstruction) techniques.
- *  - At present we use the typedef'ed "complex" type. This is no good style... Introduce a template parameter or something...
+ *  - At present we use the hardcodeed "Complex<Real>". This is no good style... Introduce a template parameter or something...
  *  - Define the basic set of functions mentioned above.
  *
  * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
