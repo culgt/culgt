@@ -235,7 +235,7 @@ int main(int argc, char* argv[])
 					gaugeStats.generateGaugeQuality();
 					printf( "%d\t\t%1.10f\t\t%e\n", i, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 
-					if( gaugeStats.getCurrentA() < options.getPrecision() ) break;
+					if( gaugeStats.getCurrentA() < options.getPrecision() || gaugeStats.getCurrentA() < 1E-6 ) break;
 				}
 				srTotalStepnumber++;
 			}

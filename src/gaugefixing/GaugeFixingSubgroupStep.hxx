@@ -409,6 +409,7 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 //				shA[id] -= 1./(Real)4.0;
 				shA[id+NSB] *= 2.;
 				shA[id+2*NSB] *= 2.;
+				shA[id+3*NSB] = 0;
 				shA[id] = shA[id]+sqrt(shA[id]*shA[id]+shA[id+NSB]*shA[id+NSB]+shA[id+2*NSB]*shA[id+2*NSB]);
 
 				algo.calculateUpdate( shA, id );
@@ -419,7 +420,8 @@ template<class SUx, class Algorithm, GaugeType lc > __device__ void GaugeFixingS
 		q[0] = shA[id];
 		q[1] = shA[id+NSB];
 		q[2] = shA[id+2*NSB];
-		q[3] = 0; // should be zero here (because it was zero before) but it is not (if we use shA[id+3*NSB]! why?)
+//		q[3] = 0; // should be zero here (because it was zero before) but it is not (if we use shA[id+3*NSB]! why?)
+		q[3] = shA[id+3*NSB];
 
 		if( updown == 0 )
 		{
