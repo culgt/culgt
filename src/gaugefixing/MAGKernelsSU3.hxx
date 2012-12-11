@@ -1,9 +1,23 @@
-/*
- * CoulombKernelsSU3.hxx
+/************************************************************************
  *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
  *
- *  Created on: Oct 26, 2012
- *      Author: vogt
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
  */
 
 #ifndef MAGKERNELSSU3_HXX_
@@ -42,8 +56,6 @@ __global__ void saStep( Real* U, lat_index_t* nnt, bool parity, float temperatur
 class MAGKernelsSU3
 {
 public:
-//	__global__ static void heatbathStep( Real* UtDw, Real* Ut, Real* UtUp, lat_index_t* nnt, float beta, bool parity, int counter );
-
 	// TODO remove static and make the init in constructor
 	static void initCacheConfig()
 	{
@@ -157,88 +169,6 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 
 	}
 	dA[site] = X[0].abs_squared()+X[1].abs_squared()+X[2].abs_squared();
-
-
-
-
-
-
-
-//	typedef GpuLandauPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
-//	typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
-//
-//	SiteCoord<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
-//	int site = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	Matrix<complex,Nc> locMatSum;
-//	SU3<Matrix<complex,Nc> > Sum(locMatSum);
-//
-//	Sum.zero();
-//
-//	// TODO check if there is a faster way to compute DELTA
-//	for( int mu = 0; mu < 4; mu++ )
-//	{
-//		s.setLatticeIndex( site );
-//
-//		Matrix<complex,Nc> locMat;
-//		SU3<Matrix<complex,Nc> > temp(locMat);
-//
-//		TLink linkUp( U, s, mu );
-//		SU3<TLink> globUp( linkUp );
-//
-//		temp.assignWithoutThirdLine( globUp );
-////				temp.projectSU3withoutThirdRow();// TODO project here?
-////				globUp.assignWithoutThirdLine( temp ); // TODO
-//		temp.reconstructThirdLine();
-//		Sum += temp;
-//
-//		s.setNeighbour(mu,-1);
-//		TLink linkDw( U, s, mu );
-//		SU3<TLink> globDw( linkDw );
-//		temp.assignWithoutThirdLine( globDw );
-////				temp.projectSU3withoutThirdRow(); // TODO project here?
-////				globDw.assignWithoutThirdLine( temp ); // TODO
-//		temp.reconstructThirdLine();
-//		Sum -= temp;
-//	}
-//
-//	Sum -= Sum.trace()/Real(3.);
-//
-//	Matrix<complex,Nc> locMatSumHerm;
-//	SU3<Matrix<complex,Nc> > SumHerm(locMatSumHerm);
-//	SumHerm = Sum;
-//	SumHerm.hermitian();
-//
-//	Sum -= SumHerm;
-//
-//	double prec = 0;
-//
-//	for( int i = 0; i < 3; i++ )
-//	{
-//		for( int j = 0; j < 3; j++ )
-//		{
-//			prec += Sum.get(i,j).abs_squared();
-//		}
-//	}
-//	dA[site] = prec;
-//
-//
-//	s.setLatticeIndex( site );
-//	double result = 0;
-//
-//	Matrix<complex,Nc> locTemp;
-//	SU3<Matrix<complex,Nc> > temp(locTemp);
-//	for( int mu = 0; mu < 4; mu++ )
-//	{
-//		TLink linkUp( U, s, mu );
-//		SU3<TLink> globUp( linkUp );
-//		temp.assignWithoutThirdLine( globUp );  // TODO put this in the loop of dA to reuse globUp
-//		temp.reconstructThirdLine();
-//		result += temp.trace().x;
-//	}
-//
-//	dGff[site] = result;
-
 }
 
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt )
@@ -286,8 +216,6 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 		s.setNeighbour(mu,false);
 	}
 
-//	if(id == 0) printf("bin in or\n");
-
 	Matrix<Complex<Real>,Nc> locMat;
 	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
@@ -298,7 +226,6 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 	// make link local
 	locU.assignWithoutThirdLine(globU);
 	locU.reconstructThirdLine();
-
 
 	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, Algorithm, MAG> subgroupStep( &locU, algorithm, id, mu, updown );
 
@@ -345,4 +272,4 @@ __global__ void randomTrafo( Real* U,lat_index_t* nnt, bool parity, int rngSeed,
 }
 
 
-#endif /* COULOMBKERNELSSU2_HXX_ */
+#endif /* MAGKERNELSSU3_HXX_ */

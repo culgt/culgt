@@ -1,15 +1,33 @@
-/**
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * Storage class for a lattice link stored in a big array that keeps the complete configuration. The array has to allocated elsewhere.
  * Only the access to the matrix-elements is computed and a pointer to the array is kept.
  *
  * TODO:
  *  - Why is T_Ndim a template parameter? All information is encoded in TheSite? Remove this.
- *  - Do we want a minimal set of functions here, like only getter and setter OR do we wannt to define other operations here like +, *, ...
- *    The question is: Is it possible to write mor efficient functions in the storage classes rather than in the frontend-classes like "SU3"?
+ *  - Do we want a minimal set of functions here, like only getter and setter OR do we want to define other operations here like +, *, ...
+ *    The question is: Is it possible to write more efficient functions in the storage classes rather than in the frontend-classes like "SU3"?
+ *    Best solutions would be: define all functions here, but overwrite if underlying classes have more efficient implementation.
  *  - Do not use typedef'ed "complex".
- *
- * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
- * @date 2012-04-16
  */
 
 #ifndef LINK_HXX_

@@ -1,11 +1,23 @@
-/*
- * CoulombKernelsSU3.hxx
+/************************************************************************
  *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
  *
- *	TODO: simplify the kernels: micro, or, sa are acutally copies of each other with different Algorithms...
+ *  This file is part of cuLGT.
  *
- *  Created on: Oct 26, 2012
- *      Author: vogt
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
  */
 
 #ifndef COULOMBKERNELSSU3_HXX_
@@ -41,8 +53,6 @@ __global__ void saStep( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, f
 class CoulombKernelsSU3
 {
 public:
-//	__global__ static void heatbathStep( Real* UtDw, Real* Ut, Real* UtUp, lat_index_t* nnt, float beta, bool parity, int counter );
-
 	// TODO remove static and make the init in constructor
 	static void initCacheConfig()
 	{
@@ -123,8 +133,6 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 		SU3<TLink> globUp( linkUp );
 
 		temp.assignWithoutThirdLine( globUp );
-//				temp.projectSU3withoutThirdRow();// TODO project here?
-//				globUp.assignWithoutThirdLine( temp ); // TODO
 		temp.reconstructThirdLine();
 		Sum += temp;
 
@@ -132,8 +140,6 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 		TLink linkDw( U, s, mu );
 		SU3<TLink> globDw( linkDw );
 		temp.assignWithoutThirdLine( globDw );
-//				temp.projectSU3withoutThirdRow(); // TODO project here?
-//				globDw.assignWithoutThirdLine( temp ); // TODO
 		temp.reconstructThirdLine();
 		Sum -= temp;
 	}
@@ -158,7 +164,6 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 
 	dA[site] = prec;
 
-
 	s.setLatticeIndex( site );
 	double result = 0;
 
@@ -172,41 +177,6 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 		temp.reconstructThirdLine();
 		result += temp.trace().x;
 	}
-
-
-//	Matrix<Complex<Real>,Nc> locTemp;
-//	SU3<Matrix<Complex<Real>,Nc> > temp(locTemp);
-//	Matrix<Complex<double>,Nc > doubleMat;
-////	SU3<Matrix<Complex<double>,Nc > > doubleTemp(doubleMat);
-//	for( int mu = 1; mu < 4; mu++ )
-//	{
-//		TLink linkUp( U, s, mu );
-//		SU3<TLink> globUp( linkUp );
-//		temp.assignWithoutThirdLine( globUp );  // TODO put this in the loop of dA to reuse globUp
-//
-////		doubleTemp = temp;
-//
-//		for( int i = 0; i < 2; i++ )
-//			for(int j = 0; j < 3; j++ )
-//			{
-//				Complex<double> a;
-//				a.x = (double)temp.get( i, j ).x;
-//				a.y = (double)temp.get( i, j ).y;
-//				doubleMat.set( i,j, a);
-//			}
-//
-//
-//		Complex<double> a = doubleMat.get(0,1).conj() * doubleMat.get(1,2).conj() - doubleMat.get(0,2).conj() * doubleMat.get(1,1).conj();
-//		Complex<double> b = doubleMat.get(0,2).conj() * doubleMat.get(1,0).conj() - doubleMat.get(0,0).conj() * doubleMat.get(1,2).conj();
-//		Complex<double> c = doubleMat.get(0,0).conj() * doubleMat.get(1,1).conj() - doubleMat.get(0,1).conj() * doubleMat.get(1,0).conj();
-//
-//
-//		doubleMat.set( 2, 0, a );
-//		doubleMat.set( 2, 1, b );
-//		doubleMat.set( 2, 2, c );
-//
-//		result += doubleMat.trace().x;
-//	}
 
 	dGff[site] = result;
 
@@ -270,7 +240,6 @@ template<class Algorithm> inline __device__ void apply( Real* UtUp, Real* UtDw, 
 	locU.reconstructThirdLine();
 
 	// define the update algorithm
-//	OrUpdate overrelax( orParameter );
 	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, Algorithm, COULOMB> subgroupStep( &locU, algorithm, id, mu, updown );
 
 	// do the subgroup iteration

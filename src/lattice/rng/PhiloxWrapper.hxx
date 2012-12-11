@@ -1,4 +1,24 @@
-/**
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * Wraps the Philox4x32-10 counter based RNG (CBRNG).
  * The benefit of CBRNGs is the absence of large states which are costly to read and write in CUDA code.
  * For a detailed discussion see "Parallel random numbers: as easy as 1, 2, 3" (http://dl.acm.org/citation.cfm?doid=2063405)
@@ -25,7 +45,6 @@
  * TODO: get rid of the preprocessor statements: float/double has to be template argument (in all classes).
  * 		Because now there is no code possible that uses both single and double precision random numbers.
  * TODO: In CUDA5.0 a lot of stack-frame is used when Philox is involved (~ 200 bytes for the single precision SA kernel)
- *
  */
 
 #ifndef PHILOXWRAPPER_HXX_

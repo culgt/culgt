@@ -1,15 +1,30 @@
-/*
- *  MultiGPU_MPI_AlgorithmOptions.cpp
+/************************************************************************
  *
- *  Created on: Nov 30, 2012
- *      Author: schroeck
- * 
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * This class contains a copy of these data members
  * of the class ProgramOptions which are needed by
  * the kernels. The corresponding object will be 
  * passed to the MultiGPU_MPI_Communicator object
  * when applying an algorithm.
- * 
+ *
  */
 
 #include "./MultiGPU_MPI_AlgorithmOptions.h"

@@ -1,8 +1,27 @@
-/*
- * SrUpdate.hxx: stochastic relaxation
+/************************************************************************
  *
- *  Created on: June 20, 2012
- *      Author: schroeck
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
+ * Stochastic Relaxation
+ *
+ * Flops: 32
  */
 
 #ifndef SRUPDATE_HXX_
@@ -34,7 +53,6 @@ __device__ SrUpdate::SrUpdate( float param, PhiloxWrapper *rng  ) : srParameter(
 
 __device__ void SrUpdate::calculateUpdate( volatile Real (&shA)[4*NSB], short id )
 {
-//stochastic overrelaxation
 #ifdef USE_DP_SRUPDATE
 	double rand = rng->rand();
 	double a0,a1,a2,a3,c;
@@ -55,7 +73,7 @@ __device__ void SrUpdate::calculateUpdate( volatile Real (&shA)[4*NSB], short id
 	shA[id+3*NSB] *= c;
 	// 4 flop
 
-	// sum: NSB flop
+	// sum: 32 flop
 #else
 	Real rand = rng->rand();
 	Real a0,a1,a2,a3,c;

@@ -1,4 +1,5 @@
-/**
+/************************************************************************
+ *
  *  Copyright 2012 Mario Schroeck, Hannes Vogt
  *
  *  This file is part of cuLGT.
@@ -15,6 +16,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
  */
 
 #include <iostream>

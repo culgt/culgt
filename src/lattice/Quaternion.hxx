@@ -1,9 +1,29 @@
-/**
- * Quaternion representation for a SU2 (or proportional) element.
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
+ * Quaternion representation for a SU2 (or proportional -> does not need to be normalized) element.
  *
  * TODO:
  *  - implement all reasonable operations: *,+,...
- *  - This may be a storage class of the not yet implemented "SU2" frontend class. Wenn tackling the question of where to
+ *  - This may be a storage class of the not yet implemented "SU2" frontend class. When tackling the question of where to
  *    place the mathematical operations (in frontend or storage classes) consider the comment of the trace() function.
  *  - check if 4-dimension array is compiled different compared to 4 scalar variables.
  *

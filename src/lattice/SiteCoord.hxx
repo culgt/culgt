@@ -1,4 +1,24 @@
-/**
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * Lattice Site using a Nd-dimensional array.
  *
  * This implementation uses a Nd-dimensional array to store the lattice coordinates of the current site.
@@ -7,10 +27,6 @@
  * Possible Optimizations:
  *  - We use on the fly neighbour calculation here. Check if a table is a more favorable choice.
  *  - See "SiteIndex".
- *
- *
- * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
- * @date 2012-04-16
  */
 
 #ifndef SITECOORD_HXX_
@@ -20,7 +36,8 @@
 #include "datatype/lattice_typedefs.h"
 
 /**
- * The template parameter "bool par" defines normal indexing (par==false) or parity split indexing (par==true).
+ * The template parameter "ParityType par" defines normal indexing (par==NO_SPLIT), full parity splitting (par==FULL_SPLIT) or splitting
+ * only within a timeslice (par == TIMESLICE_SPLIT)
  * Parity split indexing means that the first half of the indices are the even sites ((x+y+z+...)%2 == 0) and the second half the odd sites.
  * It has to be used for CUDA implementations to ensure coalesced memory reads for neighbouring (concerning its index) array elements.
  *
@@ -66,11 +83,6 @@ template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const Sit
 		this->site[i] = s.site[i];
 	}
 }
-
-//template <lat_dim_t Nd, bool par> SiteCoord<Nd, par>::~SiteCoord()
-//{
-//	// TODO Auto-generated destructor stub
-//}
 
 template<lat_dim_t Nd, ParityType par> lat_coord_t& SiteCoord<Nd,par>::operator[](lat_dim_t i)
 {

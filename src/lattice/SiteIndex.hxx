@@ -1,4 +1,24 @@
-/**
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * Lattice Site using a 1 dimensional index.
  *
  * This implementation of "Site" uses the 1 dimensional index to store the current site. It is favorable in CUDA implementations
@@ -6,15 +26,6 @@
  * This results in fewer registers which is very important for CUDA optimization.
  * Some functions are more costly in this implementation, like operator[] (access to coordinates), other functions are much faster,
  * like getLatticeIndex() (which simply return the member variable).
- *
- * Possible Optimizations:
- *  - I don't know if the compiler is smart enough to place size[] in constant memory. Check this and think about a implementation
- *    where size is stored in constant memory. (For example pass a constant array by reference.)
- *  - Think about the Quandt style neighbour table.
- *  - Think about calculating neighbour on the fly.
- *
- * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
- * @date 2012-05-02
  */
 
 #ifndef SITEINDEX_HXX_
@@ -25,12 +36,11 @@
 #include <assert.h>
 
 /**
- * The template parameter "bool par" defines normal indexing (par==false) or parity split indexing (par==true).
- * Parity split indexing means that the first half of the indices are the even sites ((x+y+z+...)%2 == 0) and the second half the odd sites.
- * It has to be used for CUDA implementations to ensure coalesced memory reads for neighbouring (concerning its index) array elements.
+ * See SiteCoord.hxx for a note on the parity splitting.
  *
  * @param template Nd: Dimension of the lattice
  * @param template par
+ * @see SiteCoord.hxx
  */
 template<lat_dim_t Nd, ParityType par> class SiteIndex
 {

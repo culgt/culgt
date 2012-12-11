@@ -1,13 +1,28 @@
-/*
- * GaugeFixingSubgroupStep.hxx
+/************************************************************************
  *
- * GFlop:
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
+ * Flops:
  * - summation of local update: 4*2*8 = 64 (Landau), 3*2*8 = 48 (Coulomb)
  * - calculating update (see update classes)
  * - apply transformation: 4*2*3*26 (mu*(up+down)*Nc*...) = 504
- *
- *  Created on: May 10, 2012
- *      Author: vogt
  */
 
 #ifndef GAUGEFIXINGSUBGROUPSTEP_HXX_

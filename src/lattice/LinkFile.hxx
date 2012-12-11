@@ -1,6 +1,26 @@
-/**
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * Class for loading and storing configurations.
- * TODO I named this class LinkFile because ConfigurationFile may be missleading but I don't like the naming.
+ * TODO I named this class LinkFile because ConfigurationFile may be misleading but I don't like the naming.
  *      Suggestions for a more precise name are very welcome.
  *
  * This class serves as a middleman between different array patterns on file and memory side.
@@ -12,7 +32,7 @@
  * The intension of this class is to cover all possible File- and MemoryPatterns. This causes some computation overhead which can
  * be avoided by spezializations of this class.
  * Check the getUnique()/setUnique() function calls in load() and save(): Each Pattern needs to be able to provide a unique index
- * wich does not depend on the pattern. Calculating back and forth this index maybe costly.
+ * which does not depend on the pattern. Calculating back and forth this index maybe costly.
  * TODO Check how much it costs actually.
  *
  * TODO:
@@ -20,8 +40,6 @@
  *  - Implement a switch for promotion to double / demotion to float
  *  - Think about partially loading when we want to use the reconstruction technique for SU3.
  *
- * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
- * @date 2012-04-9
  */
 
 #ifndef LINKFILE_HXX_

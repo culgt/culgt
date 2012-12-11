@@ -1,10 +1,31 @@
-/**
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * Storage class for a NxN matrix. Allocates a N*N linear array with elements of type "T".
  * In contrast to the other storage class "Link", this class actually allocates memory.
  * It has to provide the same functions.
  *
  * TODO:
  *  - see "Link"
+ *  - maybe imply symmetric matrix by name.
  */
 
 #ifndef MATRIX_HXX_
@@ -40,17 +61,6 @@ private:
 template<class T, int N> Matrix<T,N>::Matrix()
 {
 }
-
-//template<class T, int N> Matrix<T,N>::Matrix( const Matrix<T,N> &m )
-//{
-//	for(int i = 0; i < N; i++ )
-//	{
-//		for( int j = 0; j < N; j++ )
-//		{
-//			mat[i*N+j] = m.mat[i*N+j];
-//		}
-//	}
-//}
 
 template<class T, int N> Matrix<T,N>::~Matrix()
 {

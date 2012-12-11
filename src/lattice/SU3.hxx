@@ -1,4 +1,24 @@
-/**
+/************************************************************************
+ *
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
+ *
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
  * SU3 serves as a wrapper class for different storage techniques and implements some important operations for SU3-matrices,
  * like summation, multiplication, det(), trace(), ...
  *
@@ -15,10 +35,6 @@
  *  - We have to introduce a compatible and clear way to switch between full 18 parameter matrices
  *    and 12 parameter (third-line-reconstruction) techniques.
  *  - At present we use the hardcodeed "Complex<Real>". This is no good style... Introduce a template parameter or something...
- *  - Define the basic set of functions mentioned above.
- *
- * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
- * @date 2012-04-16
  */
 
 #ifndef SU3_HXX_

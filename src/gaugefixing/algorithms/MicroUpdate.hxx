@@ -1,10 +1,26 @@
-/*
- * Overrelaxation.hxx
+/************************************************************************
  *
- *  Created on: May 10, 2012
- *      Author: vogt
+ *  Copyright 2012 Mario Schroeck, Hannes Vogt
  *
- *      14 Flops
+ *  This file is part of cuLGT.
+ *
+ *  cuLGT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  cuLGT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with cuLGT.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ *
+ * Flops: 14
+ *
  */
 
 #ifndef MICROUPDATE_HXX_
