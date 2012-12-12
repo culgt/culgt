@@ -29,9 +29,6 @@
  *
  * For an introduction to the relation of SU2 and quaternion see for example Gattringer & Lang (2010), p. 81.
  * The first row of a SU2-matrix is given by ( x[0]+i*x[3]    x[2]+i*x[1] ).
- *
- * @author Hannes Vogt (hannes@havogt.de) Universitaet Tuebingen - Institut fuer Theoretische Physik
- * @date 2012-04-23
  */
 
 

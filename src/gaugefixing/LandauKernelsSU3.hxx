@@ -234,8 +234,6 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 		s.setNeighbour(mu,false);
 	}
 
-//	if(id == 0) printf("bin in or\n");
-
 	Matrix<Complex<Real>,Nc> locMat;
 	SU3<Matrix<Complex<Real>,Nc> > locU(locMat);
 
@@ -246,7 +244,6 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 	// make link local
 	locU.assignWithoutThirdLine(globU);
 	locU.reconstructThirdLine();
-
 
 	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, Algorithm, LANDAU> subgroupStep( &locU, algorithm, id, mu, updown );
 
