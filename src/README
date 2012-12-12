@@ -1,161 +1,269 @@
 Copyright 2012 Mario Schroeck, Hannes Vogt
 
-This README gives a short introduction on how to use cuLAT (a basic CUDA framework for lattice gauge theory)
-and cuLAT.gaugefixing (an implementation of gauge fixing algorithms for Landau, Coulomb and Maximally Abelian gauge
+This README gives a short introduction on how to use cuLAT (a basic CUDA
+framework for lattice gauge theory) and cuLAT.gaugefixing (an implementation 
+of gauge fixing algorithms for Landau, Coulomb and Maximally Abelian gauge
 for QCD: SU(3) in 3+1 dimensions).
 
 
 ------------------------------------------
 Table of contents
 ------------------------------------------
-1.  Introduction & how to start
-2.  cuLAT
-3.  cuLAT.gaugefixing
-3.a Single GPU
-3.b Multi GPU
-3.c Application parameters
+
+1. Introduction & how to start
+2. cuLAT
+3. cuLAT.gaugefixing
+  3.a Single GPU
+  3.b Multi GPU
+  3.c Application parameters
 
 
 ------------------------------------------
 1. Introduction & how to start
 ------------------------------------------
+
 cuLAT stands for cu(DA) L(attice) G(raz) T(uebingen).
-It is a basic framework for lattice gauge theory using CUDA. It is basic in the sense that at the moment it offers
-only these parts of lattice gauge theory functionallity that is needed to do 3+1 dimensional SU(3) gauge fixing.
 
-What is cuLAT?
-- cuLAT is the part of this sofware release which is general for lattice field theory, like implementation for SU(3) matrices, etc.
-  located in /lattice
-- cuLAT.gaugefixing is located in /gaugefixing, the applications are in /gaugefixing/apps
-- There may still be some files that do not respect this separation of framework  
+It is a basic framework for lattice gauge theory using CUDA. It is basic in the
+sense that at the moment it offers only these parts of lattice gauge theory 
+functionality that is needed to do 3+1 dimensional SU(3) gauge fixing.
 
-For a quick start we recommend to
+  What is cuLAT?
+  --------------
+
+- cuLAT is the part of this software release which is general for lattice field
+  theory, like implementations for SU(3) matrices, etc. located in /lattice
+  
+- cuLAT.gaugefixing is located in /gaugefixing, the applications are in
+  /gaugefixing/apps
+  
+- There may still be some files that do not respect this separation of framework
+ 
+
+  For a quick start we recommend to:
+  ----------------------------------
+
 - look in /gaugefixing/apps/LandauGaugeFixingSU3_4D.cu
+
 - compile with "make APP=LandauGaugeFixingSU3_4D X=<x> T=<t>
-  where <x> and <t> are the extents of the lattice in spatial and temporal direction respectively
+  where <x> and <t> are the extents of the lattice in spatial and temporal
+  direction respectively (optional). You will need the boost::program_options
+  library to compile, see below "Prerequisites".
+  
 - run the application with "./LandauGaugeFixingSU3_4D --hotgaugefield 1"
-  this will do a run on a hot gaugefield (beta=infinity) with the default settings.
+  this will do a run on a hot gaugefield (beta=infinity) with the default
+  settings.
 
 
 ------------------------------------------
 2. cuLAT
 ------------------------------------------
-For quick introduction please read the code of one of the given gauge fixing applications (for example LandauGaugeFixingSU3_4D).
-Here we will summarize the main ideas of cuLAT.
-- Compared to CPU code one has to implement new memory patterns for GPU code.
-  cuLAT offers a flexible way to switch between different patterns. They are defined in /lattice/access_pattern.
-  For details see the implementation.
-- LinkFile is a loader for a gauge configuration which uses two patterns: one for the pattern in the file and a second
-  for the pattern in memory. Thus, cuLAT allows playing with different memory patterns while keeping the files with gauge configuration
-  in a native (CPU) pattern.
-- SU3 is a Wrapper class for different types of storage SU(3) matrices. These types are:
-  a) Matrix allocates memory (N*N*2 Reals) and stores the values in local memory (or registers).
-  b) Link expects a lattice site and the direction mu of the link variable. Link acts on the global memory array of the gauge configuration.
-  Interoperability among SU3<Matrix> and SU3<Link> is implemented with the assignment operator "=" or by functions like assignWithoutThirdLine().
-  See for example the function apply() in /gaugefixing/LandauKernelsSU3.hxx.
+
+For quick introduction please read the code of one of the given gauge fixing
+applications (for example LandauGaugeFixingSU3_4D).
+
+  Here we summarize the main ideas of cuLAT:
+  -----------------------------------------------
+  
+- Compared to CPU code one should use new memory patterns for GPU code in oder
+  to reach good performance. cuLAT offers a flexible way to switch between 
+  different patterns. They are defined in /lattice/access_pattern. For details 
+  see the implementation.
+  
+- LinkFile is a loader for a gauge configuration which uses two patterns: one
+  for the pattern in the file and a second for the pattern in memory. Thus, 
+  cuLAT allows playing with different memory patterns while keeping the files 
+  with gauge configuration in a native (CPU) pattern.
+  
+- SU3 is a Wrapper class for different types of storage SU(3) matrices. These
+  types are:
+  
+    a) Matrix: allocates memory (N*N*2 Reals) and stores the values in local memory
+    (or registers).
+  
+    b) Link: expects a lattice site and the direction mu of the link variable. Link
+    acts on the global memory array of the gauge configuration. Interoperability 
+    among SU3<Matrix> and SU3<Link> is implemented with the assignment operator "=" 
+    or by functions like assignWithoutThirdLine(). See for example the function 
+    apply() in /gaugefixing/LandauKernelsSU3.hxx.
+  
 - Sites (a lattice point) are represented by SiteIndex and SiteCoord.
-  - SiteIndex uses one number (index) to identify a site and a neighbour table (in global memory).
-  - SiteCoord uses Ndim (number of dimensions) variables to identify a site and neighbour calculation is on the fly.
-  Both should implement the same functions (though not all are implemented, some are rather complicated and not needed),
-  like getLatticeIndex(), setNeighbour(), ...
-- rng/PhiloxWrapper wraps the counter-based Philox RNG of the Random123 package (http://www.deshawresearch.com/resources_random123.html)
-  See /gaugefixing/apps/LandauGaugeFixingSU3_4D.cu (and /gaugefixing/LandauKernelsSU3.hxx) on how to correctly use the counters.
+  - SiteIndex uses one number (index) to identify a site and a neighbour table
+  (in global memory).
+  - SiteCoord uses Ndim (number of dimensions) variables to identify a site and
+  neighbor calculation is done on the fly.
+  Both should implement the same functions (though not all are implemented, some
+  are rather complicated and not needed), like getLatticeIndex(), setNeighbour(), ...
+  
+- rng/PhiloxWrapper wraps the counter-based Philox RNG of the Random123 package
+  (http://www.deshawresearch.com/resources_random123.html)
+  See /gaugefixing/apps/LandauGaugeFixingSU3_4D.cu (and
+  /gaugefixing/LandauKernelsSU3.hxx) on how to correctly use the counters.
+  
 - See filetypes/FileVogt.hxx on how to use your own gauge configuration files.
-  Note that this concerns headers and footers only! The configuration itself is assumed to be in float or double binary with the patterns
-  mentioned earlier.
-  If you want to test with your own file-type, feel free to ask for support! We will implement this or give a converter.
+  We do support the MDP format (FermiQCD) via type 'HEADERONLY'. The MDP format
+  can be easily converted to and from many known formats (NERSC, MILC, LIME, ILDG, 
+  SciDAC) with QCDUTILS by Massimo Di Pierro, for the manual see 
+  http://arxiv.org/abs/1202.4813 and the Python source code can be downloaded 
+  at http://code.google.com/p/qcdutils/
+    If you want to test with your own file-type, feel free to ask for support! We
+  will implement this or give a converter. 
 
 
 ------------------------------------------
 3. cuLAT.gaugefixing
 ------------------------------------------
-We support gauge fixing for Landau, Coulomb and Maximally Abelian Gauge (MAG) in 3+1 dimensional SU(3) gauge theory.
-The algorithms are Simulated Annealing (SA), Stochastic Relaxation (SR) and Overrelaxation (OR).
 
-Prerequisites:
-- NVIDIA GPU with compute capability 2.x [or later] (We did not have the opportunity to test on a Keppler GPU.)
-  Compute capability 1.3 might be supported with minor changes (but the applications are not optimized to pre-Fermi GPUs).
-- CUDA 4.x or 5.0 (We did not test earlier versions.)
-- boost::program_options
-- for the Multi-GPU application: MPI
- 
-3.a Single GPU
-------------------------------------------
-Compile the applications in /gaugefixing/apps with "make APP=<app> X=<x> T=<t>" where <x> and <t> are the spatial and temporal sizes of the lattice and
-<app> is one of the following:
-- LandauGaugeFixingSU3_4D
-- CoulombGaugeFixingSU3_4D
-- MAGaugeFixingSU3_4D
-Further parameters to 'make' are
-- PREC=DP (for double precision, default is single precision)
-- DPUPDATES=true (if PREC is not set, i.e. single precision) the update matrices are calculated in DP (but applied in SP).
-  See the paper for statistics and when and why you should use DPUPDATES.
-  (If PREC=DP is set, then DPUPDATES=true has no effect.)
+We support gauge fixing for Landau, Coulomb and Maximally Abelian Gauge (MAG) in
+3+1 dimensional SU(3) gauge theory.
+
+The algorithms are Overrelaxation (OR), Stochastic Relaxation (SR) and
+Simulated Annealing (SA) with micro steps (MS). 
+
+  Prerequisites:
+  --------------
+
+- NVIDIA GPU with compute capability 2.x [or later] (We did not have the
+  opportunity to test on a Keppler GPU.)
+  Compute capability 1.3 might be supported with minor changes (but the
+  applications are not optimized to pre-Fermi GPUs).
   
-Launch parameters are specified either via command line or a configuration file (or a combination of both).
-See chapter 3.c.
+- CUDA 4.x or 5.0 (We did not test earlier versions.)
 
-All applications use SA in the beginning to "cool down" to a value (ideally) near the global maximum. Then
-Overrelaxation is used to find the local maximum. In MAG Overrelaxation gets stuck at in the optimization process, therefore
-a SR updates are placed between the SA and the OR part.
-One may repeat the gauge fixing procedure to get the best copy (see 3.c).
+- you need the boost program_options lib to read in the parameters, see Sec.3.c. 
+  Either download here http://www.boost.org/users/download/ or on, e.g, Ubuntu
+  as package via http://packages.ubuntu.com/lucid/libboost-all-dev
 
-Notes on the implementation:
-- The central idea of the code is to distribute each matrix, that is involved in an 
-  update of a site, to different threads. In 3+1 dimensions this is 8 threads per site. This implementation is necessary to get 
-  maximum performance due to the register limits of compute capability 2.x devices, where only 63 32-bit registers per thread are possible.
-  Thus, a simple calculation yields that not all eight 3x3 complex matrices fit in registers. Therefore, large register spilling to
-  slow local memory would occur in a single thread implementation. Our code stores one matrix per thread fully in registers and thus
-  spilling is reduced to a minimum. Communication among threads belonging to the same site update is done via shared memory.
-  This part of the implementation can be found in /gaugefixing/GaugeFixingSubgroupStep.hxx.
-- The different algorithms (heatbath and microcanonical updates for SA, SR, OR) are in /gaugefixing/algorithms/.
+- for the Multi-GPU application: MPI
 
-3.b Multi GPU
-------------------------------------------
-The Multi GPU application can be found in /gaugefixing/apps/MultiGPU_MPI.
-Only Landau gauge fixing is implemented in Multi GPU code.
-Use 'make' to compile. Possible parameters are PREC, DPUPDATES, X, T (see 3.a).
-You need a MPI framework to compile and execute.
 
-TODO some comments about device selection!
+  ----------------------------------------
+  3.a Single GPU
+  ----------------------------------------
+  
+  Compile the applications in /gaugefixing/apps with "make APP=<app> X=<x> T=<t>"
+  where <x> and <t> are the spatial and temporal sizes of the lattice and
+  <app> is one of the following:
+  
+    - LandauGaugeFixingSU3_4D
+    - CoulombGaugeFixingSU3_4D
+    - MAGaugeFixingSU3_4D
+  
+   Further parameters to 'make' are:
+    
+    - PREC=DP (for double precision, default is single precision)
+    - DPUPDATES=true, aka. mixed precision (if PREC is not set, i.e. single 
+      precision) the update matrices are calculated in DP (but applied in SP).
+      See the paper for statistics and when and why you should use DPUPDATES.
+      (If PREC=DP is set, then DPUPDATES=true has no effect.)
+    
+  Launch parameters are specified either via command line or a configuration file
+  (or a combination of both), see chapter 3.c.
 
-3.c Application parameters
-------------------------------------------
-All applications have the same parameters to setup file handling, algorithms, etc.
-We use boost::program_options. You may either specify the parameters on commandline or a given configuration file.
-Examples:
-./LandauGaugeFixingSU3_4D --hotgaugefield 1 (command line parameter)
-./LandauGaugeFixingSU3_4D config.txt (config file 'config.txt' with "hotgaugefield=1")
-In the configuration file: specify one parameter per line, set the value with "=".
+  All applications use SA in the beginning to "cool down" to a value (ideally)
+  near the global maximum. Then Overrelaxation is used to find the local maximum. 
+  In MAG Overrelaxation gets stuck in the optimization process, therefore
+  a SR iteration loop is placed between the SA and the OR part. One may repeat 
+  the gauge fixing procedure to get the best copy (see 3.c).
 
-A help message with all possible parameters is printed with "--help". The values of a config file are overwritten
-by command line specified parameters.
+  Notes on the implementation:
+  
+  - The central idea of the code is to distribute each matrix, that is involved in
+    an update of a site, to different threads. In 3+1 dimensions this is 8 threads
+    per site. This implementation is necessary to get maximum performance due to 
+    the register limits of compute capability 2.x devices, where only 63 32-bit 
+    registers per thread are possible. Thus, a simple calculation yields that not 
+    all eight 3x3 complex matrices fit in registers. Therefore, large register 
+    spilling to slow local memory would occur in a single thread implementation. 
+    Our code stores one matrix per thread fully in registers and thus spilling is 
+    reduced to a minimum. Communication among threads belonging to the same site 
+    update is done via shared memory. This part of the implementation can be found in
+    /gaugefixing/GaugeFixingSubgroupStep.hxx.
+    
+  - The different algorithms (heatbath and microcanonical updates for SA, SR, OR)
+    are in /gaugefixing/algorithms/.
 
-The parameters are:
+
+  ----------------------------------------
+  3.b Multi GPU
+  ----------------------------------------
+  
+  The Multi GPU application can be found in /gaugefixing/apps/MultiGPU_MPI.
+  Only Landau gauge fixing is implemented in the multi GPU code currently.
+  Use 'make' to compile. Possible parameters are PREC, DPUPDATES, X, T (see 3.a).
+  You need a MPI framework to compile and execute.
+  
+  The object of class MultiGPU_MPI_Communicator (initialized in the beginning of
+  main.cpp) takes care of all the MPI communication, including asynchronous kernel
+  execution and memory transfers to achieve linear (weak) scaling.
+
+  Each MPI process gets assinged one device (device no.= rank%4 by default, see
+  MultiGPU_MPI_Communicator.hxx line ~200).
+  
+  The MPI app. accepts the identical runtime parameters (Sec.3.c) as the single
+  GPU applications and supports all algorithms.
+
+
+  ----------------------------------------
+  3.c Application parameters
+  ----------------------------------------
+  
+  All applications have the same parameters to setup file handling, algorithms,
+  etc. We use boost::program_options. You may either specify the parameters on
+  commandline or a given configuration file.
+  
+  Examples:
+  ---------
+  
+  ./LandauGaugeFixingSU3_4D --hotgaugefield 1 (command line parameter)
+  
+  ./LandauGaugeFixingSU3_4D config.txt (config file 'config.txt' with
+  "hotgaugefield=1")
+  
+  In the configuration file: specify one parameter per line, set the value with
+  "=".
+
+  A help message with all possible parameters is printed with "--help". The values
+  of a config file are overwritten  by command line specified parameters.
+
+  The parameters are:
+  
   -D [ --devicenumber ]             number of the CUDA device
-  --ftype                           type of configuration (PLAIN, HEADERONLY, VOGT)
+  --ftype                           type of configuration (PLAIN, HEADERONLY,
+                                    VOGT)
   --fbasename                       file basename (part before numbering starts)
-  --fending                         file ending to append to basename (default: .vogt)
-  --fnumberformat                   number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...
-  --fstartnumber                    file index number to start from (startnumber, ..., startnumber+nconf-1
+  --fending                         file ending to append to basename (default:
+                                    .vogt)
+  --fnumberformat                   number format for file index: 1 =
+                                    (0,1,2,...,10,11), 2 = (00,01,...), 
+                                    3 = (000,001,...),...
+  --fstartnumber                    file index number to start from
+                                    (startnumber, ..., startnumber+nconf-1
   --fstepnumber arg                 load every <fstepnumber>-th file
   -m [ --nconf ]                    how many files to gaugefix
-  --fappendix                       appendix to be inserted beween (input-)filename and number
-  --reinterpret                     reinterpret Real datatype (STANDARD = do nothing, FLOAT = read input as float and cast to Real, DOUBLE = ...)
-  --hotgaugefield                   don't load gauge field: fill with random SU(3), beta=infinity.
+  --fappendix                       appendix to be inserted beween
+                                    (input-)filename and number
+  --reinterpret                     reinterpret Real datatype (STANDARD = do
+                                    nothing, FLOAT = read input as float and 
+                                    cast to Real, DOUBLE = ...)
+  --hotgaugefield                   don't load gauge field: fill with random
+                                    SU(3), beta=infinity.
   --seed                            RNG seed
-  --gaugecopies                     Number of gauge copies (restarts of the gaugefixing procedure to get a best copy)
+  --gaugecopies                     Number of gauge copies (restarts of the
+                                    gaugefixing procedure to get a best copy)
   --randomtrafo                     do a random trafo before each gf run
   --reproject                       reproject every arg-th step
   --sasteps                         number of SA steps
   --samin                           min. SA temperature
   --samax                           max. SA temperature
-  --microupdates                    number of microcanoncial updates at each SA temperature
+  --microupdates                    number of microcanoncial updates at each SA
+                                    temperature
   --ormaxiter                       Max. number of OR iterations
   --orparameter                     OR parameter
   --srmaxiter                       Max. number of SR iterations
   --srparameter                     SR parameter
   --precision                       Precision (dmuAmu)
-  --checkprecision arg (=100)       check the gauge precision every <checkprecision>-th step
+  --checkprecision arg (=100)       check the gauge precision every
+                                    <checkprecision>-th step
 
 
