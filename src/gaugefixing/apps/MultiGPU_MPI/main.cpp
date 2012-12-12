@@ -257,10 +257,10 @@ int main(int argc, char* argv[])
 			if( comm.isMaster() ) kernelTimer.start();
 			
 			// overrelaxation
+			// set algorithm = overrelaxation
+			algoOptions.setAlgorithm( OR );
 			for( int i = 0; i < options.getOrMaxIter(); i++ )
 			{
-				// set algorithm = overrelaxation
-				algoOptions.setAlgorithm( OR );
 				comm.apply( dU, dNnt, 0, algoOptions );
 				comm.apply( dU, dNnt, 1, algoOptions );
 
