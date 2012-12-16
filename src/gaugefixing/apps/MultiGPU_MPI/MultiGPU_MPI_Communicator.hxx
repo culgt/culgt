@@ -547,8 +547,8 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::generateGaug
 	// collect dGff, dA from all devices
 	if( nprocs > 1 )
 	{
-		MPI_CHECK( MPI_Reduce( &tempGff, &currentGff, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
-		MPI_CHECK( MPI_Reduce( &tempA,   &currentA,   1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD ) );
+		MPI_CHECK( MPI_Allreduce( &tempGff, &currentGff, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+		MPI_CHECK( MPI_Allreduce( &tempA,   &currentA,   1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
 	}
 	else
 	{
@@ -561,13 +561,13 @@ inline void MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::generateGaug
 template< class MultiGPU_MPI_GaugeKernels >
 double MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getCurrentGff()
 {
-	return currentGff;
+	return currentGff/double(Nx*Ny*Nz*Nt)/(double)Ndim/(double)Nc;
 }
 
 template< class MultiGPU_MPI_GaugeKernels >
 double MultiGPU_MPI_Communicator< MultiGPU_MPI_GaugeKernels >::getCurrentA()
 {
-	return currentA;
+	return currentA/double(Nx*Ny*Nz*Nt)/(double)Nc;
 }
 
 

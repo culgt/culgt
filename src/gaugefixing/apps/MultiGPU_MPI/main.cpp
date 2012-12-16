@@ -245,7 +245,8 @@ int main(int argc, char* argv[])
 				if( i % options.getCheckPrecision() == 0 )
 				{
 					comm.generateGaugeQuality( dU, dNnt );
-					if( comm.isMaster() ) printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, algoOptions.getTemperature(), comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
+					if( comm.isMaster() ) printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, algoOptions.getTemperature(), comm.getCurrentGff(), comm.getCurrentA() );
+					if( comm.getCurrentA() < options.getPrecision() ) break;
 				}
 				algoOptions.decreaseTemperature();
 			}
@@ -272,7 +273,8 @@ int main(int argc, char* argv[])
 				if( i % options.getCheckPrecision() == 0 )
 				{
 					comm.generateGaugeQuality( dU, dNnt );
-					if( comm.isMaster() ) printf( "%d\t\t%1.10f\t\t%e\n", i, comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );;
+					if( comm.isMaster() ) printf( "%d\t\t%1.10f\t\t%e\n", i, comm.getCurrentGff(), comm.getCurrentA() );
+					if( comm.getCurrentA() < options.getPrecision() ) break;
 				}
 
 				if( comm.isMaster() ) orTotalStepnumber++;
