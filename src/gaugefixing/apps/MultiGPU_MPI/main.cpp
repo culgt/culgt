@@ -211,8 +211,8 @@ int main(int argc, char* argv[])
 			if( comm.isMaster() ) printf( "i:\t\tgff:\t\tdA:\n");
 			comm.generateGaugeQuality( dU, dNnt );
 			
-			//TODO divide somewhere else
-			if( comm.isMaster() ) printf( "-\t\t%1.10f\t\t%e\n", comm.getCurrentGff()/double(s.getLatticeSize())/(double)Ndim/(double)Nc, comm.getCurrentA()/double(s.getLatticeSize())/(double)Nc );
+			//print the gauge quality
+			if( comm.isMaster() ) printf( "-\t\t%1.10f\t\t%e\n", comm.getCurrentGff(), comm.getCurrentA() );
 			
 
 			algoOptions.setTemperature( options.getSaMax() );
