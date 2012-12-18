@@ -215,6 +215,7 @@ int main(int argc, char* argv[])
 			}
 			cudaDeviceSynchronize();
 			kernelTimer.stop();
+			cout << "kernel time: " << kernelTimer.getTime() << " s"<< endl;
 			saTotalKernelTime += kernelTimer.getTime();
 
 

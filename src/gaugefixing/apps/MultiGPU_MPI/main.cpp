@@ -221,7 +221,11 @@ int main(int argc, char* argv[])
 			if( comm.isMaster() ) kernelTimer.reset();
 			if( comm.isMaster() ) kernelTimer.start();
 			
-			// simulated annealing
+			
+			// SIMULATED ANNEALING
+			if( options.getSaSteps()>0  && comm.isMaster() ) 
+				printf( "SIMULATED ANNEALING\n" );
+			
 			for( int i = 0; i < options.getSaSteps(); i++ )
 			{
 				// set algorithm = simulated annealing
@@ -245,19 +249,27 @@ int main(int argc, char* argv[])
 				if( i % options.getCheckPrecision() == 0 )
 				{
 					comm.generateGaugeQuality( dU, dNnt );
-					if( comm.isMaster() ) printf( "%d\t%f\t\t%1.10f\t\t%e\n", 0, algoOptions.getTemperature(), comm.getCurrentGff(), comm.getCurrentA() );
+					if( comm.isMaster() ) printf( "%d\t%f\t\t%1.10f\t\t%e\n", i, algoOptions.getTemperature(), comm.getCurrentGff(), comm.getCurrentA() );
 					if( comm.getCurrentA() < options.getPrecision() ) break;
 				}
 				algoOptions.decreaseTemperature();
 			}
 // 			cudaThreadSynchronize();
-			if( comm.isMaster() ) kernelTimer.stop();
-			if( comm.isMaster() ) saTotalKernelTime += kernelTimer.getTime();
+			if( comm.isMaster() ) 
+			{
+				kernelTimer.stop();
+				cout << "kernel time: " << kernelTimer.getTime() << " s"<< endl;
+				saTotalKernelTime += kernelTimer.getTime();
 
-			if( comm.isMaster() ) kernelTimer.reset();
-			if( comm.isMaster() ) kernelTimer.start();
+				kernelTimer.reset();
+				kernelTimer.start();
+			}
 			
-			// overrelaxation
+			
+			// OVERRELAXATION
+			if( options.getOrMaxIter()>0  && comm.isMaster() ) 
+				printf( "OVERRELAXATION\n" );
+			
 			// set algorithm = overrelaxation
 			algoOptions.setAlgorithm( OR );
 			for( int i = 0; i < options.getOrMaxIter(); i++ )
@@ -281,9 +293,12 @@ int main(int argc, char* argv[])
 			}
 
 // 			cudaThreadSynchronize();
-			if( comm.isMaster() ) kernelTimer.stop();
-			if( comm.isMaster() ) cout << "kernel time: " << kernelTimer.getTime() << " s"<< endl;
-			if( comm.isMaster() ) orTotalKernelTime += kernelTimer.getTime();
+			if( comm.isMaster() ) 
+			{
+				kernelTimer.stop();
+				cout << "kernel time: " << kernelTimer.getTime() << " s"<< endl;
+				orTotalKernelTime += kernelTimer.getTime();
+			}
 
 
 
@@ -298,7 +313,7 @@ int main(int argc, char* argv[])
 				bestGff = comm.getCurrentGff();
 
 				// send back all timeslices to master
-				if( !options.isSetHot() ) comm.collectGaugeField( dU, U );
+				comm.collectGaugeField( dU, U );
 			}
 			else
 			{
