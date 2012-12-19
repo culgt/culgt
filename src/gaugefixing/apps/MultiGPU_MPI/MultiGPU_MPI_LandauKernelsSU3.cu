@@ -35,8 +35,8 @@
 #include "../../algorithms/SaUpdate.hxx"
 #include "../../algorithms/RandomUpdate.hxx"
 #include "../../../lattice/access_pattern/StandardPattern.hxx"
-#include "../../../lattice/access_pattern/GpuCoulombPattern.hxx"
-#include "../../../lattice/access_pattern/GpuLandauPatternParity.hxx"
+#include "../../../lattice/access_pattern/GpuPatternTimesliceParityPriority.hxx"
+#include "../../../lattice/access_pattern/GpuPatternParityPriority.hxx"
 #include "../../../lattice/SiteCoord.hxx"
 #include "../../../lattice/SiteIndex.hxx"
 #include "../../../lattice/Link.hxx"
@@ -53,7 +53,7 @@ namespace MPILKSU3
 
 template<class Algorithm> inline __device__ void applyOneTimeslice( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, Algorithm algorithm  )
 {
-	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef GpuPatternParityPriority< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
@@ -111,7 +111,7 @@ template<class Algorithm> inline __device__ void applyOneTimeslice( Real* UtUp, 
 
 __global__ void generateGaugeQualityPerSite( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool parity, double *dGff, double *dA )
 {
-	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef GpuPatternParityPriority< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
@@ -215,7 +215,7 @@ __global__ void randomTrafo( Real* UtUp, Real* UtDw, lat_index_t* nnt, bool pari
 
 __global__ void projectSU3( Real* Ut )
 {
-	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef GpuPatternParityPriority< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
@@ -236,7 +236,7 @@ __global__ void projectSU3( Real* Ut )
 
 __global__ void setHot( Real* Ut, int rngSeed, int rngCounter )
 {
-	typedef GpuLandauPatternParity< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef GpuPatternParityPriority< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};

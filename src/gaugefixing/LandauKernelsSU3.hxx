@@ -112,7 +112,7 @@ namespace LKSU3
 
 __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 {
-	typedef GpuLandauPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
+	typedef GpuPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 	typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 	SiteCoord<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
@@ -191,7 +191,7 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
+	typedef GpuPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 	typedef Link<Gpu,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 //	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
@@ -214,7 +214,7 @@ __global__ void restoreThirdLine( Real* U, lat_index_t* nnt )
 
 template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn, bool parity, Algorithm algorithm  )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
+	typedef GpuPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
 	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
 
 	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};

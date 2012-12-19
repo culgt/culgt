@@ -29,7 +29,7 @@
 #include "../GlobalConstants.h"
 #include "../GaugeFixingStats.hxx"
 #include "../../lattice/access_pattern/StandardPattern.hxx"
-#include "../../lattice/access_pattern/GpuLandauPattern.hxx"
+#include "../../lattice/access_pattern/GpuPattern.hxx"
 #include "../../lattice/SiteCoord.hxx"
 #include "../../lattice/SiteIndex.hxx"
 #include "../../util/timer/Chronotimer.h"
@@ -51,7 +51,7 @@ const short Nc = 3;
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
 typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
-typedef GpuLandauPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
+typedef GpuPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 
 int main(int argc, char* argv[])
 {

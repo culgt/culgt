@@ -20,14 +20,14 @@
  ************************************************************************
  */
 
-#ifndef GPULANDAUPATTERN_HXX_
-#define GPULANDAUPATTERN_HXX_
+#ifndef GPUPATTERN_HXX_
+#define GPUPATTERN_HXX_
 
 #include <assert.h>
 #include "../cuda/cuda_host_device.h"
 #include "../datatype/lattice_typedefs.h"
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuLandauPattern
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuPattern
 {
 public:
 	static const lat_group_dim_t Nc = T_Nc;
@@ -39,18 +39,18 @@ public:
 	CUDA_HOST_DEVICE static inline lat_array_index_t getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] );
 };
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_index_t GpuLandauPattern<Site, T_Ndim,T_Nc>::getSiteIndex( Site s )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_index_t GpuPattern<Site, T_Ndim,T_Nc>::getSiteIndex( Site s )
 {
 	return  s.getLatticeIndex();
 }
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuLandauPattern<Site, T_Ndim,T_Nc>::getLinkIndex( Site s, lat_dim_t mu )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPattern<Site, T_Ndim,T_Nc>::getLinkIndex( Site s, lat_dim_t mu )
 {
 	int muSize = T_Nc*T_Nc*2*s.getLatticeSize();
 	return s.getLatticeIndex()+mu*muSize;
 }
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuLandauPattern<Site, T_Ndim,T_Nc>::getIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPattern<Site, T_Ndim,T_Nc>::getIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
 {
 	return s.getLatticeIndex() + s.getLatticeSize()*( c + 2 * ( j + T_Nc *( i + T_Nc * mu ) ) );
 //	return s.getLatticeIndex() + s.getLatticeSize()*( mu + T_Ndim * ( c + 2 * ( j + T_Nc * i ) ) );
@@ -62,7 +62,7 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 /**
  * calculate the pattern index from unique index.
  */
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuLandauPattern<Site, T_Ndim, T_Nc>::getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPattern<Site, T_Ndim, T_Nc>::getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] )
 {
 
 //	uniqueIndex /= site.getLatticeSize();

@@ -20,14 +20,14 @@
  ************************************************************************
  */
 
-#ifndef GPUCOULOMBPATTERN_HXX_
-#define GPUCOULOMBPATTERN_HXX_
+#ifndef GPUPATTERNTIMESLICE_HXX_
+#define GPUPATTERNTIMESLICE_HXX_
 
 #include <assert.h>
 #include "../cuda/cuda_host_device.h"
 #include "../datatype/lattice_typedefs.h"
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuCoulombPattern
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuPatternTimeslice
 {
 public:
 	static const lat_group_dim_t Nc = T_Nc; // TODO static is shit. do it via constructor and non static
@@ -40,13 +40,13 @@ public:
 	CUDA_HOST_DEVICE static inline lat_array_index_t getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] );
 };
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_index_t GpuCoulombPattern<Site, T_Ndim, T_Nc>::getSiteIndex( Site s )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_index_t GpuPatternTimeslice<Site, T_Ndim, T_Nc>::getSiteIndex( Site s )
 {
 	lat_index_t timesliceSize = s.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
 	return s.getLatticeIndexTimeslice()+s[0]*timesliceSize;
 }
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPattern<Site, T_Ndim, T_Nc>::getLinkIndex( Site s, lat_dim_t mu )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimeslice<Site, T_Ndim, T_Nc>::getLinkIndex( Site s, lat_dim_t mu )
 {
 	// TODO schreibs besser
 	lat_array_index_t timesliceSize = s.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
@@ -54,14 +54,14 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 	return s.getLatticeIndexTimeslice()+mu*muSize+s[0]*timesliceSize;
 }
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPattern<Site, T_Ndim, T_Nc>::getIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimeslice<Site, T_Ndim, T_Nc>::getIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
 {
 	lat_array_index_t timesliceSize = s.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
 	lat_array_index_t latSize = s.getLatticeSizeTimeslice();
 	return s.getLatticeIndexTimeslice() + latSize*( c + 2 * ( j + T_Nc *( i + T_Nc * mu ) ) )+s[0]*timesliceSize;
 }
 
-//template< int T_Ndim, int T_Nc> int GpuCoulombPattern<Site, T_Ndim, T_Nc>::getIndex( int linkIndex, int i, int j, int c )
+//template< int T_Ndim, int T_Nc> int GpuPatternTimeslice<Site, T_Ndim, T_Nc>::getIndex( int linkIndex, int i, int j, int c )
 //{
 //	return linkIndex +
 //}
@@ -69,7 +69,7 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 /**
  *
  */
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPattern<Site, T_Ndim, T_Nc>::getUniqueIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimeslice<Site, T_Ndim, T_Nc>::getUniqueIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
 {
 	assert(false);
 	return 0;
@@ -78,7 +78,7 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 /**
  * calculate the pattern index from unique index.
  */
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPattern<Site, T_Ndim, T_Nc>::getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimeslice<Site, T_Ndim, T_Nc>::getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] )
 {
 
 //	uniqueIndex /= site.getLatticeSize();

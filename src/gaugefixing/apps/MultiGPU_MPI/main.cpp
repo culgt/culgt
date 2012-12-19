@@ -29,8 +29,8 @@
 #include "malloc.h"
 #endif
 #include "../../../lattice/access_pattern/StandardPattern.hxx"
-#include "../../../lattice/access_pattern/GpuCoulombPatternParity.hxx"
-#include "../../../lattice/access_pattern/GpuLandauPatternParity.hxx"
+#include "../../../lattice/access_pattern/GpuPatternTimesliceParityPriority.hxx"
+#include "../../../lattice/access_pattern/GpuPatternParityPriority.hxx"
 #include "../../../lattice/SiteCoord.hxx"
 #include "../../../lattice/SiteIndex.hxx"
 #include "../../../lattice/LinkFile.hxx"
@@ -60,7 +60,7 @@ const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
 
 
-typedef GpuCoulombPatternParity<SiteCoord<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> Gpu;
+typedef GpuPatternTimesliceParityPriority<SiteCoord<Ndim,TIMESLICE_SPLIT>,Ndim,Nc> Gpu;
 typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
 
 void initNeighbourTable( lat_index_t* nnt )

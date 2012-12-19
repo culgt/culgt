@@ -70,7 +70,7 @@ namespace COMKSU3
 
 __global__ void projectSU3( Real *U, lat_coord_t* ptrToDeviceSize )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
+	typedef GpuPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
 	typedef Link<GpuTimeslice,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 //	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};
@@ -91,7 +91,7 @@ __global__ void projectSU3( Real *U, lat_coord_t* ptrToDeviceSize )
 
 __global__ void setHot( Real *U, lat_coord_t* ptrToDeviceSize, int rngSeed, int rngCounter )
 {
-	typedef GpuLandauPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
+	typedef GpuPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
 	typedef Link<GpuTimeslice,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
 //	const lat_coord_t size[Ndim] = {1,Nx,Ny,Nz};

@@ -20,14 +20,14 @@
  ************************************************************************
  */
 
-#ifndef GPUCOULOMBPATTERNPARITY_HXX_
-#define GPUCOULOMBPATTERNPARITY_HXX_
+#ifndef GPUPATTERNTIMESLICEPARITYPRIORITY_HXX_
+#define GPUPATTERNTIMESLICEPARITYPRIORITY_HXX_
 
 #include <assert.h>
 #include "../cuda/cuda_host_device.h"
 #include "../datatype/lattice_typedefs.h"
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuCoulombPatternParity
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> class GpuPatternTimesliceParityPriority
 {
 public:
 	static const lat_group_dim_t Nc = T_Nc; // TODO static is shit. do it via constructor and non static
@@ -40,19 +40,19 @@ public:
 	CUDA_HOST_DEVICE static inline lat_array_index_t getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] );
 };
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_index_t GpuCoulombPatternParity<Site, T_Ndim, T_Nc>::getSiteIndex( Site s )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_index_t GpuPatternTimesliceParityPriority<Site, T_Ndim, T_Nc>::getSiteIndex( Site s )
 {
 	assert(false);
 	return -1;
 }
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPatternParity<Site, T_Ndim, T_Nc>::getLinkIndex( Site s, lat_dim_t mu )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimesliceParityPriority<Site, T_Ndim, T_Nc>::getLinkIndex( Site s, lat_dim_t mu )
 {
 	assert(false);
 	return -1;
 }
 
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPatternParity<Site, T_Ndim, T_Nc>::getIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimesliceParityPriority<Site, T_Ndim, T_Nc>::getIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
 {
 	lat_array_index_t timesliceSize = s.getLatticeSizeTimeslice()*T_Ndim*T_Nc*T_Nc*2;
 
@@ -60,7 +60,7 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 	return s.getLatticeIndexTimeslice()%(s.getLatticeSizeTimeslice()/2) + (s.getLatticeSizeTimeslice()/2)*( c + 2 * ( j + T_Nc *( i + T_Nc * ( mu + T_Ndim * parity ) ) ) )+s[0]*timesliceSize;
 }
 
-//template< int T_Ndim, int T_Nc> int GpuCoulombPatternParity<Site, T_Ndim, T_Nc>::getIndex( int linkIndex, int i, int j, int c )
+//template< int T_Ndim, int T_Nc> int GpuPatternTimesliceParityPriority<Site, T_Ndim, T_Nc>::getIndex( int linkIndex, int i, int j, int c )
 //{
 //	return linkIndex +
 //}
@@ -68,7 +68,7 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 /**
  *
  */
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPatternParity<Site, T_Ndim, T_Nc>::getUniqueIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimesliceParityPriority<Site, T_Ndim, T_Nc>::getUniqueIndex( Site s, lat_dim_t mu, lat_group_dim_t i, lat_group_dim_t j, bool c )
 {
 	assert(false);
 	return 0;
@@ -77,7 +77,7 @@ template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t G
 /**
  * calculate the pattern index from unique index.
  */
-template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuCoulombPatternParity<Site, T_Ndim, T_Nc>::getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] )
+template<class Site, lat_dim_t T_Ndim, lat_group_dim_t T_Nc> lat_array_index_t GpuPatternTimesliceParityPriority<Site, T_Ndim, T_Nc>::getIndexByUnique( lat_array_index_t uniqueIndex, lat_coord_t size[T_Ndim] )
 {
 
 //	uniqueIndex /= site.getLatticeSize();
