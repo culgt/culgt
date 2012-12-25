@@ -25,6 +25,7 @@
 
 #include "GlobalConstants.h"
 #include "kernel_launch_bounds.h"
+#include "../lattice/access_pattern/GpuPattern.hxx"
 #include "../lattice/datatype/datatypes.h"
 #include "../lattice/datatype/lattice_typedefs.h"
 #include "../lattice/rng/PhiloxWrapper.hxx"
