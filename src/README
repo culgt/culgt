@@ -1,9 +1,8 @@
 Copyright 2012 Mario Schroeck, Hannes Vogt
 
-This README gives a short introduction on how to use cuLAT (a basic CUDA
-framework for lattice gauge theory) and cuLAT.gaugefixing (an implementation 
-of gauge fixing algorithms for Landau, Coulomb and Maximally Abelian gauge
-for QCD: SU(3) in 3+1 dimensions).
+This README gives a short introduction on how to use cuLGT (a  basic  CUDA  framework  for
+lattice gauge theory) and cuLGT.gaugefixing (an implementation of gauge fixing  algorithms
+for Landau, Coulomb and Maximally Abelian gauge for QCD: SU(3) in 3+1 dimensions).
 
 
 ------------------------------------------
@@ -11,8 +10,8 @@ Table of contents
 ------------------------------------------
 
 1. Introduction & how to start
-2. cuLAT
-3. cuLAT.gaugefixing
+2. cuLGT
+3. cuLGT.gaugefixing
   3.a Single GPU
   3.b Multi GPU
   3.c Application parameters
@@ -22,20 +21,19 @@ Table of contents
 1. Introduction & how to start
 ------------------------------------------
 
-cuLAT stands for cu(DA) L(attice) G(raz) T(uebingen).
+cuLGT stands for cu(DA) L(attice) G(raz) T(uebingen).
 
-It is a basic framework for lattice gauge theory using CUDA. It is basic in the
-sense that at the moment it offers only these parts of lattice gauge theory 
-functionality that is needed to do 3+1 dimensional SU(3) gauge fixing.
+It is a basic framework for lattice gauge theory using CUDA. It is basic in the sense that
+at the moment it offers only these parts of lattice gauge  theory  functionality  that are
+needed to do 3+1 dimensional SU(3) gauge fixing.
 
-  What is cuLAT?
+  What is cuLGT?
   --------------
 
-- cuLAT is the part of this software release which is general for lattice field
-  theory, like implementations for SU(3) matrices, etc. located in /lattice
+- cuLGT is the part of this software release which is general for  lattice  field  theory, 
+  like implementations for SU(3) matrices, etc. located in /lattice
   
-- cuLAT.gaugefixing is located in /gaugefixing, the applications are in
-  /gaugefixing/apps
+- cuLGT.gaugefixing is located in /gaugefixing, the applications are in /gaugefixing/apps
   
 - There may still be some files that do not respect this separation of framework
  
@@ -45,10 +43,9 @@ functionality that is needed to do 3+1 dimensional SU(3) gauge fixing.
 
 - look in /gaugefixing/apps/LandauGaugeFixingSU3_4D.cu
 
-- compile with "make APP=LandauGaugeFixingSU3_4D X=<x> T=<t>
-  where <x> and <t> are the extents of the lattice in spatial and temporal
-  direction respectively (optional). You will need the boost::program_options
-  library to compile, see below "Prerequisites".
+- compile with "make APP=LandauGaugeFixingSU3_4D X=<x> T=<t>  where <x>  and <t> are  the
+  extents of the lattice in spatial and temporal direction respectively  (optional).  You 
+  will need the boost::program_options library to compile, see below "Prerequisites".
   
 - run the application with "./LandauGaugeFixingSU3_4D --hotgaugefield 1"
   this will do a run on a hot gaugefield (beta=infinity) with the default
@@ -56,23 +53,23 @@ functionality that is needed to do 3+1 dimensional SU(3) gauge fixing.
 
 
 ------------------------------------------
-2. cuLAT
+2. cuLGT
 ------------------------------------------
 
 For quick introduction please read the code of one of the given gauge fixing
 applications (for example LandauGaugeFixingSU3_4D).
 
-  Here we summarize the main ideas of cuLAT:
+  Here we summarize the main ideas of cuLGT:
   -----------------------------------------------
   
 - Compared to CPU code one should use new memory patterns for GPU code in oder
-  to reach good performance. cuLAT offers a flexible way to switch between 
+  to reach good performance. cuLGT offers a flexible way to switch between 
   different patterns. They are defined in /lattice/access_pattern. For details 
   see the implementation.
   
 - LinkFile is a loader for a gauge configuration which uses two patterns: one
   for the pattern in the file and a second for the pattern in memory. Thus, 
-  cuLAT allows playing with different memory patterns while keeping the files 
+  cuLGT allows playing with different memory patterns while keeping the files 
   with gauge configuration in a native (CPU) pattern.
   
 - SU3 is a Wrapper class for different types of storage SU(3) matrices. These
@@ -91,7 +88,7 @@ applications (for example LandauGaugeFixingSU3_4D).
   - SiteIndex uses one number (index) to identify a site and a neighbour table
   (in global memory).
   - SiteCoord uses Ndim (number of dimensions) variables to identify a site and
-  neighbor calculation is done on the fly.
+  neighbor calcuLGTion is done on the fly.
   Both should implement the same functions (though not all are implemented, some
   are rather complicated and not needed), like getLatticeIndex(), setNeighbour(), ...
   
@@ -111,7 +108,7 @@ applications (for example LandauGaugeFixingSU3_4D).
 
 
 ------------------------------------------
-3. cuLAT.gaugefixing
+3. cuLGT.gaugefixing
 ------------------------------------------
 
 We support gauge fixing for Landau, Coulomb and Maximally Abelian Gauge (MAG) in
@@ -153,7 +150,7 @@ Simulated Annealing (SA) with micro steps (MS).
     
     - PREC=DP (for double precision, default is single precision)
     - DPUPDATES=true, aka. mixed precision (if PREC is not set, i.e. single 
-      precision) the update matrices are calculated in DP (but applied in SP).
+      precision) the update matrices are calcuLGTed in DP (but applied in SP).
       See the paper for statistics and when and why you should use DPUPDATES.
       (If PREC=DP is set, then DPUPDATES=true has no effect.)
     
@@ -172,7 +169,7 @@ Simulated Annealing (SA) with micro steps (MS).
     an update of a site, to different threads. In 3+1 dimensions this is 8 threads
     per site. This implementation is necessary to get maximum performance due to 
     the register limits of compute capability 2.x devices, where only 63 32-bit 
-    registers per thread are possible. Thus, a simple calculation yields that not 
+    registers per thread are possible. Thus, a simple calcuLGTion yields that not 
     all eight 3x3 complex matrices fit in registers. Therefore, large register 
     spilling to slow local memory would occur in a single thread implementation. 
     Our code stores one matrix per thread fully in registers and thus spilling is 
