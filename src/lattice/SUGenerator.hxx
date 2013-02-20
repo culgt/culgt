@@ -30,7 +30,7 @@
 #include "datatype/lattice_typedefs.h"
 #include "datatype/datatypes.h"
 #include "Matrix.hxx"
-#include <assert.h">
+#include <assert.h>
 #include <math.h>
 
 template<int Nc> class SUGenerator

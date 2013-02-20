@@ -36,6 +36,7 @@ public:
 
 void CudaError::getLastError( const char *msg )
 {
+	cudaDeviceSynchronize();
 	cudaError_t error = cudaGetLastError();
 	if(error!=cudaSuccess) {
 		fprintf(stderr,"ERROR: %s: %s\n", msg, cudaGetErrorString(error) );
