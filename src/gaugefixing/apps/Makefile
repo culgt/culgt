@@ -53,7 +53,7 @@ CC = gcc
 # nvcc compiler
 NVCC = nvcc
 # the objects to be compiled with NVCC
-CUOBJ = $(APP).o
+CUOBJ = $(APP)_$(PREC)_N$(X)T$(T).o
 # libs for the linking process
 LIBS = -lboost_program_options
 # flags for the NVCC compiler
@@ -63,13 +63,13 @@ CCFLAGS = -O3
 
 CUFLAGS += $(CCFLAGS)
 
-$(APP): $(CUOBJ) Chronotimer.o GlobalConstants.o
-	$(NVCC) -o $@ $(CUOBJ) Chronotimer.o GlobalConstants.o $(LIBS)
+$(APP): $(CUOBJ) Chronotimer.o GlobalConstants_$(PREC)_N$(X)T$(T).o
+	$(NVCC) -o $@_$(PREC)_N$(X)T$(T) $(CUOBJ) Chronotimer.o GlobalConstants_$(PREC)_N$(X)T$(T).o $(LIBS)
 
-%.o: %.cu
-	$(NVCC) -c $(CUFLAGS) $< $(CUDEFS) 
+%_$(PREC)_N$(X)T$(T).o: %.cu
+	$(NVCC) -c $(CUFLAGS) $< $(CUDEFS) -o $@ 
 
-%.o: %.cpp
+%_$(PREC)_N$(X)T$(T).o: %.cpp
 	$(CC) -c $(CCFLAGS) $< $(CCDEFS)
 #%.o: %.cc
 #	$(CC) -c $(CCFLAGS) $< $(CCDEFS)
@@ -77,8 +77,8 @@ $(APP): $(CUOBJ) Chronotimer.o GlobalConstants.o
 Chronotimer.o: ../../util/timer/Chronotimer.cc
 	$(CC) -c $(CCFLAGS) ../../util/timer/Chronotimer.cc
 
-GlobalConstants.o: ../GlobalConstants.cu
-	$(NVCC) -c $(CUDEFS) $(CUFLAGS) ../GlobalConstants.cu
+GlobalConstants_$(PREC)_N$(X)T$(T).o: ../GlobalConstants.cu
+	$(NVCC) -c $(CUDEFS) $(CUFLAGS) ../GlobalConstants.cu -o $@
 
 clean: 
 	rm -f *.o $(APP)
