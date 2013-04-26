@@ -38,6 +38,8 @@ NSB=32
 # double precision?
 ifeq ($(PREC),DP)
 DPREC = -DDOUBLEPRECISION
+else
+PREC=SP
 endif
 
 # do the updates in DP even if links are stored in SP

@@ -67,11 +67,21 @@ int main(int argc, char* argv[])
 	int returncode = options.init( argc, argv );
 	if( returncode != 0 ) return returncode;
 
-	cudaSetDevice(options.getDeviceNumber());
+	// Choose device and print device infos
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, options.getDeviceNumber() );
+	int selectedDeviceNumber;
+	if( options.getDeviceNumber() >= 0 )
+	{
+		cudaSetDevice( options.getDeviceNumber() );
+		selectedDeviceNumber = options.getDeviceNumber();
+	}
+	else
+	{
+		cudaGetDevice( &selectedDeviceNumber );
+	}
+	cudaGetDeviceProperties(&deviceProp, selectedDeviceNumber );
 
-	printf("\nDevice %d: \"%s\"\n", options.getDeviceNumber(), deviceProp.name);
+	printf("\nDevice %d: \"%s\"\n", selectedDeviceNumber, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 

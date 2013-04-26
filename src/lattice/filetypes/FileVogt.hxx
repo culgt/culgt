@@ -21,6 +21,8 @@
  *
  * TODO give definition of filetype here!
  *
+ * TODO: MAKE A LATTICE SIZE CHECK!!!!!
+ *
  */
 
 #ifndef FILEVOGT_HXX_

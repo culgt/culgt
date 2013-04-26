@@ -201,7 +201,7 @@ int ProgramOptions::init( int argc, char* argv[] )
 
 			("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
 
-			("devicenumber,D", boost::program_options::value<int>(&deviceNumber)->default_value(0), "number of the CUDA device")
+			("devicenumber,D", boost::program_options::value<int>(&deviceNumber)->default_value(-1), "number of the CUDA device (or -1 for auto selection)")
 
 			("ftype", boost::program_options::value<FileType>(&fType), "type of configuration (PLAIN, HEADERONLY, VOGT)")
 			("fbasename", boost::program_options::value<string>(&fBasename), "file basename (part before numbering starts)")

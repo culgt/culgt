@@ -54,9 +54,9 @@ const short Nc = 3;
 const int arraySize = Nt*Nx*Ny*Nz*Ndim*Nc*Nc*2;
 const int timesliceArraySize = Nx*Ny*Nz*Ndim*Nc*Nc*2;
 
-typedef GpuPatternTimeslice<SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 typedef StandardPattern<SiteCoord<Ndim,NO_SPLIT>,Ndim,Nc> Standard;
 typedef GpuPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> GpuTimeslice;
+typedef GpuPatternTimeslice<SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 
 int main(int argc, char* argv[])
 {
@@ -72,11 +72,20 @@ int main(int argc, char* argv[])
 	if( returncode != 0 ) return returncode;
 
 	// Choose device and print device infos
-	cudaSetDevice( options.getDeviceNumber() );
 	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, options.getDeviceNumber() );
+	int selectedDeviceNumber;
+	if( options.getDeviceNumber() >= 0 )
+	{
+		cudaSetDevice( options.getDeviceNumber() );
+		selectedDeviceNumber = options.getDeviceNumber();
+	}
+	else
+	{
+		cudaGetDevice( &selectedDeviceNumber );
+	}
+	cudaGetDeviceProperties(&deviceProp, selectedDeviceNumber );
 
-	printf("\nDevice %d: \"%s\"\n", 0, deviceProp.name);
+	printf("\nDevice %d: \"%s\"\n", selectedDeviceNumber, deviceProp.name);
 	printf("CUDA Capability Major/Minor version number:    %d.%d\n\n", deviceProp.major, deviceProp.minor);
 
 
@@ -229,7 +238,7 @@ int main(int argc, char* argv[])
 					if( i % options.getCheckPrecision() == 0 )
 					{
 						gaugeStats.generateGaugeQuality();
-						printf( "%d\t\t%1.10f\t\t%e\n", 0, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
+						printf( "%f\t\t%1.10f\t\t%e\n", temperature, gaugeStats.getCurrentGff(), gaugeStats.getCurrentA() );
 					}
 					temperature -= tempStep;
 				}
