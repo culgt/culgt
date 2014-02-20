@@ -7,6 +7,7 @@
 #ifndef LOCALLINK_H_
 #define LOCALLINK_H_
 
+#include "../common/culgt_typedefs.h"
 #include "Link.h"
 #include "ParameterizationMediator.h"
 
@@ -34,7 +35,7 @@ public:
 	 * @param i
 	 * @return
 	 */
-	typename ParamType::TYPE get( int i ) const
+	typename ParamType::TYPE get( lat_group_index_t i ) const
 	{
 		return store[i];
 	}
@@ -43,19 +44,19 @@ public:
 	 * @param i
 	 * @param val
 	 */
-	void set( int i, typename ParamType::TYPE val)
+	void set( lat_group_index_t i, typename ParamType::TYPE val)
 	{
 		store[i] = val;
 	}
 
 	/**
 	 * Sets all entries to zero.
-	 * @note A function "identity()" is not possible here, since the identity (for example for SU3) depends on the
-	 * 		 Parameterization (ParamType).
+	 * @note A function "identity()" (to set the link to the identity) is not possible here, since the identity (for example for SU3) depends on the
+	 * 		 Parameterization (ParamType). A delegate should do the job. (Maybe move zero() to the Parameterization class, too.)
 	 */
 	void zero()
 	{
-		for( int i = 0; i < ParamType::SIZE; i++ )
+		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
 		{
 			store[i] = (typename ParamType::TYPE) 0.0;
 		}
@@ -68,7 +69,7 @@ public:
 	 */
 	LocalLink<ParamType>& operator=( const LocalLink<ParamType>& arg )
 	{
-		for( int i = 0; i < ParamType::SIZE; i++ )
+		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
 		{
 			set( i, arg.get(i) );
 		}

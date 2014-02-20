@@ -16,7 +16,7 @@ namespace culgt
 template<typename T> class SU3Real12
 {
 public:
-	static const int SIZE = 12;
+	static const lat_group_index_t SIZE = 12;
 	typedef T TYPE;
 };
 

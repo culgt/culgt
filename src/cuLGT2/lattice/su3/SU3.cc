@@ -7,6 +7,8 @@
 #ifndef SU3_H_
 #define SU3_H_
 
+#include "../../common/culgt_typedefs.h"
+
 namespace culgt
 {
 
@@ -18,12 +20,12 @@ template<typename LinkType> class SU3
 public:
 	LinkType link;
 
-	typename LinkType::PARAMTYPE::TYPE get( int i )
+	typename LinkType::PARAMTYPE::TYPE get( lat_group_index_t i )
 	{
 		return link.get( i );
 	}
 
-	void set( int i, typename LinkType::PARAMTYPE::TYPE val )
+	void set( lat_group_index_t i, typename LinkType::PARAMTYPE::TYPE val )
 	{
 		link.set( i, val );
 	}

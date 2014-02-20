@@ -16,8 +16,8 @@ namespace culgt
 template<typename ParamType> class Link
 {
 public:
-	virtual typename ParamType::TYPE get( int i ) const = 0;
-	virtual void set( int i, typename ParamType::TYPE val ) = 0;
+	virtual typename ParamType::TYPE get( lat_group_index_t i ) const = 0;
+	virtual void set( lat_group_index_t i, typename ParamType::TYPE val ) = 0;
 	virtual ~Link(){};
 };
 
