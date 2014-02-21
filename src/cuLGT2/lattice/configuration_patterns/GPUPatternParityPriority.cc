@@ -21,6 +21,8 @@ namespace culgt
 template<typename Site, typename ParamType> class GPUPatternParityPriority
 {
 public:
+	typedef Site SITETYPE;
+
 	static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
 		lat_index_t halfLatSize = site.getSize()/2;
@@ -67,7 +69,7 @@ public:
 using namespace culgt;
 using namespace ::testing;
 
-TEST( GPUPatternParityPriority, GetIndexReturnsSiteIndexForIndexInLowerHalfOfLattice )
+TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInLowerHalfOfLattice )
 {
 	const int paramTypeSize = 10;
 	const int latSize = 200;
@@ -79,7 +81,7 @@ TEST( GPUPatternParityPriority, GetIndexReturnsSiteIndexForIndexInLowerHalfOfLat
 	ASSERT_EQ( mySite.index, result );
 }
 
-TEST( GPUPatternParityPriority, GetIndexReturnsSiteIndexForIndexInUpperHalfOfLattice )
+TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInUpperHalfOfLattice )
 {
 	const int paramTypeSize = 10;
 	const int paramTypeIndex = 1;
@@ -99,7 +101,7 @@ TEST( GPUPatternParityPriority, GetIndexReturnsSiteIndexForIndexInUpperHalfOfLat
 }
 
 
-TEST( GPUPatternParityPriority, GetIndexReturnsSiteIndexForIndexInUpperHalfOfLatticeWithMu )
+TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInUpperHalfOfLatticeWithMu )
 {
 	const int paramTypeSize = 10;
 	const int paramTypeIndex = 1;
@@ -120,7 +122,7 @@ TEST( GPUPatternParityPriority, GetIndexReturnsSiteIndexForIndexInUpperHalfOfLat
 	ASSERT_EQ( expect, result );
 }
 
-TEST( GPUPatternParityPriority, ConvertToStandardIndexIsCompatibleToStandardPattern )
+TEST( GPUPatternParityPriorityTest, ConvertToStandardIndexIsCompatibleToStandardPattern )
 {
 	const int latSize = 200;
 	const int siteIndex = 110;

@@ -27,10 +27,32 @@ public:
 };
 
 
+class SiteTypeMock2
+{
+public:
+	int index;
+	int getIndex() const
+ 	{
+		return index;
+	}
+	int getSize() const
+	{
+		return 2;
+	}
+};
+
+
+
 template<int mySize> class ParamTypeMock
 {
 public:
 	static const int SIZE = mySize;
+};
+
+class ParamTypeMock2
+{
+public:
+	static const int SIZE = 2;
 };
 
 

@@ -19,6 +19,21 @@ public:
 	static void assign( LinkType1& l1, const LinkType2& l2 );
 };
 
+/**
+ * Spezialization for same ParameterType but different LinkType
+ */
+template<typename LinkType1, typename LinkType2, typename ParamType> class ParameterizationMediator<ParamType,ParamType, LinkType1, LinkType2>
+{
+public:
+	static void assign( LinkType1& l1, const LinkType2& l2 )
+	{
+		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
+		{
+			l1.set(i, l2.get(i));
+		}
+	}
+};
+
 } /* namespace culgt */
 
 #endif /* PARAMETERIZATIONMEDIATOR_H_ */

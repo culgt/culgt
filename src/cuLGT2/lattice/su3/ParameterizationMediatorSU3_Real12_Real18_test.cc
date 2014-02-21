@@ -15,32 +15,32 @@ using namespace ::testing;
 class GetSetMock
 {
 public:
-	float in[18];
-	float out[12];
+	float data[18];
 	float get( int i ) const
 	{
-		return in[i];
+		return data[i];
 	}
 	void set( int i, float val )
 	{
-		out[i] = val;
+		data[i] = val;
 	}
 };
 
 class AParameterizationMediator_Real12_Real18: public Test
 {
 public:
-	GetSetMock getset;
+	GetSetMock getset1;
+	GetSetMock getset2;
 };
 
 TEST_F( AParameterizationMediator_Real12_Real18, SpecializationCanBeCalled )
 {
-	ParameterizationMediator<SU3Real12<float>,SU3Real18<float>,GetSetMock,GetSetMock >::assign( getset, getset );
+	ParameterizationMediator<SU3Real12<float>,SU3Real18<float>,GetSetMock,GetSetMock >::assign( getset1, getset2 );
 }
 
 TEST_F( AParameterizationMediator_Real12_Real18, AssignCopiesData )
 {
-	getset.in[5] = 1.3;
-	ParameterizationMediator<SU3Real12<float>,SU3Real18<float>,GetSetMock,GetSetMock >::assign( getset, getset );
-	ASSERT_FLOAT_EQ( 1.3, getset.out[5] );
+	getset2.data[5] = 1.3;
+	ParameterizationMediator<SU3Real12<float>,SU3Real18<float>,GetSetMock,GetSetMock >::assign( getset1, getset2 );
+	ASSERT_FLOAT_EQ( 1.3, getset1.data[5] );
 }

@@ -23,6 +23,8 @@ namespace culgt
 template<typename Site, typename ParamType> class GPUPattern
 {
 public:
+	typedef Site SITETYPE;
+
 	static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
 		return (mu*ParamType::SIZE+paramIndex)*site.getSize()+site.getIndex();
@@ -59,18 +61,18 @@ public:
 using namespace culgt;
 using namespace ::testing;
 
-TEST( GPUPattern, GetIndexReturnsSiteIndexForParamIndexZeroAndMuZero )
+TEST( GPUPatternTest, GetIndexReturnsSiteIndexForParamIndexZeroAndMuZero )
 {
 	const int latSize = 1000;
 	const int siteIndex = 100;
-	SiteTypeMock<> mySite(latSize,siteIndex);
+	SiteTypeMock<> mySite(latSize, siteIndex);
 
 	int result = GPUPattern<SiteTypeMock<>, ParamTypeMock<0> >::getIndex( mySite, 0, 0 );
 
 	ASSERT_EQ( mySite.index, result );
 }
 
-TEST( GPUPattern, GetIndexReturnsCorrectIndexWithMuZero )
+TEST( GPUPatternTest, GetIndexReturnsCorrectIndexWithMuZero )
 {
 	const int latSize = 1000;
 	const int siteIndex = 100;
@@ -84,7 +86,7 @@ TEST( GPUPattern, GetIndexReturnsCorrectIndexWithMuZero )
 	ASSERT_EQ( expect, result );
 }
 
-TEST( GPUPattern, GetIndexReturnsCorrectIndex )
+TEST( GPUPatternTest, GetIndexReturnsCorrectIndex )
 {
 	const int latSize = 1000;
 	const int siteIndex = 100;
@@ -100,7 +102,7 @@ TEST( GPUPattern, GetIndexReturnsCorrectIndex )
 	ASSERT_EQ( expect, result );
 }
 
-TEST( GPUPattern, ConvertToStandardIndexIsCompatibleToStandardPattern )
+TEST( GPUPatternTest, ConvertToStandardIndexIsCompatibleToStandardPattern )
 {
 	const int latSize = 1000;
 	const int siteIndex = 100;

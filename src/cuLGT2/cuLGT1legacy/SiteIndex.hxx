@@ -34,6 +34,7 @@ public:
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
 	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();}; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
+	CUDA_HOST_DEVICE inline void setIndex( lat_index_t latticeIndex ) {setLatticeIndex(latticeIndex);};
 	CUDA_HOST_DEVICE inline void setLatticeIndexTimeslice( lat_index_t latticeIndex, lat_coord_t t );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex );

@@ -5,7 +5,7 @@
 using namespace culgt;
 using namespace ::testing;
 
-TEST( StandardPattern, GetIndexReturnsParamIndexForSiteZeroAndMuZero )
+TEST( StandardPatternTest, GetIndexReturnsParamIndexForSiteZeroAndMuZero )
 {
 	SiteTypeMock<> mySite(0);
 	const int myParamIndex = 4;
@@ -15,7 +15,7 @@ TEST( StandardPattern, GetIndexReturnsParamIndexForSiteZeroAndMuZero )
 	ASSERT_EQ( myParamIndex, result );
 }
 
-TEST( StandardPattern, GetIndexReturnsCorrectIndexForSiteZeroWithMockParamType )
+TEST( StandardPatternTest, GetIndexReturnsCorrectIndexForSiteZeroWithMockParamType )
 {
 	SiteTypeMock<> mySite( 0 );
 	const int myParamSize = 18;
@@ -28,7 +28,7 @@ TEST( StandardPattern, GetIndexReturnsCorrectIndexForSiteZeroWithMockParamType )
 	ASSERT_EQ( expect, result );
 }
 
-TEST( StandardPattern, GetIndexReturnsCorrectIndexWithMockSiteAndParamType )
+TEST( StandardPatternTest, GetIndexReturnsCorrectIndexWithMockSiteAndParamType )
 {
 	// for this pattern the lattice size is irrelevant (since lattice index is running slowest and no parity splitting)
 	SiteTypeMock<> mySite( 5 );
@@ -43,7 +43,7 @@ TEST( StandardPattern, GetIndexReturnsCorrectIndexWithMockSiteAndParamType )
 	ASSERT_EQ( expect, result );
 }
 
-TEST( StandardPattern, GetIndexIsCompatibleToGetStandardIndex )
+TEST( StandardPatternTest, GetIndexIsCompatibleToGetStandardIndex )
 {
 	const int siteIndex = 5;
 	const int nDim = 4;
@@ -56,4 +56,11 @@ TEST( StandardPattern, GetIndexIsCompatibleToGetStandardIndex )
 	int result = StandardPattern<SiteTypeMock<nDim>, ParamTypeMock<myParamSize> >::getStandardIndex( siteIndex, myMu, myParamIndex );
 
 	ASSERT_EQ( expect, result );
+}
+
+TEST( StandardPatternTest, PatternHasDefinedTypeSITETYPE )
+{
+	typename StandardPattern<SiteTypeMock<4>, ParamTypeMock<2> >::SITETYPE s(5);
+
+	ASSERT_EQ( 5, s.getIndex() );
 }

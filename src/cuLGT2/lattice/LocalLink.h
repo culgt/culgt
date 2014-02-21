@@ -82,9 +82,15 @@ public:
 	 * @param arg
 	 * @return
 	 */
-	template<typename ParamType2> LocalLink<ParamType>& operator=( const LocalLink<ParamType2>& arg )
+//	template<typename ParamType2> LocalLink<ParamType>& operator=( const LocalLink<ParamType2>& arg )
+//	{
+//		ParameterizationMediator<ParamType,ParamType2,LocalLink<ParamType>, LocalLink<ParamType2> >::assign( *this, arg );
+//		return *this;
+//	}
+
+	template<typename LinkType> LocalLink<ParamType>& operator=( const LinkType arg )
 	{
-		ParameterizationMediator<ParamType,ParamType2,LocalLink<ParamType>, LocalLink<ParamType2> >::assign( *this, arg );
+		ParameterizationMediator<ParamType,typename LinkType::PARAMTYPE,LocalLink<ParamType>, LinkType >::assign( *this, arg );
 		return *this;
 	}
 private:
