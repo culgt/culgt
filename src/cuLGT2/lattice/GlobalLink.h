@@ -7,6 +7,7 @@
 #ifndef GLOBALLINK_H_
 #define GLOBALLINK_H_
 
+#include "../cudacommon/cuda_host_device.h"
 #include "../common/culgt_typedefs.h"
 #include "ParameterizationMediator.h"
 #include "Link.h"
@@ -24,11 +25,11 @@ public:
 	typedef ConfigurationPattern CONFIGURATIONPATTERN;
 
 
-	~GlobalLink()
+	CUDA_HOST_DEVICE ~GlobalLink()
 	{
 	};
 
-	GlobalLink( typename PARAMTYPE::TYPE* pointerToStore, typename ConfigurationPattern::SITETYPE site, lat_dim_t mu ) : pointerToStore(pointerToStore), site(site), mu(mu) {} ;
+	CUDA_HOST_DEVICE GlobalLink( typename PARAMTYPE::TYPE* pointerToStore, typename ConfigurationPattern::SITETYPE site, lat_dim_t mu ) : pointerToStore(pointerToStore), site(site), mu(mu) {} ;
 
 	/**
 	 * Returns the i-th entry of the ParamType specific array
@@ -42,7 +43,7 @@ public:
 	 * @param i
 	 * @return
 	 */
-	typename PARAMTYPE::TYPE get( lat_group_index_t i ) const
+	CUDA_HOST_DEVICE typename PARAMTYPE::TYPE get( lat_group_index_t i ) const
 	{
 		return pointerToStore[ConfigurationPattern::getIndex(site,mu,i)];
 	}
@@ -51,12 +52,12 @@ public:
 	 * @param i
 	 * @param val
 	 */
-	void set( lat_group_index_t i, typename PARAMTYPE::TYPE val)
+	CUDA_HOST_DEVICE void set( lat_group_index_t i, typename PARAMTYPE::TYPE val)
 	{
 		pointerToStore[ConfigurationPattern::getIndex(site,mu,i)] = val;
 	}
 
-	void zero()
+	CUDA_HOST_DEVICE void zero()
 	{
 		for( lat_group_index_t i = 0; i < PARAMTYPE::SIZE; i++ )
 		{
@@ -69,7 +70,7 @@ public:
 	 * @param arg
 	 * @return
 	 */
-	GlobalLink<ConfigurationPattern>& operator=( const GlobalLink<ConfigurationPattern>& arg )
+	CUDA_HOST_DEVICE GlobalLink<ConfigurationPattern>& operator=( const GlobalLink<ConfigurationPattern>& arg )
 	{
 		for( lat_group_index_t i = 0; i < ConfigurationPattern::PARAMTYPE::SIZE; i++ )
 		{
@@ -83,7 +84,7 @@ public:
 	 * @param arg
 	 * @return
 	 */
-	template<typename LinkType> GlobalLink<ConfigurationPattern>& operator=( const LinkType arg )
+	template<typename LinkType> CUDA_HOST_DEVICE GlobalLink<ConfigurationPattern>& operator=( const LinkType arg )
 	{
 		ParameterizationMediator<typename ConfigurationPattern::PARAMTYPE,typename LinkType::PARAMTYPE,GlobalLink<ConfigurationPattern>, LinkType >::assign( *this, arg );
 		return *this;

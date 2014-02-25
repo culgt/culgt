@@ -7,7 +7,7 @@ add_definitions(-std=gnu++11)
 set(CMAKE_CXX_FLAGS "${CMAXE_CXX_FLAGS} -Wall")
 
 set(sources 
-	main.cpp 
+	../test_main.cpp 
 	test_SiteIndex.cc
 	test_SiteCoord.cc
 	test_SiteCompatibilityWithConfigurationPatterns.cc

@@ -1,4 +1,5 @@
 /**
+ * Note: I am not sure if this class is useful or if it is easier to deal directly with Links...
  *
  *  Created on: Feb 11, 2014
  *      Author: vogt

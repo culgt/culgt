@@ -11,6 +11,7 @@
 #ifndef STANDARDPATTERN_H_
 #define STANDARDPATTERN_H_
 
+#include "../../cudacommon/cuda_host_device.h"
 #include "../../common/culgt_typedefs.h"
 
 namespace culgt
@@ -22,7 +23,7 @@ public:
 	typedef Site SITETYPE;
 	typedef ParamType PARAMTYPE;
 
-	static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
+	CUDA_HOST_DEVICE static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
 		return (site.getIndex()*Site::Ndim+mu)*ParamType::SIZE+paramIndex;
 	}
@@ -35,7 +36,7 @@ public:
 	 * @param latSize
 	 * @return
 	 */
-	static lat_array_index_t getStandardIndex( lat_index_t siteIndex, lat_dim_t mu, lat_group_index_t paramIndex )
+	CUDA_HOST_DEVICE static lat_array_index_t getStandardIndex( lat_index_t siteIndex, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
 		return (siteIndex*Site::Ndim+mu)*ParamType::SIZE+paramIndex;
 	}

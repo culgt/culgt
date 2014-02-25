@@ -7,32 +7,33 @@ add_definitions()
 set(CMAKE_CXX_FLAGS "${CMAXE_CXX_FLAGS} -Wall")
 
 set(sources 
-	main.cpp 
+	../test_main.cpp 
 	test_LocalLink.cc
 	su3/ParameterizationMediatorSU3_Real12_Real18_test.cc 
 	su3/SU3.cc
 	configuration_patterns/test_StandardPattern.cc
-	configuration_patterns/GPUPattern.cc
-	configuration_patterns/GPUPatternParityPriority.cc
+	configuration_patterns/test_GPUPattern.cc
+	configuration_patterns/test_GPUPatternParityPriority.cc
 	test_GlobalLink.cc 
 	test_GlobalLinkWithPatterns.cc
 	test_LocalGlobalLinkCompatibility.cc
 	)
-add_executable(test ${sources})
-target_link_libraries(test pthread)
-target_link_libraries(test gmock)
-target_link_libraries(test gtest)
+add_executable(test_host ${sources})
+target_link_libraries(test_host pthread)
+target_link_libraries(test_host gmock)
+target_link_libraries(test_host gtest)
 
 
 find_package(CUDA)
 include(FindCUDA)
 
 set(sources_cuda 
-	main.cpp 
+	../test_main.cpp 
 	test_LocalLink.cu
+	test_GlobalLinkWithPatterns.cu
 	../../lattice/cuda/CudaError.cu
 	)
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-arch=sm_20;--ptxas-options=-v;-DDOUBLEPRECISION;)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-arch=sm_20;)
 
 CUDA_ADD_EXECUTABLE(test_cuda ${sources_cuda} )
 target_link_libraries(test_cuda pthread)
@@ -40,11 +41,7 @@ target_link_libraries(test_cuda gmock)
 target_link_libraries(test_cuda gtest)
 
 
-set(sources2 
-	main.cpp 
-	test_GlobalLinkWithPatterns.cc
-	)
-add_executable(test2 ${sources2})
-target_link_libraries(test2 pthread)
-target_link_libraries(test2 gmock)
-target_link_libraries(test2 gtest)
+CUDA_ADD_EXECUTABLE(test ${sources} ${sources_cuda})
+target_link_libraries(test pthread)
+target_link_libraries(test gmock)
+target_link_libraries(test gtest)
