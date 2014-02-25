@@ -7,6 +7,7 @@
 #ifndef LOCALLINK_H_
 #define LOCALLINK_H_
 
+#include "../cudacommon/cuda_host_device.h"
 #include "../common/culgt_typedefs.h"
 #include "Link.h"
 #include "ParameterizationMediator.h"
@@ -26,7 +27,7 @@ public:
 	 */
 	typedef ParamType PARAMTYPE;
 
-	~LocalLink()
+	CUDA_HOST_DEVICE ~LocalLink()
 	{
 	};
 
@@ -35,7 +36,7 @@ public:
 	 * @param i
 	 * @return
 	 */
-	typename ParamType::TYPE get( lat_group_index_t i ) const
+	CUDA_HOST_DEVICE inline typename ParamType::TYPE get( lat_group_index_t i ) const
 	{
 		return store[i];
 	}
@@ -44,7 +45,7 @@ public:
 	 * @param i
 	 * @param val
 	 */
-	void set( lat_group_index_t i, typename ParamType::TYPE val)
+	CUDA_HOST_DEVICE inline  void set( lat_group_index_t i, typename ParamType::TYPE val)
 	{
 		store[i] = val;
 	}
@@ -54,7 +55,7 @@ public:
 	 * @note A function "identity()" (to set the link to the identity) is not possible here, since the identity (for example for SU3) depends on the
 	 * 		 Parameterization (ParamType). A delegate should do the job. (Maybe move zero() to the Parameterization class, too.)
 	 */
-	void zero()
+	CUDA_HOST_DEVICE inline  void zero()
 	{
 		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
 		{
@@ -67,7 +68,7 @@ public:
 	 * @param arg
 	 * @return
 	 */
-	LocalLink<ParamType>& operator=( const LocalLink<ParamType>& arg )
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator=( const LocalLink<ParamType>& arg )
 	{
 		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
 		{
@@ -77,18 +78,11 @@ public:
 	}
 
 	/**
-	 * Assignment operator for different types needs to delegate the work to a mediator that
-	 * has precise knowledge of both parameterizations.
+	 * Assignment operator needs to call Mediator for different ParamTypes and/or LinkTypes
 	 * @param arg
 	 * @return
 	 */
-//	template<typename ParamType2> LocalLink<ParamType>& operator=( const LocalLink<ParamType2>& arg )
-//	{
-//		ParameterizationMediator<ParamType,ParamType2,LocalLink<ParamType>, LocalLink<ParamType2> >::assign( *this, arg );
-//		return *this;
-//	}
-
-	template<typename LinkType> LocalLink<ParamType>& operator=( const LinkType arg )
+	template<typename LinkType> CUDA_HOST_DEVICE inline  LocalLink<ParamType>& operator=( const LinkType arg )
 	{
 		ParameterizationMediator<ParamType,typename LinkType::PARAMTYPE,LocalLink<ParamType>, LinkType >::assign( *this, arg );
 		return *this;

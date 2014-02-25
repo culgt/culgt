@@ -7,6 +7,8 @@
 #ifndef PARAMETERIZATIONMEDIATOR_H_
 #define PARAMETERIZATIONMEDIATOR_H_
 
+#include "../cudacommon/cuda_host_device.h"
+
 namespace culgt
 {
 
@@ -16,7 +18,7 @@ namespace culgt
 template<typename ParamType1, typename ParamType2, typename LinkType1, typename LinkType2> class ParameterizationMediator
 {
 public:
-	static void assign( LinkType1& l1, const LinkType2& l2 );
+	CUDA_HOST_DEVICE static void assign( LinkType1& l1, const LinkType2& l2 );
 };
 
 /**
@@ -25,7 +27,7 @@ public:
 template<typename LinkType1, typename LinkType2, typename ParamType> class ParameterizationMediator<ParamType,ParamType, LinkType1, LinkType2>
 {
 public:
-	static void assign( LinkType1& l1, const LinkType2& l2 )
+	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
 	{
 		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
 		{

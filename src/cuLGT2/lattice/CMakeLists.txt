@@ -24,9 +24,25 @@ target_link_libraries(test gmock)
 target_link_libraries(test gtest)
 
 
+find_package(CUDA)
+include(FindCUDA)
+
+set(sources_cuda 
+	main.cpp 
+	test_LocalLink.cu
+	../../lattice/cuda/CudaError.cu
+	)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-arch=sm_20;--ptxas-options=-v;-DDOUBLEPRECISION;)
+
+CUDA_ADD_EXECUTABLE(test_cuda ${sources_cuda} )
+target_link_libraries(test_cuda pthread)
+target_link_libraries(test_cuda gmock)
+target_link_libraries(test_cuda gtest)
+
+
 set(sources2 
 	main.cpp 
-	test_LocalGlobalLinkCompatibility.cc
+	test_GlobalLinkWithPatterns.cc
 	)
 add_executable(test2 ${sources2})
 target_link_libraries(test2 pthread)

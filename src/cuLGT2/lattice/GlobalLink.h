@@ -8,6 +8,7 @@
 #define GLOBALLINK_H_
 
 #include "../common/culgt_typedefs.h"
+#include "ParameterizationMediator.h"
 #include "Link.h"
 
 namespace culgt
@@ -21,6 +22,7 @@ public:
 	 */
 	typedef typename ConfigurationPattern::PARAMTYPE PARAMTYPE;
 	typedef ConfigurationPattern CONFIGURATIONPATTERN;
+
 
 	~GlobalLink()
 	{
@@ -52,6 +54,39 @@ public:
 	void set( lat_group_index_t i, typename PARAMTYPE::TYPE val)
 	{
 		pointerToStore[ConfigurationPattern::getIndex(site,mu,i)] = val;
+	}
+
+	void zero()
+	{
+		for( lat_group_index_t i = 0; i < PARAMTYPE::SIZE; i++ )
+		{
+			pointerToStore[ConfigurationPattern::getIndex(site,mu,i)] = (typename PARAMTYPE::TYPE) 0.0;
+		}
+	}
+
+	/**
+	 * Assignment operator for same type just copies all elements.
+	 * @param arg
+	 * @return
+	 */
+	GlobalLink<ConfigurationPattern>& operator=( const GlobalLink<ConfigurationPattern>& arg )
+	{
+		for( lat_group_index_t i = 0; i < ConfigurationPattern::PARAMTYPE::SIZE; i++ )
+		{
+			set( i, arg.get(i) );
+		}
+		return *this;
+	}
+
+	/**
+	 * Assignment operator needs to call Mediator for different ParamTypes and/or LinkTypes
+	 * @param arg
+	 * @return
+	 */
+	template<typename LinkType> GlobalLink<ConfigurationPattern>& operator=( const LinkType arg )
+	{
+		ParameterizationMediator<typename ConfigurationPattern::PARAMTYPE,typename LinkType::PARAMTYPE,GlobalLink<ConfigurationPattern>, LinkType >::assign( *this, arg );
+		return *this;
 	}
 
 	typename PARAMTYPE::TYPE* pointerToStore;

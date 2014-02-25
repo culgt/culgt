@@ -7,6 +7,7 @@
 #ifndef PARAMETERIZATIONMEDIATOR_REAL12_REAL18_H_
 #define PARAMETERIZATIONMEDIATOR_REAL12_REAL18_H_
 
+#include "../../cudacommon/cuda_host_device.h"
 #include "../../common/culgt_typedefs.h"
 #include "../ParameterizationMediator.h"
 #include "SU3Real12.h"
@@ -18,7 +19,19 @@ namespace culgt
 template<typename LinkType1, typename LinkType2, typename T> class ParameterizationMediator<SU3Real12<T>,SU3Real18<T>, LinkType1, LinkType2>
 {
 public:
-	static void assign( LinkType1& l1, const LinkType2& l2 )
+	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
+	{
+		for( lat_group_index_t i = 0; i < 12; i++ )
+		{
+			l1.set(i, l2.get(i));
+		}
+	}
+};
+
+template<typename LinkType1, typename LinkType2> class ParameterizationMediator<SU3Real12<float>,SU3Real18<float>, LinkType1, LinkType2>
+{
+public:
+	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
 	{
 		for( lat_group_index_t i = 0; i < 12; i++ )
 		{
@@ -33,7 +46,7 @@ public:
 template<typename LinkType1, typename LinkType2, typename T>class ParameterizationMediator<SU3Real18<T>,SU3Real12<T>, LinkType1, LinkType2>
 {
 public:
-	static void assign( LinkType1& l1, const LinkType2& l2 )
+	CUDA_HOST_DEVICE static void assign( LinkType1& l1, const LinkType2& l2 )
 	{
 		for( lat_group_index_t i = 0; i < 12; i++ )
 		{
