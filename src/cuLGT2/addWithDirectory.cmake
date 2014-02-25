@@ -1,0 +1,6 @@
+macro( addWithDirectory fdirectory localList )
+  foreach( entry ${localList} )
+    set( temp "${temp}" ${fdirectory}/${entry} )
+  endforeach()
+  set( allsources ${allsources} ${temp} PARENT_SCOPE )
+endmacro( addWithDirectory )
