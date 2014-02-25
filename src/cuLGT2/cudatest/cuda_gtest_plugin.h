@@ -9,59 +9,19 @@
 #define CUDA_GTEST_PLUGIN_H_
 
 #include "gmock/gmock.h"
-
-template <typename T> class type_name {
-public:
-	typedef T TYPE;
-    static const char *name;
-};
-
-#define DECLARE_TYPE_NAME(x) template<> const char *type_name<x>::name = #x;
-//#define GET_TYPE_NAME(x) (type_name<typeof(x)>::name)
-//#define GET_TYPE(x) (typename type_name<typeof(x)>::TYPE)
-
-DECLARE_TYPE_NAME( float );
-DECLARE_TYPE_NAME( int );
-
-#define CUDA_ASSERT_FLOAT_EQ(expected,actual)\
-	out[0]=expected;\
-	out[1]=actual;
-
-#define CUDA_TEST_CLASS_NAME_(test_case_name, test_name)\
-  kernel_test_case_name##_##test_name##_Test
-
-#define CUDA_FLOAT_TEST( test_case_name, test_name )\
-	__global__ void CUDA_TEST_CLASS_NAME_(test_case_name, test_name)(float*);\
-	TEST( test_case_name, test_name )\
-	{\
-	float* dOut;\
-	cudaMalloc( (void**)(&dOut), 2*sizeof( float ) );\
-	float out[2] = {0,0};\
-	cudaMemcpy( dOut, &out, 2*sizeof(float), cudaMemcpyHostToDevice );\
-	CUDA_TEST_CLASS_NAME_(test_case_name, test_name)<<<1,1>>>(dOut);\
-	cudaMemcpy( &out, dOut, 2*sizeof(float), cudaMemcpyDeviceToHost );\
-	ASSERT_FLOAT_EQ( out[0], out[1] );\
-	};\
-	__global__ void CUDA_TEST_CLASS_NAME_(test_case_name, test_name)(float* out)
-
+#ifdef __CUDACC__
+#include "../../lattice/cuda/CudaError.h"
 
 struct TestTransporter
 {
-	float tfloat[2];
-	int tint[2];
+	float2 tfloat[10];
+	int2 tint[10];
 
-	bool evaluateInt;
-	bool evaluateFloat;
+	int evaluateInt;
+	int evaluateFloat;
 
-	TestTransporter()
+	__host__ __device__ TestTransporter(): evaluateInt(0), evaluateFloat(0)
 	{
-		evaluateFloat = false;
-		tfloat[0] = 0.;
-		tfloat[1] = 0.;
-
-		evaluateInt = false;
-		tint[0] = 0;
-		tint[1] = 0;
 	};
 };
 
@@ -69,34 +29,109 @@ struct TestTransporter
 
 	template<> static __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, float expected, float actual )
 	{
-		transporter->tfloat[0] = expected;
-		transporter->tfloat[1] = actual;
-		transporter->evaluateFloat = true;
+
+		transporter->tfloat[transporter->evaluateFloat].x = expected;
+		transporter->tfloat[transporter->evaluateFloat].y = actual;
+		transporter->evaluateFloat++;
 	}
 
 	template<> static __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, int expected, int actual )
 	{
-		transporter->tint[0] = expected;
-		transporter->tint[1] = actual;
-		transporter->evaluateInt = true;
+		transporter->tint[transporter->evaluateInt].x = expected;
+		transporter->tint[transporter->evaluateInt].y = actual;
+		transporter->evaluateInt++;
 	}
 
-#define CUDA_TEST( test_case_name, test_name )\
-	__global__ void CUDA_TEST_CLASS_NAME_(test_case_name, test_name)(TestTransporter*);\
-	TEST( test_case_name, test_name )\
-	{\
-	TestTransporter* dTestTransporter;\
-	cudaMalloc( (void**)(&dTestTransporter), sizeof( TestTransporter ) );\
-	TestTransporter testTransporter;\
-	cudaMemcpy( dTestTransporter, &testTransporter, sizeof(TestTransporter), cudaMemcpyHostToDevice );\
-	CUDA_TEST_CLASS_NAME_(test_case_name, test_name)<<<1,1>>>(dTestTransporter);\
-	cudaMemcpy( &testTransporter, dTestTransporter, sizeof(TestTransporter), cudaMemcpyDeviceToHost );\
-	if( testTransporter.evaluateFloat ) { ASSERT_FLOAT_EQ( testTransporter.tfloat[0], testTransporter.tfloat[1] ); }\
-	if( testTransporter.evaluateInt ) { ASSERT_EQ( testTransporter.tint[0], testTransporter.tint[1] ); } \
-	};\
-	__global__ void CUDA_TEST_CLASS_NAME_(test_case_name, test_name)(TestTransporter* testTransporter)
+	template<> static __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, bool expected, bool actual )
+	{
+		transporter->tint[transporter->evaluateInt].x = (int)expected;
+		transporter->tint[transporter->evaluateInt].y = (int)actual;
+		transporter->evaluateInt++;
+	}
+
+#define CUDA_TEST_CLASS_NAME_(test_case_name, test_name)\
+  kernel_test_case_name##_##test_name##_Test
+
+#ifdef __CUDA_ARCH__
+#undef TEST
+#define CUDA_DEAD_FUNCTION_NAME_(test_case_name, test_name)\
+  MAKE_UNIQUE( dead_function_test_case_name##_##test_name##_Test )
+#define TEST(test_case_name, test_name) void CUDA_DEAD_FUNCTION_NAME_(test_case_name, test_name)( TestTransporter* testTransporter )//GTEST_TEST(test_case_name, test_name)
+#define TESTTRANSPORTERDEFINITIONWITHCOMMA , TestTransporter* testTransporter
+#define TESTTRANSPORTERDEFANDINSTANCE
+#define TESTTRANSPORTERDEFINITION TestTransporter* testTransporter
+#define TESTCALLHOST
+#define TESTCALLDEVICE test( testTransporter )
+#else
+#define CUDA_DEAD_FUNCTION_NAME_(test_case_name, test_name)
+#define TESTTRANSPORTERDEFANDINSTANCE TestTransporter* testTransporter = new TestTransporter;
+#define TESTTRANSPORTERDEFINITIONWITHCOMMA
+#define TESTTRANSPORTERDEFINITION
+#define TESTCALLHOST test()
+#define TESTCALLDEVICE
+#endif
+
+#define TESTKERNELCALL(test_case_name, test_name) CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name) test;CUDA_TEST_CLASS_NAME_(test_case_name, test_name)<<<1,1>>>(test,dTestTransporter)
 
 #define CUDA_ASSERT_EQ(expected,actual)\
 		setTestTransporterValue( testTransporter, expected, actual );
+
+
+#ifdef __CUDA_ARCH__
+#undef ASSERT_EQ
+#define ASSERT_EQ(val1, val2) CUDA_ASSERT_EQ(val1, val2)
+#endif
+
+#ifdef __CUDA_ARCH__
+#undef ASSERT_FLOAT_EQ
+#define ASSERT_FLOAT_EQ(val1, val2) CUDA_ASSERT_EQ(val1, val2)
+#endif
+
+#define CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name)\
+  test_function_test_case_name##_##test_name##_Test
+#define TEST_NAME_CUDA( test_name )\
+  test_name##_CUDA
+
+#define CONCATENATE_DETAIL(x, y) x##y
+#define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)
+#define MAKE_UNIQUE(x) CONCATENATE(x, __COUNTER__)
+
+
+#define CUDA_TEST(test_case_name, test_name)\
+	struct CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name)\
+	{\
+		__host__ __device__ void operator()( TestTransporter* testTransporter );\
+	};\
+	__global__ void CUDA_TEST_CLASS_NAME_(test_case_name, test_name)(CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name) test, TestTransporter* testTransporter);\
+	GTEST_TEST(test_case_name, test_name)\
+	{\
+		CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name) test;\
+		TestTransporter* testTransporter = new TestTransporter;\
+		test( testTransporter );\
+	};\
+	TEST(test_case_name, test_name##_CUDA )\
+	{\
+		TestTransporter* dTestTransporter;\
+		cudaMalloc( (void**)(&dTestTransporter), sizeof( TestTransporter ) );\
+		CudaError::getLastError( "malloc" );\
+		TESTTRANSPORTERDEFANDINSTANCE\
+		cudaMemcpy( dTestTransporter, testTransporter, sizeof(TestTransporter), cudaMemcpyHostToDevice );\
+		CudaError::getLastError( "memcopyhosttodevice" );\
+		CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name) test;CUDA_TEST_CLASS_NAME_(test_case_name, test_name)<<<1,1>>>(test,dTestTransporter);\
+		CudaError::getLastError( "kernel call" );\
+		cudaMemcpy( testTransporter, dTestTransporter, sizeof(TestTransporter), cudaMemcpyDeviceToHost );\
+		CudaError::getLastError( "memcopydevicetohost" );\
+		for( int i = 0; i < testTransporter->evaluateFloat; i++ ) ASSERT_FLOAT_EQ( testTransporter->tfloat[i].x, testTransporter->tfloat[i].y );\
+		for( int i = 0; i < testTransporter->evaluateInt; i++ ) GTEST_ASSERT_EQ( testTransporter->tint[i].x, testTransporter->tint[i].y );\
+	};\
+	__global__ void CUDA_TEST_CLASS_NAME_(test_case_name, test_name)(CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name) test, TestTransporter* testTransporter)\
+	{\
+		test( testTransporter );\
+	}\
+	__host__ __device__ void CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name)::operator()( TestTransporter* testTransporter )
+#else
+#warning "To enable CUDA tests compile with nvcc"
+#define CUDA_TEST(test_case_name, test_name) TEST(test_case_name, test_name)
+#endif
 
 #endif /* CUDA_GTEST_PLUGIN_H_ */
