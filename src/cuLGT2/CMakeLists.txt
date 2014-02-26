@@ -1,22 +1,14 @@
 project(test_main)
 cmake_minimum_required(VERSION 2.8)
 
+include( commonsettings.cmake )
 include( addWithDirectory.cmake )
-
-include_directories($ENV{GMOCK_HOME}/include $ENV{GMOCK_HOME}/gtest/include)
-link_directories($ENV{GMOCK_HOME}/mybuild $ENV{GMOCK_HOME}/gtest/mybuild)
-add_definitions()
-set(CMAKE_CXX_FLAGS "${CMAXE_CXX_FLAGS} -Wall")
 
 set( allsources "" )
 
 add_subdirectory( lattice )
 add_subdirectory( cuLGT1legacy )
 add_subdirectory( propagators )
-
-find_package(CUDA)
-include(FindCUDA)
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-arch=sm_20;)
 
 message( "allsources = ${allsources}" )
 

@@ -1,11 +1,7 @@
 project(test_cuLGT1legacy)
 cmake_minimum_required(VERSION 2.8)
 
-include_directories($ENV{GMOCK_HOME}/include $ENV{GMOCK_HOME}/gtest/include)
-link_directories($ENV{GMOCK_HOME}/mybuild $ENV{GMOCK_HOME}/gtest/mybuild)
-add_definitions(-std=gnu++11)
-set(CMAKE_CXX_FLAGS "${CMAXE_CXX_FLAGS} -Wall")
-
+include( ../commonsettings.cmake )
 
 set(sources 
 	test_SiteIndex.cc
