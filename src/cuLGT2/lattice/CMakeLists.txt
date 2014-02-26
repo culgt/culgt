@@ -1,7 +1,10 @@
 project(test_lattice)
+
 cmake_minimum_required(VERSION 2.8)
 
 include( ../commonsettings.cmake )
+
+#set( CMAKE_VERBOSE_MAKEFILE on )
 
 set(sources 
 	test_LocalLink.cc
@@ -29,6 +32,8 @@ set(sources_cuda
 	test_LocalLink.cu
 	test_GlobalLinkWithPatterns.cu
 	../../lattice/cuda/CudaError.cu
+	GaugeConfiguration.cc
+	GaugeConfigurationHelper.cu
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )
