@@ -16,6 +16,8 @@ set(sources
 	test_GlobalLink.cc 
 	test_GlobalLinkWithPatterns.cc
 	test_LocalGlobalLinkCompatibility.cc
+	LinkFileVogt.cc
+	test_LinkFile.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})
 target_link_libraries(test_lattice_host pthread)
@@ -32,14 +34,15 @@ set(sources_cuda
 	test_LocalLink.cu
 	test_GlobalLinkWithPatterns.cu
 	../../lattice/cuda/CudaError.cu
-	GaugeConfiguration.cc
-	GaugeConfigurationHelper.cu
+	test_GaugeConfiguration.cc
+	test_GaugeConfigurationWithPattern.cc
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )
 target_link_libraries(test_lattice_cuda pthread)
 target_link_libraries(test_lattice_cuda gmock)
 target_link_libraries(test_lattice_cuda gtest)
+target_link_libraries(test_lattice_cuda cudart)
 
 if( DEFINED allsources )
 addWithDirectory( lattice "${sources_cuda}"  )
