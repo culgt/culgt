@@ -40,14 +40,31 @@ TEST( ALinkFile, OpenFileDoesNotThrowExceptionIfFileExists )
 	ASSERT_NO_THROW( linkfile.openFile() );
 }
 
-TEST( ALinkFile, OverriddenLoadIsCalledByLoad )
+
+
+class ALinkFileWithDestination: public Test
 {
+public:
 	LinkFileStub<PatternStub<float> > linkfile;
 	float* U;
-	U = new float[10];
 
+	void SetUp()
+	{
+		U = new float[1];
+		linkfile.setFilename( "/dev/random" ); // File that exists
+	}
+};
+
+TEST_F( ALinkFileWithDestination, LoadThrowsIOExceptionBecauseItCallsOpen )
+{
+	LinkFileStub<PatternStub<float> > linkfile;
+
+	ASSERT_THROW( linkfile.load( U ), IOException );
+}
+
+TEST_F( ALinkFileWithDestination, OverriddenLoadIsCalledByLoad )
+{
 	EXPECT_CALL( linkfile, loadImplementation() );
-
 	linkfile.load( U );
 }
 

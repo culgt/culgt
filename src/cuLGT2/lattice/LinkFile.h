@@ -48,7 +48,9 @@ public:
 	virtual void load( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) final
 	{
 		this->U = U;
+		this->openFile();
 		this->loadImplementation();
+		this->closeFile();
 	};
 
 	void openFile()
@@ -88,11 +90,11 @@ public:
 	}
 
 protected:
+	std::fstream file;
 	virtual void loadImplementation(){};
 
 private:
 	std::string filename;
-	std::fstream file;
 	bool fileIsOpen;
 	bool filenameIsSet;
 	typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U;

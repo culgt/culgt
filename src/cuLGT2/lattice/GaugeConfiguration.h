@@ -37,7 +37,7 @@ public:
 	static const int Ndim = PatternType::SITETYPE::Ndim;
 	static const int LinkSize = PatternType::PARAMTYPE::SIZE;
 
-	GaugeConfiguration( const int size[4] ) : UhostIsAllocated(false), UdeviceIsAllocated(false)
+	GaugeConfiguration( const int size[Ndim] ) : UhostIsAllocated(false), UdeviceIsAllocated(false)
 	{
 		for( int i = 0; i < Ndim; i++ )
 		{

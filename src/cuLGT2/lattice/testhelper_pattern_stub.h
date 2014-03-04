@@ -7,24 +7,25 @@
 #ifndef TESTHELPER_PATTERN_STUB_H_
 #define TESTHELPER_PATTERN_STUB_H_
 
-class SiteStub
+template<int NDIM = 4> class SiteStub
 {
 public:
-	static const int Ndim=4;
+	static const int Ndim=NDIM;
 };
 
-template<typename T> class ParamStub
+template<typename T, int TNC=3> class ParamStub
 {
 public:
 	typedef T TYPE;
+	static const int NC = TNC;
 	static const int SIZE=18;
 };
 
-template<typename T> class PatternStub
+template<typename T, int SiteStubNdim=4, int ParamStubNc=3> class PatternStub
 {
 public:
-	typedef ParamStub<T> PARAMTYPE;
-	typedef SiteStub SITETYPE;
+	typedef ParamStub<T, ParamStubNc> PARAMTYPE;
+	typedef SiteStub<SiteStubNdim> SITETYPE;
 };
 
 
