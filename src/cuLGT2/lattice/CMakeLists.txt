@@ -16,7 +16,8 @@ set(sources
 	test_GlobalLink.cc 
 	test_GlobalLinkWithPatterns.cc
 	test_LocalGlobalLinkCompatibility.cc
-	LinkFileVogt.cc
+	test_LinkFileVogt.cc
+	test_LinkFileVogtWithPattern.cc
 	test_LinkFile.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})

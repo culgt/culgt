@@ -89,6 +89,11 @@ public:
 		filenameIsSet = true;
 	}
 
+	void setPointerToU( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U )
+	{
+		this->U = U;
+	}
+
 protected:
 	std::fstream file;
 	virtual void loadImplementation(){};
