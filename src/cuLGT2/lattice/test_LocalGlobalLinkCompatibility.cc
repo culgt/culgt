@@ -2,9 +2,13 @@
 #include "LocalLink.h"
 #include "GlobalLink.h"
 #include "configuration_patterns/StandardPattern.h"
+#include "configuration_patterns/GPUPattern.h"
 #include "../cuLGT1legacy/SiteIndex.hxx"
-#include "su3/SU3Real12.h"
-#include "su3/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "parameterization_types/SUNRealFull.h"
+#include "parameterization_types/SU3Real12.h"
+#include "parameterization_types/SU2Real4.h"
+#include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "parameterization_types/ParameterizationMediatorSU2_Real4_Real8.h"
 
 using namespace culgt;
 using namespace ::testing;
@@ -15,16 +19,16 @@ public:
 	static const int size[4];
 	float U[2*2*2*2*4*18];
 	SiteIndex<4,NO_SPLIT> site;
-	GlobalLink<StandardPattern<SiteIndex<4,NO_SPLIT>,SU3Real18<float> > >* globalLink18;
+	GlobalLink<StandardPattern<SiteIndex<4,NO_SPLIT>,SUNRealFull<3,float> > >* globalLink18;
 
-	LocalLink<SU3Real18<float> > localLink18;
+	LocalLink<SUNRealFull<3,float> > localLink18;
 
 	LocalGlobalLinkWithSU3Real18() : site(size){};
 
 	void SetUp()
 	{
 		site.setLatticeIndex(1);
-		globalLink18 = new GlobalLink<StandardPattern<SiteIndex<4,NO_SPLIT>,SU3Real18<float> > >( U, site, 1 );
+		globalLink18 = new GlobalLink<StandardPattern<SiteIndex<4,NO_SPLIT>,SUNRealFull<3,float> > >( U, site, 1 );
 
 		localLink18.zero();
 		globalLink18->zero();
@@ -59,7 +63,7 @@ public:
 	float U[2*2*2*2*4*18];
 	SiteIndex<4,NO_SPLIT> site;
 	GlobalLink<StandardPattern<SiteIndex<4,NO_SPLIT>,SU3Real12<float> > >* globalLink12;
-	LocalLink<SU3Real18<float> > localLink18;
+	LocalLink<SUNRealFull<3,float> > localLink18;
 
 	int someValue;
 
@@ -94,4 +98,3 @@ TEST_F( LocalGlobalLinkWithDifferentParamTypes, OperatorAssignCopiesFromGlobal12
 
 	ASSERT_FLOAT_EQ( 1., localLink18.get( 16 ) );
 }
-

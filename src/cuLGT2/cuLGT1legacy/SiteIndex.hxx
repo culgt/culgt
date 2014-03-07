@@ -14,6 +14,7 @@
 
 #include "../cudacommon/cuda_host_device.h"
 #include "../common/culgt_typedefs.h"
+#include "../lattice/LatticeDimension.h"
 #include "ParityType.h"
 #include <assert.h>
 
@@ -28,6 +29,7 @@ template<lat_dim_t Nd, ParityType par> class SiteIndex
 {
 public:
 	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd] );
+	CUDA_HOST_DEVICE inline SiteIndex( const culgt::LatticeDimension<Nd> dim );
 	CUDA_HOST_DEVICE inline SiteIndex( const SiteIndex<Nd,par> &s);
 	CUDA_HOST_DEVICE inline virtual ~SiteIndex();
 	CUDA_HOST_DEVICE inline lat_coord_t operator[](lat_dim_t i);
@@ -65,6 +67,14 @@ template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const lat
 	{
 		this->size[i] = size[i];
 		latticeSize *= size[i];
+	}
+}
+
+template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const culgt::LatticeDimension<Nd> dim )
+{
+	for( int i = 0; i < Nd; i++ )
+	{
+		this->size[i] = dim.getDimension( i );
 	}
 }
 

@@ -8,6 +8,7 @@
 #include "GaugeConfigurationHelper.h"
 #include "LocalLink.h"
 #include "GlobalLink.h"
+#include "LinkFile.h"
 
 namespace culgt {
 
@@ -45,6 +46,11 @@ public:
 		}
 		configurationSize = Ndim*getLatticeSize()*LinkSize;
 	};
+
+	~GaugeConfiguration()
+	{
+		freeMemory();
+	}
 
 
 	void allocateMemory()
@@ -199,6 +205,11 @@ public:
 	int getConfigurationSize() const
 	{
 		return configurationSize;
+	}
+
+	void loadFile( LinkFile<PatternType>& linkfile )
+	{
+		linkfile.load( Uhost );
 	}
 
 private:

@@ -2,7 +2,7 @@
 #include <iostream>
 #include "GaugeConfiguration.h"
 #include "configuration_patterns/StandardPattern.h"
-#include "su3/SU3Real12.h"
+#include "parameterization_types/SU3Real12.h"
 #include "../cuLGT1legacy/SiteIndex.hxx"
 
 using namespace culgt;
@@ -19,6 +19,7 @@ public:
 	static const int Nz = 7;
 	static const int size[4];
 
+	static const int mu = 2;
 	static const int someIndex = 4;
 	static const double someValue;
 
@@ -28,8 +29,13 @@ public:
 	typedef GaugeConfiguration<StandardPattern<SiteIndex<Ndim,NO_SPLIT>, SU3Real12<double> > > MyGaugeConfigType;
 	MyGaugeConfigType* gaugeconfig;
 
+	SiteIndex<Ndim,NO_SPLIT> site;
+
+	GaugeConfigurationWithPattern() : site(size){};
+
 	void SetUp()
 	{
+		site.setLatticeIndex( 3 );
 		latticesize = Nt*Nx*Ny*Nz;
 		arraysize = Nt*Nx*Ny*Nz*Ndim*12;
 		gaugeconfig = new MyGaugeConfigType( size );
@@ -49,10 +55,6 @@ const double GaugeConfigurationWithPattern::someValue = 13.24;
 
 TEST_F(  GaugeConfigurationWithPattern, SetGetThrowsExceptionIfNoMemoryIsAllocated )
 {
-	SiteIndex<Ndim,NO_SPLIT> site( size );
-	site.setLatticeIndex( 3 );
-	int mu = 2;
-
 	ASSERT_THROW( gaugeconfig->getLinkFromHost( site, mu ), MemoryException );
 	ASSERT_THROW( gaugeconfig->setLinkOnHost( site, mu, linkWithValue ), MemoryException );
 	ASSERT_THROW( gaugeconfig->getLinkFromDevice( site, mu ), MemoryException );
@@ -61,11 +63,8 @@ TEST_F(  GaugeConfigurationWithPattern, SetGetThrowsExceptionIfNoMemoryIsAllocat
 
 TEST_F( GaugeConfigurationWithPattern, SetGetLinkOnHost )
 {
-	SiteIndex<Ndim,NO_SPLIT> site( size );
-	site.setLatticeIndex( 3 );
-	int mu = 2;
-
 	gaugeconfig->allocateMemory();
+
 	gaugeconfig->setLinkOnHost( site, mu, linkWithValue );
 	link = gaugeconfig->getLinkFromHost( site, mu );
 
@@ -74,11 +73,8 @@ TEST_F( GaugeConfigurationWithPattern, SetGetLinkOnHost )
 
 TEST_F( GaugeConfigurationWithPattern, SetLinkOnDevice )
 {
-	SiteIndex<Ndim,NO_SPLIT> site( size );
-	site.setLatticeIndex( 3 );
-	int mu = 2;
-
 	gaugeconfig->allocateMemory();
+
 	gaugeconfig->setLinkOnDevice( site, mu, linkWithValue );
 	gaugeconfig->copyToHost();
 	link = gaugeconfig->getLinkFromHost( site, mu );
@@ -88,11 +84,8 @@ TEST_F( GaugeConfigurationWithPattern, SetLinkOnDevice )
 
 TEST_F( GaugeConfigurationWithPattern, GetLinkFromDevice )
 {
-	SiteIndex<Ndim,NO_SPLIT> site( size );
-	site.setLatticeIndex( 3 );
-	int mu = 2;
-
 	gaugeconfig->allocateMemory();
+
 	gaugeconfig->setLinkOnHost( site, mu, linkWithValue );
 	gaugeconfig->copyToDevice();
 	link = gaugeconfig->getLinkFromDevice( site, mu );

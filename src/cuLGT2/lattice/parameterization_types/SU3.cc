@@ -53,7 +53,7 @@ public:
 #include "gmock/gmock.h"
 #include "SU3Real12.h"
 #include "../LocalLink.h"
-#include "SU3Real18.h"
+#include "SUNRealFull.h"
 
 using namespace culgt;
 using namespace ::testing;
@@ -61,8 +61,8 @@ using namespace ::testing;
 class ASU3LocalLinkTest: public Test
 {
 public:
-	SU3<LocalLink<SU3Real18<float> > > link;
-	SU3<LocalLink<SU3Real18<float> > > link2;
+	SU3<LocalLink<SUNRealFull<3,float> > > link;
+	SU3<LocalLink<SUNRealFull<3,float> > > link2;
 	SU3<LocalLink<SU3Real12<float> > > link3;
 };
 

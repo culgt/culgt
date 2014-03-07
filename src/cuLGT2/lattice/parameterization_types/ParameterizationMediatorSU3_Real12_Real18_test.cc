@@ -35,12 +35,12 @@ public:
 
 TEST_F( AParameterizationMediator_Real12_Real18, SpecializationCanBeCalled )
 {
-	ParameterizationMediator<SU3Real12<float>,SU3Real18<float>,GetSetMock,GetSetMock >::assign( getset1, getset2 );
+	ParameterizationMediator<SU3Real12<float>,SUNRealFull<3,float>,GetSetMock,GetSetMock >::assign( getset1, getset2 );
 }
 
 TEST_F( AParameterizationMediator_Real12_Real18, AssignCopiesData )
 {
 	getset2.data[5] = 1.3;
-	ParameterizationMediator<SU3Real12<float>,SU3Real18<float>,GetSetMock,GetSetMock >::assign( getset1, getset2 );
+	ParameterizationMediator<SU3Real12<float>,SUNRealFull<3,float>,GetSetMock,GetSetMock >::assign( getset1, getset2 );
 	ASSERT_FLOAT_EQ( 1.3, getset1.data[5] );
 }

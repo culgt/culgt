@@ -6,9 +6,9 @@
 #include "configuration_patterns/StandardPattern.h"
 #include "configuration_patterns/GPUPattern.h"
 #include "configuration_patterns/GPUPatternParityPriority.h"
-#include "su3/SU3Real18.h"
-#include "su3/SU3Real12.h"
-#include "su3/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "parameterization_types/SUNRealFull.h"
+#include "parameterization_types/SU3Real12.h"
+#include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 
 using namespace std;
 
@@ -16,10 +16,10 @@ using namespace culgt;
 using namespace ::testing;
 
 typedef SiteIndex<4,NO_SPLIT> SiteIndex4;
-typedef GlobalLink<StandardPattern<SiteIndex4,SU3Real18<float> > > GlobalLinkStandardSU3Real18Index;
+typedef GlobalLink<StandardPattern<SiteIndex4,SUNRealFull<3,float> > > GlobalLinkStandardSU3Real18Index;
 typedef GlobalLink<StandardPattern<SiteIndex4,SU3Real12<float> > > GlobalLinkStandardSU3Real12Index;
 typedef GlobalLink<GPUPattern<SiteIndex4,SU3Real12<float> > > GlobalLinkGpuSU3Real12Index;
-typedef GlobalLink<GPUPatternParityPriority<SiteIndex4,SU3Real18<float> > > GlobalLinkGpuParitySU3Real18Index;
+typedef GlobalLink<GPUPatternParityPriority<SiteIndex4,SUNRealFull<3,float> > > GlobalLinkGpuParitySU3Real18Index;
 
 CUDA_TEST(AGlobalLinkWithPatternCu, SetGetValueWithSameLinkAndParameterIndexWorks )
 {

@@ -11,12 +11,12 @@
 #include "../../common/culgt_typedefs.h"
 #include "../ParameterizationMediator.h"
 #include "SU3Real12.h"
-#include "SU3Real18.h"
+#include "SUNRealFull.h"
 
 namespace culgt
 {
 
-template<typename LinkType1, typename LinkType2, typename T> class ParameterizationMediator<SU3Real12<T>,SU3Real18<T>, LinkType1, LinkType2>
+template<typename LinkType1, typename LinkType2, typename T> class ParameterizationMediator<SU3Real12<T>,SUNRealFull<3,T>, LinkType1, LinkType2>
 {
 public:
 	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
@@ -28,7 +28,7 @@ public:
 	}
 };
 
-template<typename LinkType1, typename LinkType2> class ParameterizationMediator<SU3Real12<float>,SU3Real18<float>, LinkType1, LinkType2>
+template<typename LinkType1, typename LinkType2> class ParameterizationMediator<SU3Real12<float>,SUNRealFull<3,float>, LinkType1, LinkType2>
 {
 public:
 	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
@@ -43,7 +43,7 @@ public:
 /**
  * Copy from 12 to 18 parameterization needs reconstruction of "third row"
  */
-template<typename LinkType1, typename LinkType2, typename T>class ParameterizationMediator<SU3Real18<T>,SU3Real12<T>, LinkType1, LinkType2>
+template<typename LinkType1, typename LinkType2, typename T>class ParameterizationMediator<SUNRealFull<3,T>,SU3Real12<T>, LinkType1, LinkType2>
 {
 public:
 	CUDA_HOST_DEVICE static void assign( LinkType1& l1, const LinkType2& l2 )

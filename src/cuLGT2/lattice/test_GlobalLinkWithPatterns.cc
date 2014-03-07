@@ -3,9 +3,9 @@
 #include "GlobalLink.h"
 #include "../cuLGT1legacy/SiteIndex.hxx"
 #include "configuration_patterns/StandardPattern.h"
-#include "su3/SU3Real18.h"
-#include "su3/SU3Real12.h"
-#include "su3/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "parameterization_types/SUNRealFull.h"
+#include "parameterization_types/SU3Real12.h"
+#include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 
 using namespace std;
 
@@ -13,7 +13,7 @@ using namespace culgt;
 using namespace ::testing;
 
 typedef SiteIndex<4,NO_SPLIT> SiteIndex4;
-typedef GlobalLink<StandardPattern<SiteIndex4,SU3Real18<float> > > GlobalLinkStandardSU3Real18Index;
+typedef GlobalLink<StandardPattern<SiteIndex4,SUNRealFull<3,float> > > GlobalLinkStandardSU3Real18Index;
 typedef GlobalLink<StandardPattern<SiteIndex4,SU3Real12<float> > > GlobalLinkStandardSU3Real12Index;
 
 

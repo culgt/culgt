@@ -12,6 +12,9 @@
 #include <fstream>
 #include <sstream>
 #include "LinkFile.h"
+#include "LocalLink.h"
+#include "GlobalLink.h"
+#include "parameterization_types/SUNRealFull.h"
 #include "../common/culgt_typedefs.h"
 
 namespace culgt
@@ -34,7 +37,6 @@ private:
 	short nc;
 	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::Ndim;
 	short size[memoryNdim];
-	short memorySize[memoryNdim];
 	short sizeOfReal;
 
 	void readSize()
@@ -58,15 +60,20 @@ private:
 
 public:
 	LinkFileVogt(){};
-	LinkFileVogt( const int size[memoryNdim] )
+	LinkFileVogt( const int size[memoryNdim] ) : LinkFile<MemoryConfigurationPattern>( size )
 	{
-		for( int i = 0; i < memoryNdim; i++ )
-		{
-			this->memorySize[i] = size[i];
-		}
+	}
+	LinkFileVogt( const LatticeDimension<memoryNdim> size ) : LinkFile<MemoryConfigurationPattern>( size )
+	{
 	}
 
-	virtual void loadImplementation() override;
+	virtual void loadImplementation() override
+	{
+		loadHeader();
+		verify();
+		loadBody();
+	}
+
 	void loadHeader()
 	{
 		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&ndim, sizeof(short) );
@@ -75,16 +82,36 @@ public:
 		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&sizeOfReal, sizeof(short) );
 	}
 
+	LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > getNextLink()
+	{
+		typedef LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > LocalLink;
+		LocalLink link;
+
+		for( int i = 0; i < MemoryConfigurationPattern::PARAMTYPE::SIZE; i++ )
+		{
+			typename MemoryConfigurationPattern::PARAMTYPE::TYPE value;
+			LinkFile<MemoryConfigurationPattern>::file.read( (char*)&value, sizeof(typename MemoryConfigurationPattern::PARAMTYPE::TYPE) );
+			link.set( i, value );
+		}
+		return link;
+	}
+
 	void loadBody()
 	{
-		for( int i = 0; i < latticeSize*memoryNdim; i++ )
+		for( int i = 0; i < this->getLatticeDimension().getSize(); i++ )
 		{
-			// loadLink
-			// assignLink
+			for( int mu = 0; mu < memoryNdim; mu++ )
+			{
+				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension() );
+				site.setLatticeIndex( i );
 
+				GlobalLink<MemoryConfigurationPattern> dest( this->getPointerToU(), site, mu );
 
+				LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > src;
+				src = getNextLink();
 
-//			U[MemoryConfigurationPattern::getIndexFromStandardIndex( i )]
+				dest = src;
+			}
 		}
 	}
 
@@ -107,13 +134,13 @@ public:
 
 		for( int i = 0; i < memoryNdim; i++ )
 		{
-			if( memorySize[i] != size[i] )
+			if( this->getLatticeDimension().getDimension(i) != size[i] )
 			{
 				std::stringstream msg;
 				msg << "Wrong lattice size in ";
 				msg << i;
 				msg << " direction";
-				throwException( msg.str(), memorySize[i], size[i] );
+				throwException( msg.str(), this->getLatticeDimension().getDimension(i), size[i] );
 			}
 		}
 	}
@@ -144,15 +171,6 @@ public:
 	}
 
 };
-
-
-
-template<typename MemoryConfigurationPattern, typename TFloatFile > void LinkFileVogt<MemoryConfigurationPattern, TFloatFile>::loadImplementation()
-{
-	loadHeader();
-	verify();
-}
-
 
 }
 

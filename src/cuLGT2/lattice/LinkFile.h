@@ -10,6 +10,8 @@
 
 #include <string>
 #include <fstream>
+#include "LatticeDimension.h"
+#include "../common/culgt_typedefs.h"
 
 namespace culgt
 {
@@ -42,6 +44,19 @@ public:
 
 
 	LinkFile() : fileIsOpen( false ), filenameIsSet( false )
+	{
+	};
+
+//	LinkFile( const LinkFile<MemoryConfigurationPattern>& copy ) : fileIsOpen( false ), filenameIsSet( false ), latticeDimension(copy.getLatticeDimension() )
+//	{
+//		U = copy.getPointerToU();
+//	};
+
+	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::Ndim] ) : fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
+	{
+	};
+
+	LinkFile( const LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> size ) : fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
 
@@ -94,14 +109,26 @@ public:
 		this->U = U;
 	}
 
+	typename MemoryConfigurationPattern::PARAMTYPE::TYPE* getPointerToU() const
+	{
+		return U;
+	}
+
+	LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> getLatticeDimension() const
+	{
+		return latticeDimension;
+	}
+
+
 protected:
 	std::fstream file;
 	virtual void loadImplementation(){};
 
 private:
-	std::string filename;
 	bool fileIsOpen;
 	bool filenameIsSet;
+	LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> latticeDimension;
+	std::string filename;
 	typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U;
 };
 

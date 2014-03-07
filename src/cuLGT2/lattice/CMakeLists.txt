@@ -8,8 +8,9 @@ include( ../commonsettings.cmake )
 
 set(sources 
 	test_LocalLink.cc
-	su3/ParameterizationMediatorSU3_Real12_Real18_test.cc 
-	su3/SU3.cc
+	parameterization_types/ParameterizationMediatorSU3_Real12_Real18_test.cc 
+	parameterization_types/test_ParameterizationMediatorSU2_Real4_Real8.cc 
+	parameterization_types/SU3.cc
 	configuration_patterns/test_StandardPattern.cc
 	configuration_patterns/test_GPUPattern.cc
 	configuration_patterns/test_GPUPatternParityPriority.cc
@@ -37,6 +38,7 @@ set(sources_cuda
 	../../lattice/cuda/CudaError.cu
 	test_GaugeConfiguration.cc
 	test_GaugeConfigurationWithPattern.cc
+	test_LatticeDimension.cu
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )
@@ -55,3 +57,15 @@ cuda_add_executable(test_lattice ../test_main.cpp ${sources} ${sources_cuda})
 target_link_libraries(test_lattice pthread)
 target_link_libraries(test_lattice gmock)
 target_link_libraries(test_lattice gtest)
+
+
+
+
+
+set(sourcesSpecial 
+	test_GlobalLinkWithPatterns.cc
+	)
+add_executable(test_lattice_special ../test_main.cpp ${sourcesSpecial})
+target_link_libraries(test_lattice_special pthread)
+target_link_libraries(test_lattice_special gmock)
+target_link_libraries(test_lattice_special gtest)

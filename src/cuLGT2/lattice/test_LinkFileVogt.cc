@@ -2,22 +2,28 @@
 #include "gmock/gmock.h"
 #include "testhelper_pattern_stub.h"
 #include "LinkFileVogt.h"
+#include "LocalLink.h"
+#include "parameterization_types/SUNRealFull.h"
 
 using namespace culgt;
 using namespace ::testing;
 
 /**
- * The sample configuration is 8x4^3 lattice SU(2) lattice in Single Precision with first entry -1.966492e-01
+ * The sample configuration is 8x4^3 lattice SU(2) lattice in Single Precision with first entry -4.711566e-01
  */
 class ALinkFileVogtWithSampleConfiguration: public Test
 {
 public:
-	LinkFileVogt<PatternStub<float>,float> linkfile;
+	LinkFileVogt<PatternStub<float,4,2>,float> linkfile;
 
 	void SetUp()
 	{
-		linkfile.setFilename("../test_configSU2N4T8SP.vogt");
+		linkfile.setFilename("test_configSU2N4T8SP.vogt");
 		linkfile.openFile();
+	}
+	void TearDown()
+	{
+		linkfile.closeFile();
 	}
 };
 
@@ -50,9 +56,19 @@ TEST_F( ALinkFileVogtWithSampleConfiguration, LoadHeaderReadsSizeOfReal)
 	ASSERT_EQ( sizeof( float ), (size_t)linkfile.getSizeOfReal() );
 }
 
+TEST_F( ALinkFileVogtWithSampleConfiguration, LoadFirstLinkHasCorrectFirstEntry)
+{
+	const float firstEntry = -4.711566e-01;
+	linkfile.loadHeader();
+	LocalLink<SUNRealFull<2,float> >link;
+	link = linkfile.getNextLink();
+
+	ASSERT_EQ( firstEntry, link.get(0) );
+}
+
 template<typename LinkFileType> void readSampleFileHeader( LinkFileType& linkfile )
 {
-	linkfile.setFilename("../test_configSU2N4T8SP.vogt");
+	linkfile.setFilename("test_configSU2N4T8SP.vogt");
 	linkfile.openFile();
 	linkfile.loadHeader();
 }
@@ -144,7 +160,7 @@ TEST( ALinkFileVogtWithWrongSettings, LoadThrowsExceptionIfWrongNdim )
 	U = new float[1];
 
 	linkfile = new LinkFileVogt<PatternStub<float,WrongNDIM,Nc>,float>(size);
-	linkfile->setFilename( "../test_configSU2N4T8SP.vogt" );
+	linkfile->setFilename( "test_configSU2N4T8SP.vogt" );
 
 	ASSERT_THROW( linkfile->load( U ), LinkFileVogtException );
 }

@@ -126,3 +126,23 @@ TEST_F( GaugeConfigurationDoubleFixedSize, CopyConfigToHost )
 
 	ASSERT_DOUBLE_EQ( someValue, gaugeconfig->getElementFromHost( someIndex ) );
 }
+
+#include "LinkFile.h"
+
+class LinkFileMock: public LinkFile<PatternStub<float> >
+{
+public:
+	MOCK_METHOD0(loadImplementation, void() );
+};
+
+TEST( GaugeConfigurationFileLoad, CallsLoadImplementation )
+{
+	int size[4] = {4,4,4,4};
+	GaugeConfiguration<PatternStub<float> > gaugeconfig( size );
+	LinkFileMock linkfile;
+	linkfile.setFilename( "/dev/random" );
+
+	EXPECT_CALL( linkfile, loadImplementation() );
+
+	gaugeconfig.loadFile( linkfile );
+}

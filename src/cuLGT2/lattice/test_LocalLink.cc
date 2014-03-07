@@ -1,8 +1,8 @@
 #include "gmock/gmock.h"
 #include "LocalLink.h"
-#include "su3/SU3Real12.h"
-#include "su3/SU3Real18.h"
-#include "su3/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "parameterization_types/SU3Real12.h"
+#include "parameterization_types/SUNRealFull.h"
+#include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 
 using namespace culgt;
 using namespace ::testing;
@@ -11,7 +11,7 @@ using namespace ::testing;
 class ALocalLinkWithSU3Real12AndSU3Real18: public Test
 {
 public:
-	LocalLink<SU3Real18<float> > link18;
+	LocalLink<SUNRealFull<3,float> > link18;
 	LocalLink<SU3Real12<float> > link12_1;
 	LocalLink<SU3Real12<float> > link12_2;
 
