@@ -4,8 +4,8 @@
  *      Author: vogt
  */
 
-#ifndef SU3REAL18_H_
-#define SU3REAL18_H_
+#ifndef SU2REAL4_H_
+#define SU2REAL4_H_
 
 #include "../../common/culgt_typedefs.h"
 
@@ -15,13 +15,13 @@ namespace culgt
 /*
  *
  */
-template<typename T> class SU3Real18
+template<typename T> class SU2Real4
 {
 public:
-	static const lat_dim_t NC = 3;
-	static const lat_group_index_t SIZE = 18;
+	static const lat_dim_t NC = 2;
+	static const lat_group_index_t SIZE = 4;
 	typedef T TYPE;
 };
 
 } /* namespace culgt */
-#endif /* SU3REAL18_H_ */
+#endif /* SU2REAL4_H_ */
