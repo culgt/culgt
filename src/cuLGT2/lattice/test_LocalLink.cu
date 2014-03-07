@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "LocalLink.h"
 #include "parameterization_types/SU3Real12.h"
-#include "parameterization_types/SU3Real18.h"
+#include "parameterization_types/SUNRealFull.h"
 #include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 #include "../cudatest/cuda_test_compare.h"
 #include "../cudatest/cuda_gtest_plugin.h"
