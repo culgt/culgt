@@ -11,6 +11,7 @@ set(sources
 	parameterization_types/ParameterizationMediatorSU3_Real12_Real18_test.cc 
 	parameterization_types/test_ParameterizationMediatorSU2_Real4_Real8.cc 
 	parameterization_types/SU3.cc
+	parameterization_types/test_SUNRealFull.cc
 	configuration_patterns/test_StandardPattern.cc
 	configuration_patterns/test_GPUPattern.cc
 	configuration_patterns/test_GPUPatternParityPriority.cc

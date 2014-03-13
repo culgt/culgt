@@ -40,7 +40,7 @@ const int GaugeConfigurationDoubleFixedSize::size[4] = {Nt,Nx,Ny,Nz};
 
 TEST_F( GaugeConfigurationDoubleFixedSize, LatticeSizesIsCorrectlySet )
 {
-	ASSERT_EQ( latticesize, gaugeconfig->getLatticeSize() );
+	ASSERT_EQ( latticesize, gaugeconfig->getLatticeDimension().getSize() );
 }
 
 TEST_F( GaugeConfigurationDoubleFixedSize, ConfigurationSizeIsCorrect )
@@ -63,18 +63,21 @@ TEST_F( GaugeConfigurationDoubleFixedSize, GetElementFromHostDoesNotThrowExcepti
 TEST_F( GaugeConfigurationDoubleFixedSize, GetElementFromDeviceThrowsExceptionIfNoDeviceMemoryIsAllocated )
 {
 	gaugeconfig->allocateMemoryOnHost();
+
 	ASSERT_THROW( gaugeconfig->getElementFromDevice( 3 ), MemoryException );
 }
 
 TEST_F( GaugeConfigurationDoubleFixedSize, GetElementFromDeviceDoesNotThrowExceptionIfMemoryIsAllocated )
 {
 	gaugeconfig->allocateMemoryOnDevice();
+
 	ASSERT_NO_THROW( gaugeconfig->getElementFromDevice( 3 ) );
 }
 
 TEST_F( GaugeConfigurationDoubleFixedSize, GetElementNoThrowsAfterAllocateBoth )
 {
 	gaugeconfig->allocateMemory();
+
 	ASSERT_NO_THROW( gaugeconfig->getElementFromHost( 3 ) );
 	ASSERT_NO_THROW( gaugeconfig->getElementFromDevice( 3 ) );
 }
@@ -83,6 +86,7 @@ TEST_F( GaugeConfigurationDoubleFixedSize, GetElementThrowsAfterFree )
 {
 	gaugeconfig->allocateMemory();
 	gaugeconfig->freeMemory();
+
 	ASSERT_THROW( gaugeconfig->getElementFromHost( 3 ), MemoryException );
 	ASSERT_THROW( gaugeconfig->getElementFromDevice( 3 ), MemoryException );
 }
@@ -92,14 +96,16 @@ TEST_F( GaugeConfigurationDoubleFixedSize, SetGetOnDeviceWorks )
 	const int someIndex = 4;
 	const double someValue = 1.5233;
 	gaugeconfig->allocateMemoryOnDevice();
+
 	gaugeconfig->setElementOnDevice( someIndex, someValue );
 
 	ASSERT_DOUBLE_EQ( someValue, gaugeconfig->getElementFromDevice( someIndex ) );
 }
 
-TEST_F( GaugeConfigurationDoubleFixedSize, CopyToDeviceFailsIfNoMemoryIsAllocatedInHostAndDevice )
+TEST_F( GaugeConfigurationDoubleFixedSize, CopyToDeviceFailsIfNoMemoryIsAllocatedInHost )
 {
 	gaugeconfig->allocateMemoryOnDevice();
+
 	ASSERT_THROW( gaugeconfig->copyToDevice(), MemoryException );
 }
 
@@ -127,6 +133,7 @@ TEST_F( GaugeConfigurationDoubleFixedSize, CopyConfigToHost )
 	ASSERT_DOUBLE_EQ( someValue, gaugeconfig->getElementFromHost( someIndex ) );
 }
 
+
 #include "LinkFile.h"
 
 class LinkFileMock: public LinkFile<PatternStub<float> >
@@ -135,13 +142,27 @@ public:
 	MOCK_METHOD0(loadImplementation, void() );
 };
 
-TEST( GaugeConfigurationFileLoad, CallsLoadImplementation )
+class GaugeConfigurationFileLoad: public testing::Test
 {
-	int size[4] = {4,4,4,4};
-	GaugeConfiguration<PatternStub<float> > gaugeconfig( size );
+public:
+	static const int size[4];
+	GaugeConfiguration<PatternStub<float> > gaugeconfig;
 	LinkFileMock linkfile;
-	linkfile.setFilename( "/dev/random" );
 
+	GaugeConfigurationFileLoad() : gaugeconfig(size)
+	{
+	}
+
+	void SetUp()
+	{
+		linkfile.setFilename( "/dev/random" );
+	}
+};
+
+const int GaugeConfigurationFileLoad::size[4] = {4,4,4,4};
+
+TEST_F( GaugeConfigurationFileLoad, CallsLoadImplementation )
+{
 	EXPECT_CALL( linkfile, loadImplementation() );
 
 	gaugeconfig.loadFile( linkfile );

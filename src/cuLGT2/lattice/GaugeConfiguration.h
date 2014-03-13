@@ -5,16 +5,18 @@
 #include <cuda_runtime.h>
 #include <exception>
 #include <string>
-#include "GaugeConfigurationHelper.h"
+#include "GaugeConfigurationCudaHelper.h"
 #include "LocalLink.h"
 #include "GlobalLink.h"
 #include "LinkFile.h"
+#include "LatticeDimension.h"
 
 namespace culgt {
 
 class MemoryException: public std::exception
 {
 public:
+	~MemoryException() throw() {};
 	MemoryException( std::string msg ) : msg(msg){};
 	virtual const char* what() const throw()
 	{
@@ -38,13 +40,13 @@ public:
 	static const int Ndim = PatternType::SITETYPE::Ndim;
 	static const int LinkSize = PatternType::PARAMTYPE::SIZE;
 
-	GaugeConfiguration( const int size[Ndim] ) : UhostIsAllocated(false), UdeviceIsAllocated(false)
+	GaugeConfiguration( const LatticeDimension<Ndim> dim ) : UhostIsAllocated(false), UdeviceIsAllocated(false), dim(dim)
 	{
-		for( int i = 0; i < Ndim; i++ )
-		{
-			this->size[i] = size[i];
-		}
-		configurationSize = Ndim*getLatticeSize()*LinkSize;
+//		for( int i = 0; i < Ndim; i++ )
+//		{
+//			this->size[i] = size[i];
+//		}
+		configurationSize = Ndim*dim.getSize()*LinkSize;
 	};
 
 	~GaugeConfiguration()
@@ -72,7 +74,7 @@ public:
 	{
 		if( !UdeviceIsAllocated )
 		{
-			GaugeConfigurationHelper<T>::allocateMemory( &Udevice, configurationSize );
+			GaugeConfigurationCudaHelper<T>::allocateMemory( &Udevice, configurationSize );
 			UdeviceIsAllocated = true;
 		}
 	}
@@ -97,7 +99,7 @@ public:
 	{
 		if( UdeviceIsAllocated )
 		{
-			GaugeConfigurationHelper<T>::freeMemory( Udevice );
+			GaugeConfigurationCudaHelper<T>::freeMemory( Udevice );
 			Udevice = NULL;
 			UdeviceIsAllocated = false;
 		}
@@ -106,13 +108,13 @@ public:
 	void copyToDevice()
 	{
 		checkMemoryIsAllocated();
-		GaugeConfigurationHelper<T>::copyToDevice( Udevice, Uhost, configurationSize );
+		GaugeConfigurationCudaHelper<T>::copyToDevice( Udevice, Uhost, configurationSize );
 	}
 
 	void copyToHost()
 	{
 		checkMemoryIsAllocated();
-		GaugeConfigurationHelper<T>::copyToHost( Uhost, Udevice, configurationSize );
+		GaugeConfigurationCudaHelper<T>::copyToHost( Uhost, Udevice, configurationSize );
 	}
 
 	T getElementFromHost( int i ) const
@@ -158,7 +160,7 @@ public:
 	T getElementFromDevice( int i ) const
 	{
 		if( UdeviceIsAllocated )
-			return GaugeConfigurationHelper<T>::getElement( Udevice, i );
+			return GaugeConfigurationCudaHelper<T>::getElement( Udevice, i );
 		else
 			throw MemoryException( "No device memory allocated!" );
 	}
@@ -166,7 +168,7 @@ public:
 	void setElementOnDevice( int i, const T val )
 	{
 		if( UdeviceIsAllocated )
-			GaugeConfigurationHelper<T>::setElement( Udevice, i, val );
+			GaugeConfigurationCudaHelper<T>::setElement( Udevice, i, val );
 		else
 			throw MemoryException( "No device memory allocated!" );
 	}
@@ -176,7 +178,7 @@ public:
 		if( UdeviceIsAllocated )
 		{
 			// TODO this is an ugly construct...
-			GaugeConfigurationHelper<T>::template setLink<PatternType>( Udevice, site, mu, link );
+			GaugeConfigurationCudaHelper<T>::template setLink<PatternType>( Udevice, site, mu, link );
 		}
 		else
 			throw MemoryException( "No device memory allocated!" );
@@ -186,20 +188,15 @@ public:
 	{
 		if( UdeviceIsAllocated )
 		{
-			return GaugeConfigurationHelper<T>::template getLink<PatternType,LocalLink<PARAMTYPE> >( Udevice, site, mu );;
+			return GaugeConfigurationCudaHelper<T>::template getLink<PatternType,LocalLink<PARAMTYPE> >( Udevice, site, mu );;
 		}
 		else
 			throw MemoryException( "No device memory allocated!" );
 	}
 
-	int getLatticeSize() const
+	LatticeDimension<Ndim> getLatticeDimension() const
 	{
-		int latsize = 1;
-		for( int i = 0; i < Ndim; i++ )
-		{
-			latsize *= size[i];
-		}
-		return latsize;
+		return dim;
 	}
 
 	int getConfigurationSize() const
@@ -225,7 +222,7 @@ private:
 	T* Udevice;
 	bool UhostIsAllocated;
 	bool UdeviceIsAllocated;
-	int size[Ndim];
+	LatticeDimension<Ndim> dim;
 	int configurationSize;
 };
 

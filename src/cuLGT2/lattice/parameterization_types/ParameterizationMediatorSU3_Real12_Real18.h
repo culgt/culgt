@@ -28,17 +28,17 @@ public:
 	}
 };
 
-template<typename LinkType1, typename LinkType2> class ParameterizationMediator<SU3Real12<float>,SUNRealFull<3,float>, LinkType1, LinkType2>
-{
-public:
-	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
-	{
-		for( lat_group_index_t i = 0; i < 12; i++ )
-		{
-			l1.set(i, l2.get(i));
-		}
-	}
-};
+//template<typename LinkType1, typename LinkType2> class ParameterizationMediator<SU3Real12<float>,SUNRealFull<3,float>, LinkType1, LinkType2>
+//{
+//public:
+//	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
+//	{
+//		for( lat_group_index_t i = 0; i < 12; i++ )
+//		{
+//			l1.set(i, l2.get(i));
+//		}
+//	}
+//};
 
 /**
  * Copy from 12 to 18 parameterization needs reconstruction of "third row"

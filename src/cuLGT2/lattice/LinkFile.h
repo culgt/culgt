@@ -20,6 +20,7 @@ namespace culgt
 class IOException: public std::exception
 {
 public:
+	~IOException() throw() {};
 	IOException( std::string msg ) : msg(msg){};
 	virtual const char* what() const throw()
 	{
@@ -60,7 +61,11 @@ public:
 	{
 	};
 
+#if __cplusplus == 201103L
 	virtual void load( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) final
+#else
+	void load( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U )
+#endif
 	{
 		this->U = U;
 		this->openFile();

@@ -7,6 +7,7 @@
 #ifndef LINK_H_
 #define LINK_H_
 
+#include "../common/culgt_typedefs.h"
 #include "../cudacommon/cuda_host_device.h"
 
 namespace culgt

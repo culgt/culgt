@@ -21,6 +21,7 @@ public:
 	static const lat_dim_t NC = 2;
 	static const lat_group_index_t SIZE = 4;
 	typedef T TYPE;
+	typedef T REALTYPE;
 };
 
 } /* namespace culgt */

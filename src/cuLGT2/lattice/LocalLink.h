@@ -11,6 +11,8 @@
 #include "../common/culgt_typedefs.h"
 #include "Link.h"
 #include "ParameterizationMediator.h"
+#include <cmath>
+
 
 namespace culgt
 {
@@ -61,6 +63,25 @@ public:
 		{
 			store[i] = (typename ParamType::TYPE) 0.0;
 		}
+	}
+
+	/**
+	 */
+	CUDA_HOST_DEVICE inline  void identity()
+	{
+		ParamType::identity( store );
+	}
+
+	/**
+	 */
+	CUDA_HOST_DEVICE inline typename ParamType::REALTYPE reDet()
+	{
+		return ParamType::reDet( store );
+	}
+
+	CUDA_HOST_DEVICE inline typename ParamType::REALTYPE reTrace()
+	{
+		return ParamType::reTrace( store );
 	}
 
 	/**

@@ -14,7 +14,6 @@
 namespace culgt
 {
 
-
 template<int Ndim> class LatticeDimension
 {
 private:
