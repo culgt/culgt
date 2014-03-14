@@ -21,7 +21,7 @@ private:
 	lat_dim_t latSize;
 
 public:
-	CUDA_HOST_DEVICE LatticeDimension( const int size[Ndim] )
+	CUDA_HOST_DEVICE inline LatticeDimension( const int size[Ndim] )
 	{
 		latSize = 1;
 		for( int i = 0; i < Ndim; i++ )
@@ -38,7 +38,7 @@ public:
 	 * @param dir2
 	 * @param dir3
 	 */
-	CUDA_HOST_DEVICE LatticeDimension( lat_coord_t dir0 = 0, lat_coord_t dir1 = 0, lat_coord_t dir2 = 0, lat_coord_t dir3 = 0)
+	CUDA_HOST_DEVICE inline LatticeDimension( lat_coord_t dir0 = 0, lat_coord_t dir1 = 0, lat_coord_t dir2 = 0, lat_coord_t dir3 = 0)
 	{
 		if( Ndim > 0 )
 			size[0] = dir0;
@@ -58,12 +58,12 @@ public:
 
 
 
-	CUDA_HOST_DEVICE lat_coord_t getDimension( const lat_dim_t i ) const
+	CUDA_HOST_DEVICE inline lat_coord_t getDimension( const lat_dim_t i ) const
 	{
 		return size[i];
 	}
 
-	CUDA_HOST_DEVICE lat_dim_t getSize() const
+	CUDA_HOST_DEVICE inline lat_dim_t getSize() const
 	{
 		return latSize;
 	}

@@ -46,7 +46,7 @@ public:
 template<typename LinkType1, typename LinkType2, typename T>class ParameterizationMediator<SUNRealFull<2,T>,SU2Real4<T>, LinkType1, LinkType2>
 {
 public:
-	CUDA_HOST_DEVICE static void assign( LinkType1& l1, const LinkType2& l2 )
+	CUDA_HOST_DEVICE inline static void assign( LinkType1& l1, const LinkType2& l2 )
 	{
 		for( lat_group_index_t i = 0; i < 4; i++ )
 		{

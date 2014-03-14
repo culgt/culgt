@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
 #include <iostream>
 #include "GaugeConfiguration.h"
+#include "GaugeConfigurationHelper.h"
 #include "configuration_patterns/StandardPattern.h"
 #include "parameterization_types/SU3Real12.h"
 #include "../cuLGT1legacy/SiteIndex.hxx"
@@ -17,7 +18,7 @@ public:
 	static const int Nx = 5;
 	static const int Ny = 6;
 	static const int Nz = 7;
-	static const int size[4];
+	const LatticeDimension<Ndim> dim;
 
 	static const int mu = 2;
 	static const int someIndex = 4;
@@ -26,19 +27,20 @@ public:
 	LocalLink<SU3Real12<double> > linkWithValue;
 	LocalLink<SU3Real12<double> > link;
 
-	typedef GaugeConfiguration<StandardPattern<SiteIndex<Ndim,NO_SPLIT>, SU3Real12<double> > > MyGaugeConfigType;
+	typedef StandardPattern<SiteIndex<Ndim,NO_SPLIT>, SU3Real12<double> >  MyPattern;
+	typedef GaugeConfiguration<MyPattern> MyGaugeConfigType;
 	MyGaugeConfigType* gaugeconfig;
 
 	SiteIndex<Ndim,NO_SPLIT> site;
 
-	GaugeConfigurationWithPattern() : site(size){};
+	GaugeConfigurationWithPattern() : dim(Nt,Nx,Ny,Nz), site(dim){};
 
 	void SetUp()
 	{
 		site.setLatticeIndex( 3 );
 		latticesize = Nt*Nx*Ny*Nz;
 		arraysize = Nt*Nx*Ny*Nz*Ndim*12;
-		gaugeconfig = new MyGaugeConfigType( size );
+		gaugeconfig = new MyGaugeConfigType( dim );
 		linkWithValue.set( someIndex, someValue );
 	};
 
@@ -50,7 +52,6 @@ public:
 	};
 };
 
-const int GaugeConfigurationWithPattern::size[4] = {Nt,Nx,Ny,Nz};
 const double GaugeConfigurationWithPattern::someValue = 13.24;
 
 TEST_F(  GaugeConfigurationWithPattern, SetGetThrowsExceptionIfNoMemoryIsAllocated )
@@ -91,4 +92,13 @@ TEST_F( GaugeConfigurationWithPattern, GetLinkFromDevice )
 	link = gaugeconfig->getLinkFromDevice( site, mu );
 
 	ASSERT_DOUBLE_EQ( someValue, link.get( someIndex ) );
+}
+
+TEST_F( GaugeConfigurationWithPattern, SetColdFromGaugeConfigurationHelper )
+{
+	gaugeconfig->allocateMemoryOnHost();
+
+	GaugeConfigurationHelper<MyPattern>::setCold( gaugeconfig->getHostPointer(), dim );
+
+	ASSERT_FLOAT_EQ( 1.0, gaugeconfig->getElementFromHost(8) );
 }

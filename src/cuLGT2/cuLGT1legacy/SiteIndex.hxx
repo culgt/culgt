@@ -46,6 +46,7 @@ public:
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice();
 	CUDA_HOST_DEVICE inline lat_coord_t getLatticeSizeDirection( lat_dim_t i );
 	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, bool up );
+	CUDA_HOST_DEVICE inline SiteIndex<Nd,par> getNeighbour( lat_dim_t direction, bool up );
 
 	CUDA_HOST_DEVICE inline void calculateNeighbourTable( lat_index_t* nn );
 
@@ -54,6 +55,8 @@ public:
 
 	lat_coord_t size[Nd];
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex( const lat_coord_t site[Nd] );
+
+	static const lat_index_t* globalNN;
 private:
 	lat_index_t index;
 	lat_index_t latticeSize;
@@ -267,6 +270,17 @@ template<lat_dim_t Nd, ParityType par> lat_coord_t SiteIndex<Nd, par>::getLattic
 template<lat_dim_t Nd, ParityType par> void SiteIndex<Nd, par>::setNeighbour( lat_dim_t mu, bool up )
 {
 	index = nn[(2*mu+up)*getLatticeSize()+index];
+}
+
+/**
+ * Sets the index to the neighbour given by mu = 0..(Nd-1) and direction "up": positive direction (up==true), negative direction (up==false)
+ * using a neighbour table stored in memory. On the fly calculation reduces memory traffic but probably needs more registers.
+ */
+template<lat_dim_t Nd, ParityType par> SiteIndex<Nd, par> SiteIndex<Nd, par>::getNeighbour( lat_dim_t mu, bool up )
+{
+	SiteIndex<Nd, par> site(this);
+	site.setNeighbour( mu, up );
+	return site;
 }
 
 /**

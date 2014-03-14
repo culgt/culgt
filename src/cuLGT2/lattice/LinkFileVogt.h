@@ -66,8 +66,11 @@ public:
 	LinkFileVogt( const LatticeDimension<memoryNdim> size ) : LinkFile<MemoryConfigurationPattern>( size )
 	{
 	}
-
+#if __cplusplus == 201103L
 	virtual void loadImplementation() override
+#else
+	void loadImplementation()
+#endif
 	{
 		loadHeader();
 		verify();
@@ -84,10 +87,11 @@ public:
 
 	LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > getNextLink()
 	{
-		typedef LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > LocalLink;
+		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> LocalLinkParamType;
+		typedef LocalLink<LocalLinkParamType> LocalLink;
 		LocalLink link;
 
-		for( int i = 0; i < MemoryConfigurationPattern::PARAMTYPE::SIZE; i++ )
+		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
 		{
 			typename MemoryConfigurationPattern::PARAMTYPE::TYPE value;
 			LinkFile<MemoryConfigurationPattern>::file.read( (char*)&value, sizeof(typename MemoryConfigurationPattern::PARAMTYPE::TYPE) );

@@ -209,6 +209,16 @@ public:
 		linkfile.load( Uhost );
 	}
 
+	T* getDevicePointer() const
+	{
+		return Udevice;
+	}
+
+	T* getHostPointer() const
+	{
+		return Uhost;
+	}
+
 private:
 	void checkMemoryIsAllocated()
 	{

@@ -17,11 +17,38 @@
 namespace culgt
 {
 
+
+
+template<typename LinkType> class CommaInitializer
+{
+public:
+	inline CommaInitializer( LinkType& link, const typename LinkType::PARAMTYPE::TYPE& a ) : link(link), pos(1)
+	{
+		link.set(0, a );
+	}
+
+	CommaInitializer<LinkType>& operator,( const typename LinkType::PARAMTYPE::TYPE a )
+	{
+		if( pos < LinkType::PARAMTYPE::SIZE )
+		{
+			link.set( pos, a );
+			pos++;
+		}
+		return *this;
+	}
+private:
+	LinkType& link;
+	lat_group_index_t pos;
+};
+
+
+
+
 /**
  * LocalLink allocates memory of size got from ParamType.
  * @author vogt
  */
-template<typename ParamType> class LocalLink: Link<ParamType>
+template<typename ParamType> class LocalLink//: Link<ParamType>
 {
 public:
 	/**
@@ -29,7 +56,11 @@ public:
 	 */
 	typedef ParamType PARAMTYPE;
 
-	CUDA_HOST_DEVICE ~LocalLink()
+//	CUDA_HOST_DEVICE inline LocalLink()
+//	{
+//	}
+
+	CUDA_HOST_DEVICE inline ~LocalLink()
 	{
 	};
 
@@ -57,7 +88,7 @@ public:
 	 * @note A function "identity()" (to set the link to the identity) is not possible here, since the identity (for example for SU3) depends on the
 	 * 		 Parameterization (ParamType). A delegate should do the job. (Maybe move zero() to the Parameterization class, too.)
 	 */
-	CUDA_HOST_DEVICE inline  void zero()
+	CUDA_HOST_DEVICE inline void zero()
 	{
 		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
 		{
@@ -67,7 +98,7 @@ public:
 
 	/**
 	 */
-	CUDA_HOST_DEVICE inline  void identity()
+	CUDA_HOST_DEVICE inline void identity()
 	{
 		ParamType::identity( store );
 	}
@@ -84,6 +115,7 @@ public:
 		return ParamType::reTrace( store );
 	}
 
+
 	/**
 	 * Assignment operator for same type just copies all elements.
 	 * @param arg
@@ -98,6 +130,25 @@ public:
 		return *this;
 	}
 
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const LocalLink<ParamType>& b )
+	{
+		ParamType::multAssign( store, b.store );
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline CommaInitializer<LocalLink<ParamType> > operator<<( const typename ParamType::TYPE& a )
+	{
+		return CommaInitializer<LocalLink<ParamType> >( *this, a );
+	}
+
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& hermitian()
+	{
+		ParamType::hermitian( store );
+		return *this;
+	}
+
+
+
 	/**
 	 * Assignment operator needs to call Mediator for different ParamTypes and/or LinkTypes
 	 * @param arg
@@ -108,9 +159,42 @@ public:
 		ParameterizationMediator<ParamType,typename LinkType::PARAMTYPE,LocalLink<ParamType>, LinkType >::assign( *this, arg );
 		return *this;
 	}
+
+	static CUDA_HOST_DEVICE inline  LocalLink<ParamType> getIdentity()
+	{
+		LocalLink<ParamType> link;
+		link.identity();
+		return link;
+	}
+
 private:
 	typename ParamType::TYPE store[ParamType::SIZE];
 };
+
+#include <iostream>
+using namespace std;
+
+template<typename ParamType> CUDA_HOST_DEVICE inline bool operator==(LocalLink<ParamType> const& lhs, LocalLink<ParamType> const& rhs)
+{
+	for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
+	{
+		if( rhs.get(i) != lhs.get(i) )
+		{
+			cout << i << ": " << rhs.get(i) << "/" << lhs.get(i) << endl;
+			return false;
+		}
+	}
+	return true;
+}
+template<typename ParamType> CUDA_HOST_DEVICE inline bool operator!=(LocalLink<ParamType> const& lhs, LocalLink<ParamType> const& rhs)
+{
+	return !(lhs == rhs);
+}
+
+
+
+
+
 
 
 } /* namespace culgt */

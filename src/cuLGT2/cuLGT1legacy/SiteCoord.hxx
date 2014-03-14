@@ -33,22 +33,23 @@ template<lat_dim_t Nd, ParityType par> class SiteCoord
 public:
 	CUDA_HOST_DEVICE inline SiteCoord( const lat_coord_t size[Nd] );
 	CUDA_HOST_DEVICE inline SiteCoord( const SiteCoord<Nd,par> &s);
-	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd> dim );
+	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd>& dim );
 //	CUDA_HOST_DEVICE inline virtual ~SiteCoord();
 	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
-	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex();
-	CUDA_HOST_DEVICE inline lat_index_t getIndex(){return getLatticeIndex();}; // for compatibility with cuLGT2
+	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
+	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();} ; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline lat_coord_t getLatticeSizeDirection( lat_dim_t i );
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex );
-	CUDA_HOST_DEVICE inline lat_index_t getSize(){return getLatticeSize();}; // for compatibility with cuLGT2
-	CUDA_HOST_DEVICE inline lat_index_t getLatticeSize();
-	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndexTimeslice();
-	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice();
+	CUDA_HOST_DEVICE inline lat_index_t getSize() const {return getLatticeSize();}; // for compatibility with cuLGT2
+	CUDA_HOST_DEVICE inline lat_index_t getLatticeSize() const;
+	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndexTimeslice() const;
+	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice() const;
 //	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, lat_coord_t steps );
 	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, bool up );
 	CUDA_HOST_DEVICE inline void setNeighbour( lat_coord_t* direction );
+	CUDA_HOST_DEVICE inline SiteCoord<Nd,par> getNeighbour( lat_dim_t direction, bool up );
 
 	lat_coord_t size[Nd];
 	static const lat_dim_t Ndim = Nd;
@@ -65,7 +66,7 @@ template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const lat
 	}
 }
 
-template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const culgt::LatticeDimension<Nd> dim )
+template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const culgt::LatticeDimension<Nd>& dim )
 {
 	for( int i = 0; i < Nd; i++ )
 	{
@@ -96,7 +97,7 @@ template<lat_dim_t Nd, ParityType par> lat_coord_t SiteCoord<Nd, par>::getLattic
 	return size[i];
 }
 
-template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex() // TODO parity ordering
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex() const // TODO parity ordering
 {
 	if( par == FULL_SPLIT )
 	{
@@ -268,7 +269,7 @@ template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setLatticeIndexF
 }
 
 
-template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeSize()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeSize() const
 {
 	int tmp = 1;
 	for( lat_dim_t i = 0; i < Nd; i++ )
@@ -281,7 +282,7 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLattic
 /**
  * Index within a timeslice
  */
-template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeIndexTimeslice()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeIndexTimeslice() const
 {
 	if( par == FULL_SPLIT )
 	{
@@ -349,7 +350,7 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLattic
 	}
 }
 
-template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeSizeTimeslice()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeSizeTimeslice() const
 {
 	int tmp = 1;
 	for( lat_dim_t i = 1; i < Nd; i++ )
@@ -438,6 +439,13 @@ template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setNeighbour( la
 			}
 		}
 	}
+}
+
+template<lat_dim_t Nd, ParityType par> SiteCoord<Nd, par> SiteCoord<Nd, par>::getNeighbour( lat_dim_t direction, bool up )
+{
+	SiteCoord<Nd, par> site(*this);
+	site.setNeighbour( direction, up );
+	return site;
 }
 
 

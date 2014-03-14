@@ -6,5 +6,5 @@ if( NOT DEFINED commonsettings )
 	
 	find_package(CUDA)
 	include(FindCUDA)
-	set(CUDA_NVCC_FLAGS "-arch=sm_20")
+	set(CUDA_NVCC_FLAGS "-arch=sm_20 -Xptxas -v")
 endif()

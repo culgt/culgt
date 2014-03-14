@@ -22,6 +22,16 @@ public:
 	static const lat_group_index_t SIZE = 12;
 	typedef T TYPE;
 	typedef T REALTYPE;
+
+	static void inline identity( TYPE store[SIZE] )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			store[i] = 0;
+		}
+		store[0] = 1.;
+		store[8] = 1.;
+	}
 };
 
 } /* namespace culgt */

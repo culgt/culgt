@@ -12,6 +12,7 @@ set(sources
 	parameterization_types/test_ParameterizationMediatorSU2_Real4_Real8.cc 
 	parameterization_types/SU3.cc
 	parameterization_types/test_SUNRealFull.cc
+	parameterization_types/test_SU3Real12.cc
 	configuration_patterns/test_StandardPattern.cc
 	configuration_patterns/test_GPUPattern.cc
 	configuration_patterns/test_GPUPatternParityPriority.cc
@@ -21,6 +22,7 @@ set(sources
 	test_LinkFileVogt.cc
 	test_LinkFileVogtWithPattern.cc
 	test_LinkFile.cc
+	test_KernelSetup.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})
 target_link_libraries(test_lattice_host pthread)
@@ -40,6 +42,7 @@ set(sources_cuda
 	test_GaugeConfiguration.cc
 	test_GaugeConfigurationWithPattern.cc
 	test_LatticeDimension.cu
+	../cudacommon/test_DeviceCommunicator.cu
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )

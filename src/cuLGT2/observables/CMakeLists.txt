@@ -7,7 +7,7 @@ include( ../commonsettings.cmake )
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
 set(sources 
-	Plaquette.cc
+	test_Plaquette.cc
 	)
 add_executable(test_observables_host ../test_main.cpp ${sources})
 target_link_libraries(test_observables_host pthread)
@@ -21,6 +21,7 @@ endif()
 
 
 set(sources_cuda 
+	test_PlaquetteAverage.cu
 	)
 
 cuda_add_executable(test_observables_cuda ../test_main.cpp ${sources_cuda} )
