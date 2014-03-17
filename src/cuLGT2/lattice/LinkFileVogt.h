@@ -106,7 +106,7 @@ public:
 		{
 			for( int mu = 0; mu < memoryNdim; mu++ )
 			{
-				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension() );
+				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
 				site.setLatticeIndex( i );
 
 				GlobalLink<MemoryConfigurationPattern> dest( this->getPointerToU(), site, mu );

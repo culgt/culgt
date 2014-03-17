@@ -17,7 +17,7 @@ template<int NDIM = 4> class SiteStub
 {
 public:
 	SiteStub(){};
-	SiteStub( culgt::LatticeDimension<NDIM> dim){};
+	SiteStub( culgt::LatticeDimension<NDIM> dim, lat_index_t* nn = NULL ){};
 	static const int Ndim=NDIM;
 	void setLatticeIndex( const int i ){};
 };

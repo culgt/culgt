@@ -31,9 +31,9 @@
 template<lat_dim_t Nd, ParityType par> class SiteCoord
 {
 public:
-	CUDA_HOST_DEVICE inline SiteCoord( const lat_coord_t size[Nd] );
-	CUDA_HOST_DEVICE inline SiteCoord( const SiteCoord<Nd,par> &s);
-	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd>& dim );
+	CUDA_HOST_DEVICE inline SiteCoord( const lat_coord_t size[Nd], lat_index_t* nn=NULL );
+	CUDA_HOST_DEVICE inline SiteCoord( const SiteCoord<Nd,par> &s );
+	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd>& dim, lat_index_t* nn=NULL );
 //	CUDA_HOST_DEVICE inline virtual ~SiteCoord();
 	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
@@ -51,6 +51,8 @@ public:
 	CUDA_HOST_DEVICE inline void setNeighbour( lat_coord_t* direction );
 	CUDA_HOST_DEVICE inline SiteCoord<Nd,par> getNeighbour( lat_dim_t direction, bool up );
 
+	CUDA_HOST_DEVICE inline void calculateNeighbourTable( lat_index_t* nn ) {}; // does not use neighbourtable;
+
 	lat_coord_t size[Nd];
 	static const lat_dim_t Ndim = Nd;
 	lat_coord_t site[Nd];
@@ -58,7 +60,7 @@ public:
 
 
 
-template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const lat_coord_t size[Nd] )
+template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const lat_coord_t size[Nd], lat_index_t* nn )
 {
 	for( int i = 0; i < Nd; i++ )
 	{
@@ -66,7 +68,7 @@ template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const lat
 	}
 }
 
-template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const culgt::LatticeDimension<Nd>& dim )
+template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const culgt::LatticeDimension<Nd>& dim, lat_index_t* nn )
 {
 	for( int i = 0; i < Nd; i++ )
 	{

@@ -27,7 +27,7 @@ template<typename Pattern> void GaugeConfigurationHelper<Pattern>::setCold( TYPE
 {
 	LocalLink<typename Pattern::PARAMTYPE> locLink;
 	locLink.identity();
-	SITE site( dim );
+	SITE site( dim, NULL );
 	for( int i = 0; i < dim.getSize(); i++ )
 	{
 		for( int mu = 0; mu < SITE::Ndim; mu++ )

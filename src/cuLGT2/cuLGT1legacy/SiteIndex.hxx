@@ -28,9 +28,9 @@
 template<lat_dim_t Nd, ParityType par> class SiteIndex
 {
 public:
-	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd] );
-	CUDA_HOST_DEVICE inline SiteIndex( const culgt::LatticeDimension<Nd> dim );
-	CUDA_HOST_DEVICE inline SiteIndex( const SiteIndex<Nd,par> &s);
+	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd], lat_index_t* nn = NULL); // for compatibility
+	CUDA_HOST_DEVICE inline SiteIndex( const SiteIndex<Nd,par> &s );
+	CUDA_HOST_DEVICE inline SiteIndex( const culgt::LatticeDimension<Nd> dim, lat_index_t* nn ); // init without neighbour table not allowed (this is a new interface)
 	CUDA_HOST_DEVICE inline virtual ~SiteIndex();
 	CUDA_HOST_DEVICE inline lat_coord_t operator[](lat_dim_t i);
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
@@ -56,14 +56,13 @@ public:
 	lat_coord_t size[Nd];
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex( const lat_coord_t site[Nd] );
 
-	static const lat_index_t* globalNN;
 private:
 	lat_index_t index;
 	lat_index_t latticeSize;
 };
 
 
-template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const lat_coord_t size[Nd] )
+template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const lat_coord_t size[Nd], lat_index_t* nn ) :nn(nn)
 {
 	latticeSize = 1;
 	for( lat_dim_t i = 0; i < Nd; i++ )
@@ -71,14 +70,17 @@ template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const lat
 		this->size[i] = size[i];
 		latticeSize *= size[i];
 	}
+	index = 0;
 }
 
-template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const culgt::LatticeDimension<Nd> dim )
+template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const culgt::LatticeDimension<Nd> dim, lat_index_t* nn ):nn(nn)
 {
 	for( int i = 0; i < Nd; i++ )
 	{
 		this->size[i] = dim.getDimension( i );
 	}
+	latticeSize = dim.getSize();
+	index = 0;
 }
 
 template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const SiteIndex<Nd,par> &s )
@@ -278,7 +280,7 @@ template<lat_dim_t Nd, ParityType par> void SiteIndex<Nd, par>::setNeighbour( la
  */
 template<lat_dim_t Nd, ParityType par> SiteIndex<Nd, par> SiteIndex<Nd, par>::getNeighbour( lat_dim_t mu, bool up )
 {
-	SiteIndex<Nd, par> site(this);
+	SiteIndex<Nd, par> site(*this);
 	site.setNeighbour( mu, up );
 	return site;
 }

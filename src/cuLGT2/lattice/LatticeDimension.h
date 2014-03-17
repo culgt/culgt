@@ -21,6 +21,8 @@ private:
 	lat_dim_t latSize;
 
 public:
+	static const int NDIM = Ndim;
+
 	CUDA_HOST_DEVICE inline LatticeDimension( const int size[Ndim] )
 	{
 		latSize = 1;
@@ -67,9 +69,56 @@ public:
 	{
 		return latSize;
 	}
+
+	/**
+	 * This allows the use of LatticeDimension in std::map as key.
+	 */
+	CUDA_HOST_DEVICE inline bool operator==( const LatticeDimension<Ndim>& rhs )
+	{
+		for( int i = 0; i < Ndim; i++ )
+		{
+			if( getDimension(i) != rhs.getDimension(i) )
+				return false;
+		}
+		return true; // equal
+	}
+
+	CUDA_HOST_DEVICE inline bool operator!=( const LatticeDimension<Ndim>& rhs ) {return !( this == rhs);}
 };
 
+
+struct LatticeDimensionCompare
+{
+	template<typename LatticeDimensionType> bool operator()( const LatticeDimensionType& lhs, const LatticeDimensionType& rhs ) const
+	{
+		for( int i = 0; i < LatticeDimensionType::NDIM; i++ )
+		{
+			if( lhs.getDimension(i) < rhs.getDimension(i) )
+				return true;
+			else if( lhs.getDimension(i) > rhs.getDimension(i) )
+				return false;
+			// else the extent in i-direction is same, test next...
+		}
+		return false; // equal
+	}
+};
+
+//template<int Ndim> CUDA_HOST_DEVICE inline bool operator<( const LatticeDimension<Ndim>& lhs, const LatticeDimension<Ndim>& rhs )
+//{
+//	for( int i = 0; i < Ndim; i++ )
+//	{
+//		if( lhs.getDimension(i) < rhs.getDimension(i) )
+//			return true;
+//		else if( lhs.getDimension(i) > rhs.getDimension(i) )
+//			return false;
+//		// else the extent in i-direction is same, test next...
+//	}
+//	return false; // equal
+//}
+//
+
 }
+
 #endif /* LATTICEDIMENSION_H_ */
 
 

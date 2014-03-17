@@ -33,7 +33,7 @@ public:
 
 	SiteIndex<Ndim,NO_SPLIT> site;
 
-	GaugeConfigurationWithPattern() : dim(Nt,Nx,Ny,Nz), site(dim){};
+	GaugeConfigurationWithPattern() : dim(Nt,Nx,Ny,Nz), site(dim, NULL ){};
 
 	void SetUp()
 	{
