@@ -37,12 +37,14 @@ endif()
 
 set(sources_cuda 
 	test_LocalLink.cu
+	test_LocalLinkWithSU2Vector4.cu
 	test_GlobalLinkWithPatterns.cu
 	../../lattice/cuda/CudaError.cu
 	test_GaugeConfiguration.cc
 	test_GaugeConfigurationWithPattern.cc
 	test_LatticeDimension.cu
 	../cudacommon/test_DeviceCommunicator.cu
+	parameterization_types/test_SU2Vector4.cu
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )

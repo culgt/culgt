@@ -90,10 +90,11 @@ public:
 	 */
 	CUDA_HOST_DEVICE inline void zero()
 	{
-		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
-		{
-			store[i] = (typename ParamType::TYPE) 0.0;
-		}
+		ParamType::zero( store );
+//		for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
+//		{
+//			store[i] = (typename ParamType::TYPE) 0.0;
+//		}
 	}
 
 	/**
@@ -171,16 +172,12 @@ private:
 	typename ParamType::TYPE store[ParamType::SIZE];
 };
 
-#include <iostream>
-using namespace std;
-
 template<typename ParamType> CUDA_HOST_DEVICE inline bool operator==(LocalLink<ParamType> const& lhs, LocalLink<ParamType> const& rhs)
 {
 	for( lat_group_index_t i = 0; i < ParamType::SIZE; i++ )
 	{
 		if( rhs.get(i) != lhs.get(i) )
 		{
-			cout << i << ": " << rhs.get(i) << "/" << lhs.get(i) << endl;
 			return false;
 		}
 	}

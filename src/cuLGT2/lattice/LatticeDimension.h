@@ -86,7 +86,9 @@ public:
 	CUDA_HOST_DEVICE inline bool operator!=( const LatticeDimension<Ndim>& rhs ) {return !( this == rhs);}
 };
 
-
+/**
+ * Used in SiteNeighbourTableManager to allow LatticeDimension objects as keys in std::map.
+ */
 struct LatticeDimensionCompare
 {
 	template<typename LatticeDimensionType> bool operator()( const LatticeDimensionType& lhs, const LatticeDimensionType& rhs ) const
@@ -103,26 +105,7 @@ struct LatticeDimensionCompare
 	}
 };
 
-//template<int Ndim> CUDA_HOST_DEVICE inline bool operator<( const LatticeDimension<Ndim>& lhs, const LatticeDimension<Ndim>& rhs )
-//{
-//	for( int i = 0; i < Ndim; i++ )
-//	{
-//		if( lhs.getDimension(i) < rhs.getDimension(i) )
-//			return true;
-//		else if( lhs.getDimension(i) > rhs.getDimension(i) )
-//			return false;
-//		// else the extent in i-direction is same, test next...
-//	}
-//	return false; // equal
-//}
-//
 
 }
 
 #endif /* LATTICEDIMENSION_H_ */
-
-
-
-
-
-

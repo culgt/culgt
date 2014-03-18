@@ -45,6 +45,98 @@ public:
 		}
 		return result;
 	}
+
+	static CUDA_HOST_DEVICE void inline zero( TYPE store[SIZE] )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			store[i] = 0;
+		}
+	}
+};
+
+template<typename T> class SUNRealFull<2,T>
+{
+public:
+	static const lat_dim_t NC = 2;
+	static const lat_group_index_t SIZE = 8;
+	typedef T TYPE;
+	typedef T REALTYPE;
+
+	static CUDA_HOST_DEVICE void inline zero( TYPE store[SIZE] )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			store[i] = 0;
+		}
+	}
+
+	static CUDA_HOST_DEVICE void inline identity( TYPE store[SIZE] )
+	{
+		store[0] = 1.;
+		store[1] = 0.;
+		store[2] = 0.;
+		store[3] = 0.;
+		store[4] = 0.;
+		store[5] = 0.;
+		store[6] = 1.;
+		store[7] = 0.;
+	}
+
+	static CUDA_HOST_DEVICE inline REALTYPE reDet( TYPE store[SIZE] )
+	{
+		return store[0]*store[6] - store[2]*store[4] - store[1]*store[7] + store[3]*store[5];
+	}
+
+	static CUDA_HOST_DEVICE REALTYPE inline reTrace( TYPE store[SIZE] )
+	{
+		return store[0]+store[6];
+	}
+
+	static CUDA_HOST_DEVICE void inline multAssign( TYPE dest[SIZE], const TYPE b[SIZE] )
+	{
+		TYPE a[SIZE];
+		for( int i = 0; i < SIZE; i++ )
+		{
+			a[i] = dest[i];
+		}
+
+		dest[0] = a[0]*b[0] - a[1]*b[1] + a[2]*b[4] - a[3]*b[5];
+		dest[1] = a[0]*b[1] + a[1]*b[0] + a[2]*b[5] + a[3]*b[4];
+		dest[2] = a[0]*b[2] - a[1]*b[3] + a[2]*b[6] - a[3]*b[7];
+		dest[3] = a[0]*b[3] + a[1]*b[2] + a[2]*b[7] + a[3]*b[6];
+		dest[4] = a[4]*b[0] - a[5]*b[1] + a[6]*b[4] - a[7]*b[5];
+		dest[5] = a[4]*b[1] + a[5]*b[0] + a[6]*b[5] + a[7]*b[4];
+		dest[6] = a[4]*b[2] - a[5]*b[3] + a[6]*b[6] - a[7]*b[7];
+		dest[7] = a[4]*b[3] + a[5]*b[2] + a[6]*b[7] + a[7]*b[6];
+	}
+
+	static CUDA_HOST_DEVICE void inline flipSign( TYPE& a )
+	{
+		a = -a;
+	}
+
+	static CUDA_HOST_DEVICE void inline swap( TYPE& a, TYPE& b )
+	{
+		TYPE temp = b;
+		b = a;
+		a = temp;
+	}
+
+	static CUDA_HOST_DEVICE void inline swapAndFlipSign( TYPE& a, TYPE& b )
+	{
+		TYPE temp = b;
+		b = -a;
+		a = -temp;
+	}
+
+	static CUDA_HOST_DEVICE void inline hermitian( TYPE store[SIZE] )
+	{
+		flipSign( store[1] );
+		swap( store[2], store[4] );
+		swapAndFlipSign( store[3], store[5] );
+		flipSign( store[7] );
+	}
 };
 
 template<typename T> class SUNRealFull<3,T>
@@ -54,6 +146,14 @@ public:
 	static const lat_group_index_t SIZE = 2*(3*3);
 	typedef T TYPE;
 	typedef T REALTYPE;
+
+	static CUDA_HOST_DEVICE void inline zero( TYPE store[SIZE] )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			store[i] = 0;
+		}
+	}
 
 	static CUDA_HOST_DEVICE void inline identity( TYPE store[SIZE] )
 	{

@@ -8,6 +8,7 @@
 #define SU3REAL12_H_
 
 #include "../../common/culgt_typedefs.h"
+#include "../../cudacommon/cuda_host_device.h"
 
 namespace culgt
 {
@@ -23,7 +24,7 @@ public:
 	typedef T TYPE;
 	typedef T REALTYPE;
 
-	static void inline identity( TYPE store[SIZE] )
+	static CUDA_HOST_DEVICE void inline identity( TYPE store[SIZE] )
 	{
 		for( int i = 0; i < SIZE; i++ )
 		{
@@ -31,6 +32,14 @@ public:
 		}
 		store[0] = 1.;
 		store[8] = 1.;
+	}
+
+	static CUDA_HOST_DEVICE void inline zero( TYPE store[SIZE] )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			store[i] = 0;
+		}
 	}
 };
 

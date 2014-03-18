@@ -14,6 +14,8 @@
 #include "../cudacommon/cuda_host_device.h"
 #include "reduction_kernel.cu"
 
+namespace culgt
+{
 
 unsigned int nextPow2(unsigned int x)
 {
@@ -26,7 +28,7 @@ unsigned int nextPow2(unsigned int x)
     return ++x;
 }
 
-extern "C"
+//extern "C"
 bool isPow2(unsigned int x)
 {
     return ((x&(x-1))==0);
@@ -296,6 +298,8 @@ template<class T> T Reduction<T>::reduceAllMax( T* d_idata )
 		cudaMemcpy(&gpu_result, d_odata, sizeof(T), cudaMemcpyDeviceToHost);
 	}
 	return gpu_result;
+}
+
 }
 
 #endif

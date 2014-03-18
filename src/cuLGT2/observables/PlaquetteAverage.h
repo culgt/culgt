@@ -46,6 +46,10 @@ public:
 		return devPtr;
 	}
 
+	~PlaquetteAverage()
+	{
+		cudaFree( devPtr );
+	}
 
 private:
 	LatticeDimension<PatternType::SITETYPE::Ndim> dim;

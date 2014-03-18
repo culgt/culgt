@@ -44,6 +44,11 @@ public:
 		return devPtr;
 	}
 
+	~WilsonLoopAverage()
+	{
+		cudaFree( devPtr );
+	}
+
 
 private:
 	LatticeDimension<PatternType::SITETYPE::Ndim> dim;
