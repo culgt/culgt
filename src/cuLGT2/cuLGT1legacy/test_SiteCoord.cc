@@ -59,11 +59,11 @@ class SiteCoordCompatibilityTimesliceSplitNoSplit: public Test
 {
 public:
 	static const int latticeIndex = 123;
-	static const int size[4]; // size is 4^3 = 265
+	static const int size[4]; // size is 4^4 = 265
 	SiteCoord<4,NO_SPLIT> siteNoSplit;
-	SiteCoord<4,TIMESLICE_SPLIT> siteFullSplit;
+	SiteCoord<4,TIMESLICE_SPLIT> siteTimesliceSplit;
 
-	SiteCoordCompatibilityTimesliceSplitNoSplit() : siteNoSplit(size), siteFullSplit(size)
+	SiteCoordCompatibilityTimesliceSplitNoSplit() : siteNoSplit(size), siteTimesliceSplit(size)
 	{
 	}
 };
@@ -73,7 +73,7 @@ const int SiteCoordCompatibilityTimesliceSplitNoSplit::size[] = {4,4,4,4};
 TEST_F( SiteCoordCompatibilityTimesliceSplitNoSplit, CoordinatesAreEqual )
 {
 	siteNoSplit.setLatticeIndex( latticeIndex );
-	siteFullSplit.setLatticeIndexFromNonParitySplitOrder( latticeIndex );
+	siteTimesliceSplit.setLatticeIndexFromNonParitySplitOrder( latticeIndex );
 
-	ASSERT_THAT( true, coordinatesAreEqual( siteNoSplit, siteFullSplit ));
+	ASSERT_THAT( true, coordinatesAreEqual( siteNoSplit, siteTimesliceSplit ));
 }

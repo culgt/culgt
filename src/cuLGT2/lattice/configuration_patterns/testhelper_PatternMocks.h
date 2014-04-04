@@ -7,22 +7,44 @@
 
 #ifndef TEST_PATTERNMOCKS_H_
 #define TEST_PATTERNMOCKS_H_
+#include "../../cuLGT1legacy/ParityType.h"
 
-template<int TNdim=4> class SiteTypeMock
+template<int TNdim=4, ParityType Parity=NO_SPLIT> class SiteTypeMock
 {
 public:
+	static const ParityType PARITYTYPE = Parity;
 	static const int Ndim = TNdim;
 	const int size;
+	const int sizeTimeslice;
 	const int index;
-	SiteTypeMock( int size, int index ) : size(size), index(index) {};
-	SiteTypeMock( int index ) : size(0), index(index) {};
+	const int indexTimeslice;
+	SiteTypeMock( int size, int sizeTimeslice, int index, int indexTimeslice ) : size(size), sizeTimeslice(sizeTimeslice), index(index), indexTimeslice(indexTimeslice) {};
+	SiteTypeMock( int size, int index ) : size(size), sizeTimeslice(0), index(index), indexTimeslice(0) {};
+	SiteTypeMock( int index ) : size(0), sizeTimeslice(0), index(index), indexTimeslice(0) {};
 	int getIndex() const
  	{
 		return index;
 	}
+	int getIndexTimeslice() const
+	{
+		return indexTimeslice;
+	}
 	int getSize() const
 	{
 		return size;
+	}
+	int getSizeTimeslice() const
+	{
+		return sizeTimeslice;
+	}
+	/**
+	 * always return index of timeslice
+	 * @param mu
+	 * @return
+	 */
+	int operator[]( const int mu ) const
+	{
+		return index/sizeTimeslice;
 	}
 };
 
@@ -43,10 +65,11 @@ public:
 
 
 
-template<int mySize> class ParamTypeMock
+template<int mySize, int nc=2> class ParamTypeMock
 {
 public:
 	static const int SIZE = mySize;
+	static const int NC = nc;
 };
 
 class ParamTypeMock2

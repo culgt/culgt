@@ -42,10 +42,6 @@ public:
 
 	GaugeConfiguration( const LatticeDimension<Ndim> dim ) : UhostIsAllocated(false), UdeviceIsAllocated(false), dim(dim)
 	{
-//		for( int i = 0; i < Ndim; i++ )
-//		{
-//			this->size[i] = size[i];
-//		}
 		configurationSize = Ndim*dim.getSize()*LinkSize;
 	};
 
@@ -218,6 +214,13 @@ public:
 	{
 		return Uhost;
 	}
+
+#ifdef __CUDACC__
+	template<typename RNG> void setHotOnDevice( int rngSeed, int rngCounter )
+	{
+		GaugeConfigurationCudaHelper<T>::template setHot<PatternType,RNG>(Udevice, dim, rngSeed, rngCounter );
+	}
+#endif
 
 private:
 	void checkMemoryIsAllocated()

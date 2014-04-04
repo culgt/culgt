@@ -29,12 +29,12 @@
 }
 
 #define CUDA_LAST_ERROR( msg )\
-	cudaDeviceSynchronize();\
+	{cudaDeviceSynchronize();\
 	cudaError_t error = cudaGetLastError();\
 	if(error!=cudaSuccess) {\
 		fprintf(stderr,"ERROR: %s: %s\n", msg, cudaGetErrorString(error) );\
 		exit(-1);\
-	}
+	}}
 #endif
 
 #endif /* CUDA_ERROR_H_ */

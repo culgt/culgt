@@ -18,6 +18,9 @@
 
 #include <stdio.h>
 
+namespace culgt
+{
+
 // Utility class used to avoid linker errors with extern
 // unsized shared memory arrays with templated type
 template<class T>
@@ -836,9 +839,24 @@ reduce6max(T *g_idata, T *g_odata, unsigned int n)
 }
 
 
-extern "C"
-bool isPow2(unsigned int x);
+//extern "C"
+//bool isPow2(unsigned int x);
+unsigned int nextPow2(unsigned int x)
+{
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return ++x;
+}
 
+//extern "C"
+bool isPow2(unsigned int x)
+{
+    return ((x&(x-1))==0);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Wrapper function for kernel launch
@@ -1441,5 +1459,5 @@ reducemax(int size, int threads, int blocks,
 //reducedot<double>(int size, int threads, int blocks,
 //               int whichKernel, double *d_idata, double *d_idata2, double *d_odata);
 
-
+}
 #endif // #ifndef _REDUCE_KERNEL_H_

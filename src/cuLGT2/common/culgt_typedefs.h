@@ -8,6 +8,36 @@
 #ifndef LATTICE_TYPEDEFS_H_
 #define LATTICE_TYPEDEFS_H_
 
+#if !defined(__VECTOR_TYPES_H__)
+	struct float4 {
+		float x;
+		float y;
+		float z;
+		float w;
+	};
+	struct double4 {
+		double x;
+		double y;
+		double z;
+		double w;
+	};
+#endif
+
+template<typename T> struct Real4
+{
+};
+
+template<> struct Real4<float>
+{
+	typedef float4 VECTORTYPE;
+};
+
+template<> struct Real4<double>
+{
+	typedef double4 VECTORTYPE;
+};
+
+
 // type for lattic dimension, i.e. 3 or 4, ...
 //  and for group dimensions
 typedef int lat_dim_t;

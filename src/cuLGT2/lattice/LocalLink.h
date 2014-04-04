@@ -12,7 +12,8 @@
 #include "Link.h"
 #include "ParameterizationMediator.h"
 #include <cmath>
-
+#include "parameterization_types/SU2Vector4.h"
+#include "../cuLGT1legacy/Complex.hxx"
 
 namespace culgt
 {
@@ -64,12 +65,22 @@ public:
 	{
 	};
 
+	CUDA_HOST_DEVICE inline typename ParamType::TYPE& operator[](lat_group_index_t i)
+	{
+		return store[i];
+	}
+
 	/**
 	 * Returns the i-th entry of the ParamType specific array
 	 * @param i
 	 * @return
 	 */
 	CUDA_HOST_DEVICE inline typename ParamType::TYPE get( lat_group_index_t i ) const
+	{
+		return store[i];
+	}
+
+	CUDA_HOST_DEVICE inline typename ParamType::TYPE& getReference( lat_group_index_t i )
 	{
 		return store[i];
 	}
@@ -116,6 +127,16 @@ public:
 		return ParamType::reTrace( store );
 	}
 
+	CUDA_HOST_DEVICE inline Complex<typename ParamType::REALTYPE> trace()
+	{
+		return ParamType::trace( store );
+	}
+
+	CUDA_HOST_DEVICE inline typename ParamType::REALTYPE normFrobeniusSquared()
+	{
+		return ParamType::normFrobeniusSquared( store );
+	}
+
 
 	/**
 	 * Assignment operator for same type just copies all elements.
@@ -137,6 +158,24 @@ public:
 		return *this;
 	}
 
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator+=( const LocalLink<ParamType>& b )
+	{
+		ParamType::addAssign( store, b.store );
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator-=( const LocalLink<ParamType>& b )
+	{
+		ParamType::subtractAssign( store, b.store );
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator-=( const Complex<typename ParamType::REALTYPE>& b )
+	{
+		ParamType::subtractAssign( store, b );
+		return *this;
+	}
+
 	CUDA_HOST_DEVICE inline CommaInitializer<LocalLink<ParamType> > operator<<( const typename ParamType::TYPE& a )
 	{
 		return CommaInitializer<LocalLink<ParamType> >( *this, a );
@@ -146,6 +185,26 @@ public:
 	{
 		ParamType::hermitian( store );
 		return *this;
+	}
+
+	/**
+	 * This introduces a hardcoding to a Parameterization. Should be avoided if possible.
+	 */
+	CUDA_HOST_DEVICE inline LocalLink<SU2Vector4<typename ParamType::REALTYPE> > getSU2Subgroup( lat_group_index_t iSub, lat_group_index_t jSub )
+	{
+		LocalLink<SU2Vector4<typename ParamType::REALTYPE> > subgroup;
+		subgroup.set( 0, ParamType::getSU2Subgroup( store, iSub, jSub) );
+		return subgroup;
+	}
+
+	CUDA_HOST_DEVICE inline void leftSubgroupMult( LocalLink<SU2Vector4<typename ParamType::REALTYPE> >& mat, lat_group_index_t iSub, lat_group_index_t jSub )
+	{
+		ParamType::leftSubgroupMult( store, mat.getReference(0), iSub, jSub );
+	}
+
+	CUDA_HOST_DEVICE inline void rightSubgroupMult( LocalLink<SU2Vector4<typename ParamType::REALTYPE> >& mat, lat_group_index_t iSub, lat_group_index_t jSub )
+	{
+		ParamType::rightSubgroupMult( store, mat.getReference(0), iSub, jSub );
 	}
 
 
@@ -161,12 +220,20 @@ public:
 		return *this;
 	}
 
-	static CUDA_HOST_DEVICE inline  LocalLink<ParamType> getIdentity()
+	static CUDA_HOST_DEVICE inline LocalLink<ParamType> getIdentity()
 	{
 		LocalLink<ParamType> link;
 		link.identity();
 		return link;
 	}
+
+	static CUDA_HOST_DEVICE inline LocalLink<ParamType> getZero()
+	{
+		LocalLink<ParamType> link;
+		link.zero();
+		return link;
+	}
+
 
 private:
 	typename ParamType::TYPE store[ParamType::SIZE];

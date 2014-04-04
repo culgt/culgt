@@ -15,6 +15,8 @@ set(sources
 	parameterization_types/test_SU3Real12.cc
 	configuration_patterns/test_StandardPattern.cc
 	configuration_patterns/test_GPUPattern.cc
+	configuration_patterns/test_GPUPatternTimeslice.cc
+	configuration_patterns/test_GPUPatternTimesliceParityPriority.cc
 	configuration_patterns/test_GPUPatternParityPriority.cc
 	test_GlobalLink.cc 
 	test_GlobalLinkWithPatterns.cc
@@ -41,7 +43,7 @@ set(sources_cuda
 	test_GlobalLinkWithPatterns.cu
 	../../lattice/cuda/CudaError.cu
 	test_GaugeConfiguration.cc
-	test_GaugeConfigurationWithPattern.cc
+	test_GaugeConfigurationWithPattern.cu
 	test_LatticeDimension.cu
 	../cudacommon/test_DeviceCommunicator.cu
 	parameterization_types/test_SU2Vector4.cu

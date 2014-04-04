@@ -21,6 +21,7 @@ template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<Pa
 {
 public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
+	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 
 	CUDA_HOST_DEVICE inline Plaquette( T* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim ) : U(U), dim(dim)
 	{
@@ -44,9 +45,9 @@ public:
 		return temp;
 	};
 
-	CUDA_HOST_DEVICE inline T getReTracePlaquetteNormalized( typename PatternType::SITETYPE site, lat_dim_t mu, lat_dim_t nu )
+	CUDA_HOST_DEVICE inline REALT getReTracePlaquetteNormalized( typename PatternType::SITETYPE site, lat_dim_t mu, lat_dim_t nu )
 	{
-		return getPlaquette( site, mu, nu ).reTrace() / (T)PatternType::PARAMTYPE::NC;
+		return getPlaquette( site, mu, nu ).reTrace() / (REALT)PatternType::PARAMTYPE::NC;
 	}
 
 

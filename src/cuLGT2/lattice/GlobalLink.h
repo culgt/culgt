@@ -11,25 +11,43 @@
 #include "../common/culgt_typedefs.h"
 #include "ParameterizationMediator.h"
 #include "Link.h"
+#include "LatticeDimension.h"
+
+#ifdef __CUDACC__
+#include "TextureManager.h"
+
+#define COPY_GLOBALLINKTYPE( SRC, DEST, TEXTUREID )\
+	typedef GlobalLink<typename SRC::PATTERNTYPE, GlobalLinkType::USETEXTURE, TEXTUREID> DEST
+
+#endif
 
 namespace culgt
 {
-
-template<typename ConfigurationPattern> class GlobalLink//: Link<typename ConfigurationPattern::PARAMTYPE>
+template<typename ConfigurationPattern, bool UseTexture=false, int TextureID = 0> class GlobalLink//: Link<typename ConfigurationPattern::PARAMTYPE>
 {
 public:
 	/**
 	 * Layout of the Link (for example 18 real parameters, 9 complex parameters, or 12 real, ...)
 	 */
 	typedef typename ConfigurationPattern::PARAMTYPE PARAMTYPE;
+	typedef ConfigurationPattern PATTERNTYPE;
 	typedef ConfigurationPattern CONFIGURATIONPATTERN;
+	static const bool USETEXTURE=UseTexture;
 
+#ifdef __CUDACC__
+	static void bindTexture( typename PARAMTYPE::TYPE* pointerToStore, lat_array_index_t arraySize )
+	{
+		cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<typename TextureManager<typename PARAMTYPE::TYPE>::Type>();
+		size_t offset;
+		cudaBindTexture(&offset, TextureManager<typename PARAMTYPE::TYPE>::getTextureReference( TextureID ), pointerToStore, channelDesc, arraySize*sizeof(typename PARAMTYPE::TYPE) );
+	}
+#endif
 
 	CUDA_HOST_DEVICE inline ~GlobalLink()
 	{
 	};
 
-	CUDA_HOST_DEVICE inline GlobalLink( typename PARAMTYPE::TYPE* pointerToStore, typename ConfigurationPattern::SITETYPE site, lat_dim_t mu ) : pointerToStore(pointerToStore), site(site), mu(mu) {} ;
+	CUDA_HOST_DEVICE inline GlobalLink( typename PARAMTYPE::TYPE* pointerToStore, const typename ConfigurationPattern::SITETYPE site, lat_dim_t mu ) : pointerToStore(pointerToStore), site(site), mu(mu) {} ;
 
 	/**
 	 * Returns the i-th entry of the ParamType specific array
@@ -45,7 +63,17 @@ public:
 	 */
 	CUDA_HOST_DEVICE inline typename PARAMTYPE::TYPE get( lat_group_index_t i ) const
 	{
-		return pointerToStore[ConfigurationPattern::getIndex(site,mu,i)];
+#ifdef __CUDA_ARCH__
+		if( UseTexture )
+		{
+			return Tex1DFetcher<typename PARAMTYPE::TYPE>::fetch( TextureManager<typename PARAMTYPE::TYPE>::getTexture( TextureID ), ConfigurationPattern::getIndex(site,mu,i) );;
+		}
+		else
+#endif
+		{
+			return pointerToStore[ConfigurationPattern::getIndex(site,mu,i)];
+
+		}
 	}
 	/**
 	 * Sets the i-th entry of the ParamType specific array
@@ -70,7 +98,7 @@ public:
 	 * @param arg
 	 * @return
 	 */
-	CUDA_HOST_DEVICE inline GlobalLink<ConfigurationPattern>& operator=( const GlobalLink<ConfigurationPattern>& arg )
+	CUDA_HOST_DEVICE inline GlobalLink<ConfigurationPattern,USETEXTURE>& operator=( const GlobalLink<ConfigurationPattern,USETEXTURE>& arg )
 	{
 		for( lat_group_index_t i = 0; i < ConfigurationPattern::PARAMTYPE::SIZE; i++ )
 		{
@@ -79,19 +107,24 @@ public:
 		return *this;
 	}
 
+	static inline lat_array_index_t getArraySize( LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim )
+	{
+		return dim.getSize()*ConfigurationPattern::SITETYPE::Ndim*PARAMTYPE::SIZE;
+	}
+
 	/**
 	 * Assignment operator needs to call Mediator for different ParamTypes and/or LinkTypes
 	 * @param arg
 	 * @return
 	 */
-	template<typename LinkType> inline CUDA_HOST_DEVICE GlobalLink<ConfigurationPattern>& operator=( const LinkType arg )
+	template<typename LinkType> inline CUDA_HOST_DEVICE GlobalLink<ConfigurationPattern,USETEXTURE,TextureID>& operator=( const LinkType arg )
 	{
-		ParameterizationMediator<typename ConfigurationPattern::PARAMTYPE,typename LinkType::PARAMTYPE,GlobalLink<ConfigurationPattern>, LinkType >::assign( *this, arg );
+		ParameterizationMediator<typename ConfigurationPattern::PARAMTYPE,typename LinkType::PARAMTYPE,GlobalLink<ConfigurationPattern,USETEXTURE,TextureID>, LinkType >::assign( *this, arg );
 		return *this;
 	}
 
 	typename PARAMTYPE::TYPE* pointerToStore;
-	typename ConfigurationPattern::SITETYPE site;
+	const typename ConfigurationPattern::SITETYPE site;
 	lat_dim_t mu;
 };
 

@@ -18,10 +18,12 @@ namespace culgt
 template<int Ndim> class KernelSetup
 {
 public:
-	KernelSetup( LatticeDimension<Ndim> dim, int blockSize = 32 ) : dim( dim ), blockSize(blockSize)
+	KernelSetup( LatticeDimension<Ndim> dim, bool paritySplit = false, int blockSize = 32 ) : dim( dim ), blockSize(blockSize)
 	{
-		int mod = dim.getSize()%blockSize;
-		gridSize = dim.getSize()/blockSize;
+		lat_index_t latSize = dim.getSize();
+		if( paritySplit ) latSize /= 2;
+		int mod = latSize%blockSize;
+		gridSize = latSize/blockSize;
 		if( mod > 0 ) gridSize++;
 	}
 	int getBlockSize() const

@@ -50,6 +50,7 @@ TEST( GPUPatternTest, GetIndexReturnsCorrectIndex )
 
 TEST( GPUPatternTest, ConvertToStandardIndexIsCompatibleToStandardPattern )
 {
+	LatticeDimension<4> dim( 1, 10, 10, 10 );
 	const int latSize = 1000;
 	const int siteIndex = 100;
 	const int paramTypeSize = 18;
@@ -60,7 +61,7 @@ TEST( GPUPatternTest, ConvertToStandardIndexIsCompatibleToStandardPattern )
 	int expect = StandardPattern<SiteTypeMock<>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, myMu, paramIndex );
 
 	int gpuPatternIndex = GPUPattern<SiteTypeMock<>, ParamTypeMock<18> >::getIndex( mySite, myMu, paramIndex );
-	int result = GPUPattern<SiteTypeMock<>, ParamTypeMock<18> >::convertToStandardIndex( gpuPatternIndex, mySite.getSize() );
+	int result = GPUPattern<SiteTypeMock<>, ParamTypeMock<18> >::convertToStandardIndex( gpuPatternIndex, dim );
 
 	ASSERT_EQ( expect, result );
 }

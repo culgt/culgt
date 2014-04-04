@@ -11,9 +11,9 @@ TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInLowerHalfO
 	const int paramTypeSize = 10;
 	const int latSize = 200;
 	const int siteIndex = 10;
-	SiteTypeMock<> mySite(latSize,siteIndex);
+	SiteTypeMock<4,FULL_SPLIT> mySite(latSize,siteIndex);
 
-	int result = GPUPatternParityPriority<SiteTypeMock<>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, 0, 0 );
+	int result = GPUPatternParityPriority<SiteTypeMock<4,FULL_SPLIT>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, 0, 0 );
 
 	ASSERT_EQ( mySite.index, result );
 }
@@ -24,7 +24,7 @@ TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInUpperHalfO
 	const int paramTypeIndex = 1;
 	const int latSize = 200;
 	const int siteIndex = 110;
-	SiteTypeMock<1> mySite(latSize,siteIndex);
+	SiteTypeMock<1,FULL_SPLIT> mySite(latSize,siteIndex);
 
 	//expect:
 	int parity = (siteIndex/(latSize/2)); // = 1
@@ -32,7 +32,7 @@ TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInUpperHalfO
 
 	int expect = (parity*paramTypeSize+paramTypeIndex)*(latSize/2)+siteIndexInParity;
 
-	int result = GPUPatternParityPriority<SiteTypeMock<1>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, 0, paramTypeIndex );
+	int result = GPUPatternParityPriority<SiteTypeMock<1,FULL_SPLIT>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, 0, paramTypeIndex );
 
 	ASSERT_EQ( expect, result );
 }
@@ -46,7 +46,7 @@ TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInUpperHalfO
 	const int siteIndex = 110;
 	const int nDim = 4;
 	const int myMu = 2;
-	SiteTypeMock<nDim> mySite(latSize,siteIndex);
+	SiteTypeMock<nDim,FULL_SPLIT> mySite(latSize,siteIndex);
 
 	//expect:
 	int parity = (siteIndex/(latSize/2)); // = 1
@@ -54,24 +54,25 @@ TEST( GPUPatternParityPriorityTest, GetIndexReturnsSiteIndexForIndexInUpperHalfO
 
 	int expect = ((parity*nDim+myMu)*paramTypeSize+paramTypeIndex)*(latSize/2)+siteIndexInParity;
 
-	int result = GPUPatternParityPriority<SiteTypeMock<nDim>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, myMu, paramTypeIndex );
+	int result = GPUPatternParityPriority<SiteTypeMock<nDim,FULL_SPLIT>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, myMu, paramTypeIndex );
 
 	ASSERT_EQ( expect, result );
 }
 
 TEST( GPUPatternParityPriorityTest, ConvertToStandardIndexIsCompatibleToStandardPattern )
 {
+	LatticeDimension<4> dim( 2, 2, 5, 10 );
 	const int latSize = 200;
 	const int siteIndex = 110;
 	const int paramTypeSize = 18;
 	const int paramIndex = 4;
 	const int myMu = 3;
-	const SiteTypeMock<> mySite(latSize,siteIndex);
+	const SiteTypeMock<4,FULL_SPLIT> mySite(latSize,siteIndex);
 
-	int expect = StandardPattern<SiteTypeMock<>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, myMu, paramIndex );
+	int expect = StandardPattern<SiteTypeMock<4,FULL_SPLIT>, ParamTypeMock<paramTypeSize> >::getIndex( mySite, myMu, paramIndex );
 
-	int gpuPatternIndex = GPUPatternParityPriority<SiteTypeMock<>, ParamTypeMock<18> >::getIndex( mySite, myMu, paramIndex );
-	int result = GPUPatternParityPriority<SiteTypeMock<>, ParamTypeMock<18> >::convertToStandardIndex( gpuPatternIndex, mySite.getSize() );
+	int gpuPatternIndex = GPUPatternParityPriority<SiteTypeMock<4,FULL_SPLIT>, ParamTypeMock<18> >::getIndex( mySite, myMu, paramIndex );
+	int result = GPUPatternParityPriority<SiteTypeMock<4,FULL_SPLIT>, ParamTypeMock<18> >::convertToStandardIndex( gpuPatternIndex, dim );
 
 	ASSERT_EQ( expect, result );
 }

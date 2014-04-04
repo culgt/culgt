@@ -16,10 +16,11 @@ using namespace culgt;
 using namespace ::testing;
 
 typedef SiteIndex<4,NO_SPLIT> SiteIndex4;
+typedef SiteIndex<4,FULL_SPLIT> SiteIndex4FullSplit;
 typedef GlobalLink<StandardPattern<SiteIndex4,SUNRealFull<3,float> > > GlobalLinkStandardSU3Real18Index;
 typedef GlobalLink<StandardPattern<SiteIndex4,SU3Real12<float> > > GlobalLinkStandardSU3Real12Index;
 typedef GlobalLink<GPUPattern<SiteIndex4,SU3Real12<float> > > GlobalLinkGpuSU3Real12Index;
-typedef GlobalLink<GPUPatternParityPriority<SiteIndex4,SUNRealFull<3,float> > > GlobalLinkGpuParitySU3Real18Index;
+typedef GlobalLink<GPUPatternParityPriority<SiteIndex4FullSplit,SUNRealFull<3,float> > > GlobalLinkGpuParitySU3Real18Index;
 
 CUDA_TEST(AGlobalLinkWithPatternCu, SetGetValueWithSameLinkAndParameterIndexWorks )
 {
@@ -83,7 +84,7 @@ CUDA_TEST(AGlobalLinkWithDifferentPatternsCu, OperatorAssignCopiesData )
 {
 	const int size[4]= {2,2,2,2};
 	SiteIndex4 s(size);
-	SiteIndex4 s2(size);
+	SiteIndex4FullSplit s2(size);
 	const int mu = 0;
 	float U[2*2*2*2*4*18];
 	float U2[2*2*2*2*4*18];

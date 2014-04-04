@@ -15,6 +15,7 @@
 
 #include "../../cudacommon/cuda_host_device.h"
 #include "../../common/culgt_typedefs.h"
+#include "../LatticeDimension.h"
 
 #include "StandardPattern.h"
 namespace culgt
@@ -39,11 +40,11 @@ public:
 	 * @param latSize
 	 * @return
 	 */
-	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, lat_index_t latSize )
+	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::Ndim> dim )
 	{
-		lat_index_t siteIndex = index % latSize;
+		lat_index_t siteIndex = index % dim.getSize();
 
-		index /= latSize;
+		index /= dim.getSize();
 		lat_group_index_t paramIndex = index % ParamType::SIZE;
 
 		lat_dim_t mu = index / ParamType::SIZE;

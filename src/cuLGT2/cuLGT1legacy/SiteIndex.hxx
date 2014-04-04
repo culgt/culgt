@@ -25,14 +25,24 @@
  * @param template par
  * @see SiteCoord.hxx
  */
+
+namespace culgt
+{
+
+enum NeigbourTableType {
+	DO_NOT_USE_NEIGHBOURS
+};
+
 template<lat_dim_t Nd, ParityType par> class SiteIndex
 {
 public:
 	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd], lat_index_t* nn = NULL); // for compatibility
 	CUDA_HOST_DEVICE inline SiteIndex( const SiteIndex<Nd,par> &s );
 	CUDA_HOST_DEVICE inline SiteIndex( const culgt::LatticeDimension<Nd> dim, lat_index_t* nn ); // init without neighbour table not allowed (this is a new interface)
+	CUDA_HOST_DEVICE inline SiteIndex( const culgt::LatticeDimension<Nd> dim, NeigbourTableType type ); // init without neighbour table not allowed (this is a new interface)
+	CUDA_HOST_DEVICE inline SiteIndex( const lat_index_t latticeSize, lat_index_t* nn );
 	CUDA_HOST_DEVICE inline virtual ~SiteIndex();
-	CUDA_HOST_DEVICE inline lat_coord_t operator[](lat_dim_t i);
+	CUDA_HOST_DEVICE inline lat_coord_t operator[](const lat_dim_t i) const;
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
 	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();}; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
@@ -42,8 +52,10 @@ public:
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSize() const;
 	CUDA_HOST_DEVICE inline lat_index_t getSize() const {return getLatticeSize();}; // for compatibility with cuLGT2
-	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndexTimeslice();
-	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice();
+	CUDA_HOST_DEVICE inline lat_index_t getIndexTimeslice() const {return getLatticeIndexTimeslice();}; // for compatibility with cuLGT2
+	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndexTimeslice() const;
+	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice() const;
+	CUDA_HOST_DEVICE inline lat_index_t getSizeTimeslice() const {return getLatticeSizeTimeslice();}; // for compatibility with cuLGT2;
 	CUDA_HOST_DEVICE inline lat_coord_t getLatticeSizeDirection( lat_dim_t i );
 	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, bool up );
 	CUDA_HOST_DEVICE inline SiteIndex<Nd,par> getNeighbour( lat_dim_t direction, bool up );
@@ -51,6 +63,7 @@ public:
 	CUDA_HOST_DEVICE inline void calculateNeighbourTable( lat_index_t* nn );
 
 	static const lat_dim_t Ndim = Nd;
+	static const ParityType PARITYTYPE = par;
 	lat_index_t* nn;
 
 	lat_coord_t size[Nd];
@@ -83,16 +96,35 @@ template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const cul
 	index = 0;
 }
 
+template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const culgt::LatticeDimension<Nd> dim, NeigbourTableType type )
+{
+	for( int i = 0; i < Nd; i++ )
+	{
+		this->size[i] = dim.getDimension( i );
+	}
+	latticeSize = dim.getSize();
+	index = 0;
+}
+
 template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const SiteIndex<Nd,par> &s )
 {
 	this->index = s.index;
-	latticeSize = 1;
+//	latticeSize = 1;
 	for( lat_dim_t i = 0; i < Nd; i++ )
 	{
 		this->size[i] = s.size[i];
-		latticeSize *= size[i];
+//		latticeSize *= size[i];
 	}
+	this->latticeSize = s.getLatticeSize();
 	this->nn = s.nn;
+}
+
+template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::SiteIndex( const lat_index_t latticeSize, lat_index_t* nn ) :latticeSize(latticeSize), nn(nn), index(0)
+{
+	for( lat_dim_t i = 0; i < Nd; i++ )
+	{
+		this->size[i] = 0;
+	}
 }
 
 template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::~SiteIndex()
@@ -103,7 +135,7 @@ template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::~SiteIndex()
  * TODO
  * Returns the i-coordinate of the current site.
  */
-template<lat_dim_t Nd, ParityType par> lat_coord_t SiteIndex<Nd,par>::operator[](lat_dim_t i)
+template<lat_dim_t Nd, ParityType par> lat_coord_t SiteIndex<Nd,par>::operator[](const lat_dim_t i) const
 {
 	lat_index_t temp = index;
 
@@ -196,7 +228,7 @@ template<lat_dim_t Nd, ParityType par> void SiteIndex<Nd, par>::setLatticeIndexF
 	{
 		index = latticeIndex;
 	}
-	else if( par == FULL_SPLIT )
+	else if( par == FULL_SPLIT || par == TIMESLICE_SPLIT )
 	{
 		lat_coord_t site[4];
 		lat_index_t parity = 0;
@@ -210,7 +242,6 @@ template<lat_dim_t Nd, ParityType par> void SiteIndex<Nd, par>::setLatticeIndexF
 	}
 	else
 	{
-		// TODO
 		assert(false);
 	}
 }
@@ -230,7 +261,7 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLattic
  * Returns the index within a timeslice
  * @return lattice index in timeslice
  */
-template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLatticeIndexTimeslice()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLatticeIndexTimeslice() const
 {
 	if( par == FULL_SPLIT )
 	{
@@ -251,7 +282,7 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLattic
  * Returns the size of a timeslice, i.e. latticeSize/size[0]
  * @return size of timeslice
  */
-template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLatticeSizeTimeslice()
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLatticeSizeTimeslice() const
 {
 	return latticeSize/size[0];
 }
@@ -387,7 +418,7 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLattic
 	}
 }
 
-
+}
 
 
 #endif /* SITEINDEX_HXX_ */

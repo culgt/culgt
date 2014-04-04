@@ -20,12 +20,14 @@ public:
 	SiteStub( culgt::LatticeDimension<NDIM> dim, lat_index_t* nn = NULL ){};
 	static const int Ndim=NDIM;
 	void setLatticeIndex( const int i ){};
+	void setLatticeIndexFromNonParitySplitOrder( const int i ){};
 };
 
 template<typename T, int TNC=3> class ParamStub
 {
 public:
 	typedef T TYPE;
+	typedef T REALTYPE;
 	static const int NC = TNC;
 	static const int SIZE=18;
 };

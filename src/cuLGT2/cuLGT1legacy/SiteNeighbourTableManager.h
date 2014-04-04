@@ -11,9 +11,12 @@
 #include <cstddef>
 #include <map>
 #include "../lattice/LatticeDimension.h"
-#include "../cudacommon/cuda_error.h"
-
 #include <iostream>
+
+#ifdef __CUDACC__
+#include "../cudacommon/cuda_error.h"
+#endif
+
 
 namespace culgt
 {
@@ -21,14 +24,6 @@ namespace culgt
 template<typename SiteType> class SiteNeighbourTableManager
 {
 public:
-//	static lat_index_t* getDevicePointer( LatticeDimension<SiteType::Ndim> dim )
-//	{
-//		return manager.getDevicePointer( dim );
-//	}
-//	static lat_index_t* getHostPointer( LatticeDimension<SiteType::Ndim> dim )
-//	{
-//		return manager.getHostPointer( dim );
-//	}
 
 	static lat_index_t* getHostPointer( LatticeDimension<SiteType::Ndim> dim )
 	{
@@ -58,11 +53,12 @@ public:
 		SiteType site( dim, nn );
 		site.calculateNeighbourTable( nn );
 		storeHost[dim] = nn;
-
+#ifdef __CUDACC__
 		lat_index_t* nnd;
 		CUDA_SAFE_CALL( cudaMalloc( &nnd, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ) ), "malloc neighbour table" );
 		CUDA_SAFE_CALL( cudaMemcpy( nnd, nn, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ), cudaMemcpyHostToDevice ), "memcpy neighbour table" );
 		storeDevice[dim] = nnd;
+#endif
 	}
 
 private:

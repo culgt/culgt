@@ -17,22 +17,7 @@
 namespace culgt
 {
 
-unsigned int nextPow2(unsigned int x)
-{
-    --x;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    return ++x;
-}
 
-//extern "C"
-bool isPow2(unsigned int x)
-{
-    return ((x&(x-1))==0);
-}
 
 template<class T> class Reduction
 {

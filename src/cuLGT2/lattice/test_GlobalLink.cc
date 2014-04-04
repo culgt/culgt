@@ -15,6 +15,7 @@ public:
 class SiteStub
 {
 public:
+	static const int Ndim = 4;
 	int index;
 	SiteStub() : index(0) {}
 	SiteStub( int i ) : index(i) {}

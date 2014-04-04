@@ -33,12 +33,12 @@ public:
 		PlaquetteAverageCudaHelper<PatternType,LocalLinkType>::calculatePlaquettes( U, devPtr, dim );
 	}
 
-	T getPlaquette()
+	REALT getPlaquette()
 	{
 		calculatePlaquettes();
-		Reduction<T> reducer(dim.getSize());
+		Reduction<REALT> reducer(dim.getSize());
 
-		return reducer.reduceAll( devPtr )/(T)dim.getSize();
+		return reducer.reduceAll( devPtr )/(REALT)dim.getSize();
 	}
 
 	REALT* getDevicePointer() const

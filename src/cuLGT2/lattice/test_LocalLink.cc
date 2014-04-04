@@ -3,6 +3,7 @@
 #include "parameterization_types/SU3Real12.h"
 #include "parameterization_types/SUNRealFull.h"
 #include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "parameterization_types/SU2Vector4.h"
 
 using namespace culgt;
 using namespace ::testing;
@@ -75,13 +76,33 @@ class ASpecialLocalLinkWithSU3Real18: public Test
 public:
 	LocalLink<SUNRealFull<3,float> > A;
 	LocalLink<SUNRealFull<3,float> > Ahermitian;
+	LocalLink<SUNRealFull<3,float> > ALeftSubgroupMult01;
+	LocalLink<SUNRealFull<3,float> > ARightSubgroupMult01;
+	LocalLink<SUNRealFull<3,float> > AplusA;
+
+	LocalLink<SU2Vector4<float> > aSU2link;
 
 	const float redet = 0.585224903024000;
 	const float imdet = 0.185504451600000;
 	const float retrace = 2.3660;
 	const float imtrace = 2.3844;
+	const float frobeniusNorm = 3.1442840;
+
+	const Complex<float> trace;
 
 	const float AtimesA_0_SP =  0.1127562523; // single precision operation
+
+	ASpecialLocalLinkWithSU3Real18() : trace(2.3659999, 2.3843999)
+	{
+	}
+
+	void assertFloatEqual( LocalLink<SUNRealFull<3,float> > a, LocalLink<SUNRealFull<3,float> > b )
+	{
+		for( int i = 0; i < 18; i++ )
+		{
+			ASSERT_FLOAT_EQ( a.get(i), b.get(i) );
+		}
+	}
 
 	void SetUp()
 	{
@@ -102,6 +123,36 @@ public:
 		Ahermitian <<	0.9649, -0.7922,   0.1576, -0.9595,   0.9706, -0.6557,
 						0.9572, -0.0357,   0.4854, -0.8491,   0.8003, -0.9340,
 						0.1419, -0.6787,   0.4218, -0.7577,   0.9157, -0.7431;
+
+		AplusA <<  1.9298000, + 1.5844001,  1.9144000, + 0.0714000, 0.2838000, + 1.3573999,
+				  0.3152000, + 1.9190000,  0.9708000, + 1.6982000, 0.8436000, + 1.5154001,
+				  1.9412000, + 1.3114001,  1.6006000, + 1.8680000, 1.8314000, + 1.4862000;
+
+		float4 SU2linkData;
+		SU2linkData.x = 0.5309;
+		SU2linkData.w = 0.8038;
+		SU2linkData.z = 0.2338;
+		SU2linkData.y = 0.1323;
+		aSU2link.set( 0, SU2linkData );
+
+
+		/*
+		 * 		| X X 0 |
+		 * A * 	| X X 0 |
+		 * 		| 0 0 2 |
+		 */
+		ARightSubgroupMult01 << -0.3530214, + 1.3144565,  0.6576587, - 0.4375715, 0.1419000, + 0.6787000,
+				 -0.9133987, + 0.5017763,  0.8501104, + 0.3058043, 0.4218000, + 0.7577000,
+				 -0.3224384, + 1.0157899,  1.3158057, + 0.1342926, 0.9157000, + 0.7431000;
+		/*
+		 * | X X 0 |
+		 * | X X 0 | * A
+		 * | 0 0 2 |
+		 */
+		ALeftSubgroupMult01 <<  -0.2145999, + 1.4413472,  0.4806324, + 1.0510885,-0.4718312, + 0.7073354,
+				  0.5245142, + 0.3251596,  0.7116889, + 0.1789136, 0.7100046, - 0.0766865,
+				  0.9706000, + 0.6557000,  0.8003000, + 0.9340000, 0.9157000, + 0.7431000;
+
 //		A.set(0, 0.9649);
 //		A.set(1, 0.7922);
 //		A.set(2, 0.9572);
@@ -184,6 +235,58 @@ TEST_F( ASpecialLocalLinkWithSU3Real18, HermitianWorks )
 	ASSERT_TRUE( isSame );
 }
 
+TEST_F( ASpecialLocalLinkWithSU3Real18, GetSU2SubgroupWorks )
+{
+	LocalLink<SU2Vector4<float> > subgroup;
+	subgroup = A.getSU2Subgroup( 0, 2 );
+
+	ASSERT_FLOAT_EQ( subgroup.get(0).x, A.get(0)+A.get(16) );
+}
+
+
+TEST_F( ASpecialLocalLinkWithSU3Real18, LeftSubgroupMultWorks )
+{
+	A.leftSubgroupMult( aSU2link, 0, 1 );
+
+	assertFloatEqual( ALeftSubgroupMult01, A );
+}
+
+TEST_F( ASpecialLocalLinkWithSU3Real18, RightSubgroupMultWorks )
+{
+	A.rightSubgroupMult( aSU2link, 0, 1 );
+
+	assertFloatEqual( ARightSubgroupMult01, A );
+}
+
+TEST_F( ASpecialLocalLinkWithSU3Real18, TraceWorks )
+{
+	Complex<float> result = A.trace();
+
+	ASSERT_FLOAT_EQ( trace.x, result.x );
+	ASSERT_FLOAT_EQ( trace.y, result.y );
+}
+
+TEST_F( ASpecialLocalLinkWithSU3Real18, AddAssignWorks )
+{
+	A += A;
+
+	assertFloatEqual( AplusA, A );
+}
+
+TEST_F( ASpecialLocalLinkWithSU3Real18, SubtractAssignWorks )
+{
+	A -= A;
+
+	assertFloatEqual( LocalLink<SUNRealFull<3,float> >::getZero(), A );
+}
+
+TEST_F( ASpecialLocalLinkWithSU3Real18, FrobeniusNormWorks )
+{
+	float frobeniusNormSquared = frobeniusNorm*frobeniusNorm;
+	ASSERT_FLOAT_EQ( frobeniusNormSquared, A.normFrobeniusSquared() );
+}
+
+
 TEST( ALocalLink, GetIdentityWorks )
 {
 	LocalLink<SUNRealFull<3,float> > link;
@@ -202,6 +305,8 @@ TEST( ALocalLink, OperatorStreamWorksToFillMatrix )
 
 	ASSERT_FLOAT_EQ( 18., link.get(17) );
 }
+
+
 
 
 

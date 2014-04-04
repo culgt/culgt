@@ -31,13 +31,41 @@ public:
 		WilsonLoopAverageCudaHelper<PatternType,LocalLinkType>::calculateWilsonLoops( U, devPtr, dim, dir1, length1, dir2, length2 );
 	}
 
-	T getWilsonLoop( int dir1, int length1, int dir2, int length2 )
+	REALT getWilsonLoop( int dir1, int length1, int dir2, int length2 )
 	{
 		calculateWilsonLoops( dir1, length1, dir2, length2 );
-		Reduction<T> reducer(dim.getSize());
+		Reduction<REALT> reducer(dim.getSize());
 
-		return reducer.reduceAll( devPtr )/(T)dim.getSize();
+		return reducer.reduceAll( devPtr )/(REALT)dim.getSize();
 	}
+
+	void calculatePolyakovLoopCorrelators( int separationDir, int separation, int timeDir = 0 )
+	{
+		WilsonLoopAverageCudaHelper<PatternType,LocalLinkType>::calculatePolyakovLoopCorrelators( U, devPtr, dim, separationDir, separation, timeDir );
+	}
+
+	REALT getPolyakovLoopCorrelator( int separationDir, int separation, int timeDir = 0 )
+	{
+		calculatePolyakovLoopCorrelators( separationDir, separation, timeDir );
+		Reduction<REALT> reducer(dim.getSize());
+
+		return reducer.reduceAll( devPtr )/(REALT)dim.getSize();
+	}
+
+	void calculatePolyakovLoops( int timeDir = 0 )
+	{
+		WilsonLoopAverageCudaHelper<PatternType,LocalLinkType>::calculatePolyakovLoops( U, devPtr, dim, timeDir );
+	}
+
+	REALT getPolyakovLoop( int timeDir = 0 )
+	{
+		calculatePolyakovLoops( timeDir );
+		Reduction<REALT> reducer(dim.getSize());
+
+		return reducer.reduceAll( devPtr )/(REALT)dim.getSize();
+	}
+
+
 
 	REALT* getDevicePointer() const
 	{

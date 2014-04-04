@@ -93,8 +93,8 @@ public:
 
 		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
 		{
-			typename MemoryConfigurationPattern::PARAMTYPE::TYPE value;
-			LinkFile<MemoryConfigurationPattern>::file.read( (char*)&value, sizeof(typename MemoryConfigurationPattern::PARAMTYPE::TYPE) );
+			typename LocalLinkParamType::TYPE value;
+			LinkFile<MemoryConfigurationPattern>::file.read( (char*)&value, sizeof(typename LocalLinkParamType::TYPE) );
 			link.set( i, value );
 		}
 		return link;
@@ -107,7 +107,7 @@ public:
 			for( int mu = 0; mu < memoryNdim; mu++ )
 			{
 				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
-				site.setLatticeIndex( i );
+				site.setLatticeIndexFromNonParitySplitOrder( i );
 
 				GlobalLink<MemoryConfigurationPattern> dest( this->getPointerToU(), site, mu );
 
@@ -131,9 +131,9 @@ public:
 			throwException( "Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
 		}
 
-		if( sizeof( typename MemoryConfigurationPattern::PARAMTYPE::TYPE ) != sizeOfReal )
+		if( sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE ) != sizeOfReal )
 		{
-			throwException( "Wrong size of real", sizeof( typename MemoryConfigurationPattern::PARAMTYPE::TYPE ), sizeOfReal );
+			throwException( "Wrong size of real", sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE ), sizeOfReal );
 		}
 
 		for( int i = 0; i < memoryNdim; i++ )

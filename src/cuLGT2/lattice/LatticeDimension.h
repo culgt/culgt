@@ -20,17 +20,33 @@ private:
 	lat_coord_t size[Ndim];
 	lat_dim_t latSize;
 
+	CUDA_HOST_DEVICE inline void updateLatticeSize()
+	{
+		latSize = 1;
+		for( int i = 0; i < Ndim; i++ )
+		{
+			latSize *= size[i];
+		}
+	}
 public:
 	static const int NDIM = Ndim;
 
 	CUDA_HOST_DEVICE inline LatticeDimension( const int size[Ndim] )
 	{
-		latSize = 1;
 		for( int i = 0; i < Ndim; i++ )
 		{
 			this->size[i] = size[i];
-			latSize *= size[i];
 		}
+		updateLatticeSize();
+	}
+
+	CUDA_HOST_DEVICE inline LatticeDimension( const LatticeDimension<Ndim>& src )
+	{
+		for( int i = 0; i < Ndim; i++ )
+		{
+			this->size[i] = src.getDimension(i);
+		}
+		updateLatticeSize();
 	}
 
 	/**
@@ -51,11 +67,7 @@ public:
 		if( Ndim > 3 )
 			size[3] = dir3;
 
-		latSize = 1;
-		for( int i = 0; i < Ndim; i++ )
-		{
-			latSize *= size[i];
-		}
+		updateLatticeSize();
 	}
 
 
@@ -65,9 +77,31 @@ public:
 		return size[i];
 	}
 
+	CUDA_HOST_DEVICE inline void setDimension( const lat_dim_t i, const lat_coord_t sizeInI )
+	{
+		size[i] = sizeInI;
+		updateLatticeSize();
+	}
+
+
 	CUDA_HOST_DEVICE inline lat_dim_t getSize() const
 	{
 		return latSize;
+	}
+
+	CUDA_HOST_DEVICE inline LatticeDimension<Ndim> getDimensionTimeslice() const
+	{
+		LatticeDimension<Ndim> result( *this );
+		result.setDimension( 0, 1 );
+		return result;
+	}
+
+	/**
+	 * I don't know if this is a wise choice or if we should keep a local variable for latSizeTimeslice (but probably the compiler is smart enough to do so).
+	 */
+	CUDA_HOST_DEVICE inline lat_dim_t getSizeTimeslice() const
+	{
+		return latSize/size[0];
 	}
 
 	/**
