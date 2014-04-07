@@ -58,6 +58,14 @@ public:
 		return store[0].x*store[0].x+store[0].y*store[0].y+store[0].z*store[0].z+store[0].w*store[0].w;
 	}
 
+	static CUDA_HOST_DEVICE void inline multAssignScalar( TYPE dest[SIZE], const REALTYPE scalar )
+	{
+		dest[0].x *= scalar;
+		dest[0].y *= scalar;
+		dest[0].z *= scalar;
+		dest[0].w *= scalar;
+	}
+
 	static CUDA_HOST_DEVICE void inline multAssign( TYPE dest[SIZE], const TYPE b[SIZE] )
 	{
 		TYPE a[SIZE];

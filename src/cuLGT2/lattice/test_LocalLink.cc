@@ -75,6 +75,7 @@ class ASpecialLocalLinkWithSU3Real18: public Test
 {
 public:
 	LocalLink<SUNRealFull<3,float> > A;
+	LocalLink<SUNRealFull<3,float> > B;
 	LocalLink<SUNRealFull<3,float> > Ahermitian;
 	LocalLink<SUNRealFull<3,float> > ALeftSubgroupMult01;
 	LocalLink<SUNRealFull<3,float> > ARightSubgroupMult01;
@@ -286,6 +287,15 @@ TEST_F( ASpecialLocalLinkWithSU3Real18, FrobeniusNormWorks )
 	ASSERT_FLOAT_EQ( frobeniusNormSquared, A.normFrobeniusSquared() );
 }
 
+TEST_F( ASpecialLocalLinkWithSU3Real18, MultWithScalarWorks )
+{
+	float someVal = 0.5;
+	float originalVal = A.get(5);
+
+	A*=someVal;
+
+	ASSERT_FLOAT_EQ( originalVal*someVal, A.get(5) );
+}
 
 TEST( ALocalLink, GetIdentityWorks )
 {

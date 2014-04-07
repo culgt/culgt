@@ -56,6 +56,17 @@ TEST_F( ASU2Vector4, MultAssign )
 	ASSERT_FLOAT_EQ( someValue, store[0].x );
 }
 
+TEST_F( ASU2Vector4, MultAssignScalar )
+{
+	SU2Vector4<float>::identity( store );
+	const float someFactor = 0.5;
+	store[0].z = someValue;
+
+	SU2Vector4<float>::multAssignScalar( store, someFactor );
+
+	ASSERT_FLOAT_EQ( someValue*someFactor, store[0].z );
+}
+
 TEST_F( ASU2Vector4, AddAssign )
 {
 	SU2Vector4<float>::identity( store );

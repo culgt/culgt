@@ -38,6 +38,7 @@ public:
 	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
 	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();} ; // for compatibility with cuLGT2
+	CUDA_HOST_DEVICE inline lat_index_t getIndexNonSplit() const; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline lat_coord_t getLatticeSizeDirection( lat_dim_t i );
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex );
@@ -162,6 +163,17 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLattic
 		}
 		return index;
 	}
+}
+
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getIndexNonSplit() const // TODO parity ordering
+{
+	lat_index_t index = 0;
+	for( lat_dim_t i = 0; i < Nd; i++ )
+	{
+		index *= size[i];
+		index += site[i];
+	}
+	return index;
 }
 
 template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setLatticeIndex( lat_index_t latticeIndex )

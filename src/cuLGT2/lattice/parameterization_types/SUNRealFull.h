@@ -94,6 +94,14 @@ public:
 		return store[0]+store[6];
 	}
 
+	static CUDA_HOST_DEVICE void inline multAssignScalar( TYPE dest[SIZE], const REALTYPE scalar )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			dest[i] *= scalar;
+		}
+	}
+
 	static CUDA_HOST_DEVICE void inline multAssign( TYPE dest[SIZE], const TYPE b[SIZE] )
 	{
 		TYPE a[SIZE];
@@ -191,6 +199,14 @@ public:
 	static CUDA_HOST_DEVICE Complex<REALTYPE> inline trace( TYPE store[SIZE] )
 	{
 		return Complex<REALTYPE>(store[0]+store[8]+store[16], store[1]+store[9]+store[17]);
+	}
+
+	static CUDA_HOST_DEVICE void inline multAssignScalar( TYPE dest[SIZE], const REALTYPE scalar )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			dest[i] *= scalar;
+		}
 	}
 
 	static CUDA_HOST_DEVICE void inline multAssign( TYPE dest[SIZE], const TYPE b[SIZE] )

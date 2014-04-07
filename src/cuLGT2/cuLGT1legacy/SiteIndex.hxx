@@ -45,6 +45,7 @@ public:
 	CUDA_HOST_DEVICE inline lat_coord_t operator[](const lat_dim_t i) const;
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
 	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();}; // for compatibility with cuLGT2
+	CUDA_HOST_DEVICE inline lat_index_t getIndexNonSplit() const; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setIndex( lat_index_t latticeIndex ) {setLatticeIndex(latticeIndex);};
 	CUDA_HOST_DEVICE inline void setLatticeIndexTimeslice( lat_index_t latticeIndex, lat_coord_t t );
@@ -175,6 +176,51 @@ template<lat_dim_t Nd, ParityType par> lat_coord_t SiteIndex<Nd,par>::operator[]
 template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getLatticeIndex() const
 {
 	return index;
+}
+
+/**
+ * Don't hate me for this
+ * @return
+ */
+template<lat_dim_t Nd, ParityType par> lat_index_t SiteIndex<Nd, par>::getIndexNonSplit() const
+{
+	if( par == FULL_SPLIT )
+	{
+		lat_index_t nonSplitIndex = index;
+		bool parity = 0;
+		if( nonSplitIndex >= getSize()/2 )
+		{
+			parity=1;
+			nonSplitIndex -= getSize()/2;
+		}
+		nonSplitIndex *= 2;
+
+		lat_index_t checkParity = nonSplitIndex;
+
+		lat_coord_t curParity;
+		for( lat_dim_t i = Nd-1; i >= 0; i-- )
+		{
+			curParity += checkParity % size[i];
+			checkParity /= size[i];
+		}
+
+		curParity %= 2;
+		if( !curParity && parity )
+			nonSplitIndex += 1;
+		else if( curParity && !parity )
+			nonSplitIndex += 1;
+
+		return nonSplitIndex;
+	}
+	else if ( par == TIMESLICE_SPLIT )
+	{
+		assert(false);
+		return -1;
+	}
+	else
+	{
+		return index;
+	}
 }
 
 /**

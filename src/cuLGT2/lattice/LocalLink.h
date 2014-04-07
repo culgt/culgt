@@ -152,6 +152,12 @@ public:
 		return *this;
 	}
 
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const typename ParamType::REALTYPE scalar )
+	{
+		ParamType::multAssignScalar( store, scalar );
+		return *this;
+	}
+
 	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const LocalLink<ParamType>& b )
 	{
 		ParamType::multAssign( store, b.store );
