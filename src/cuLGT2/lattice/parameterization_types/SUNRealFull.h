@@ -146,6 +146,7 @@ public:
 		swapAndFlipSign( store[3], store[5] );
 		flipSign( store[7] );
 	}
+
 };
 
 template<typename T> class SUNRealFull<3,T>

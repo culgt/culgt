@@ -12,6 +12,7 @@
 #include "../lattice/GlobalLink.h"
 
 using culgt::LocalLink;
+using culgt::GlobalLink;
 using culgt::SU2Vector4;
 
 #include <boost/mpl/assert.hpp>
@@ -91,7 +92,7 @@ public:
 	__device__ inline void subgroupStep( lat_group_index_t iSub, lat_group_index_t jSub )
 	{
 		extern __shared__ typename LocalLinkType::PARAMTYPE::REALTYPE shA[]; // define size in kernel call (size needs to be 4*NSB)!
-		initializeSharedMemory( shA );
+		initializeSharedMemory( shA, GaugeType::SharedArraySize );
 
 		__syncthreads();
 		LocalLink<SU2Vector4<typename LocalLinkType::PARAMTYPE::REALTYPE> > quaternionUp = localLinkUp.getSU2Subgroup( iSub, jSub );
@@ -113,7 +114,9 @@ public:
 
 		GaugeType::collectUpdate( shA, qUp, id, mu, 0, SitesPerBlock );
 		__syncthreads(); // this is necessary otherwise the next subgroup already overwrites shA!
+
 		quaternionUp.set( 0, qUp );
+
 
 		localLinkUp.leftSubgroupMult( quaternionUp, iSub, jSub );
 		quaternionUp.hermitian();
@@ -127,15 +130,11 @@ private:
 	LocalLinkType localLinkUp;
 	LocalLinkType localLinkDown;
 
-	__device__ inline void initializeSharedMemory( typename LocalLinkType::PARAMTYPE::REALTYPE* shA )
+	__device__ inline void initializeSharedMemory( typename LocalLinkType::PARAMTYPE::REALTYPE* shA, int sharedArraySize )
 	{
 		if( mu == 0 )
 		{
-//			shA[id]	= 0;
-//			shA[id+SitesPerBlock] = 0;
-//			shA[id+2*SitesPerBlock] = 0;
-//			shA[id+3*SitesPerBlock] = 0;
-			for( int i = 0; i < 16; i++ )
+			for( int i = 0; i < sharedArraySize; i++ )
 			{
 				shA[id+i*SitesPerBlock] = 0;
 			}

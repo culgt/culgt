@@ -26,10 +26,11 @@
 
 using std::string;
 
+#include "gaugefixing_thread_types.h"
+
 namespace culgt
 {
 
-//enum GaugeFixingThreadsPerSite{ SINGLE_THREAD_PER_SITE, FOUR_THREAD_PER_SITE, EIGHT_THREAD_PER_SITE, TIMESLICE };
 
 
 namespace CoulombGaugefixingKernel

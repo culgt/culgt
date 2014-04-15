@@ -220,6 +220,10 @@ public:
 	{
 		GaugeConfigurationCudaHelper<T>::template setHot<PatternType,RNG>(Udevice, dim, rngSeed, rngCounter );
 	}
+	void setColdOnDevice()
+	{
+		GaugeConfigurationCudaHelper<T>::template setCold<PatternType>(Udevice, dim );
+	}
 #endif
 
 private:

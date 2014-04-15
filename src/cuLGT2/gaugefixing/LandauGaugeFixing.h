@@ -24,7 +24,7 @@
 #include "GaugeStats.h"
 #include <string>
 
-
+#include "gaugefixing_thread_types.h"
 
 
 using std::string;
@@ -32,7 +32,6 @@ using std::string;
 namespace culgt
 {
 
-enum GaugeFixingThreadsPerSite{ SINGLE_THREAD_PER_SITE, FOUR_THREAD_PER_SITE, EIGHT_THREAD_PER_SITE, TIMESLICE };
 
 
 namespace LandauGaugefixingKernel
@@ -65,7 +64,7 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	}
 
 	// TODO: verify that the following statement indeed drops out, then remove it
-	Sum -= Sum.trace()/Real(GlobalLinkType::PARAMTYPE::NC);
+	Sum -= Sum.trace()/(LocalLinkType::PARAMTYPE::REALTYPE)(GlobalLinkType::PARAMTYPE::NC);
 
 	LocalLinkType SumHerm;
 	SumHerm = Sum;

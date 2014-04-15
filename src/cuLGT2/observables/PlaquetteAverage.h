@@ -17,7 +17,7 @@
 namespace culgt
 {
 
-template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<PatternType::PARAMTYPE::NC, typename PatternType::PARAMTYPE::TYPE> > > class PlaquetteAverage
+template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<PatternType::PARAMTYPE::NC, typename PatternType::PARAMTYPE::TYPE> >, PlaquetteType MyPlaquetteType = PLAQUETTE_FULL > class PlaquetteAverage
 {
 public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
@@ -30,7 +30,7 @@ public:
 
 	void calculatePlaquettes()
 	{
-		PlaquetteAverageCudaHelper<PatternType,LocalLinkType>::calculatePlaquettes( U, devPtr, dim );
+		PlaquetteAverageCudaHelper<PatternType,LocalLinkType,MyPlaquetteType>::calculatePlaquettes( U, devPtr, dim );
 	}
 
 	REALT getPlaquette()

@@ -115,7 +115,7 @@ public:
 
 
 	/**
-	 * The following subgroup methods are defined for convenience.
+	 * The following subgroup methods are defined for compatibility with general SU(N).
 	 */
 	static const int FlopsGetSU2Subgroup = 0;
 	static CUDA_HOST_DEVICE typename Real4<REALTYPE>::VECTORTYPE inline getSU2Subgroup( TYPE store[SIZE], lat_group_index_t i, lat_group_index_t j )

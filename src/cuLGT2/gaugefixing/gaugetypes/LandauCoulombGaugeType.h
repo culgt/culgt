@@ -13,6 +13,7 @@ template<GaugeTypeName gaugetype> class LandauCoulombGaugeType
 {
 public:
 	static const int LinksInvolved = (gaugetype==LANDAU)?(8):(6);
+	static const int SharedArraySize = 4;
 
 	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& q, const short id, const short mu, const bool updown, const int NSB )
 	{

@@ -40,6 +40,9 @@
 
 #include <stdio.h>
 
+namespace culgt
+{
+
 
 template<class T> struct PhiloxWrapperInfo
 {
@@ -263,6 +266,6 @@ template<typename T> __host__ unsigned int PhiloxWrapper<T>::getCurrentCounter()
 	return globalCounter;
 }
 
-
+}
 
 #endif /* PHILOXWRAPPER_HXX_ */

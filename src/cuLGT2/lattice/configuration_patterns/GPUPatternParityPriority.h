@@ -15,7 +15,7 @@
 #include "StandardPattern.h"
 #include "../LatticeDimension.h"
 #include <boost/mpl/assert.hpp>
-
+#include "../../cuLGT1legacy/ParityType.h"
 
 namespace culgt
 {

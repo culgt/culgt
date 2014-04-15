@@ -17,7 +17,7 @@
 #include "TextureManager.h"
 
 #define COPY_GLOBALLINKTYPE( SRC, DEST, TEXTUREID )\
-	typedef GlobalLink<typename SRC::PATTERNTYPE, GlobalLinkType::USETEXTURE, TEXTUREID> DEST
+	typedef GlobalLink<typename SRC::PATTERNTYPE, SRC::USETEXTURE, TEXTUREID> DEST
 
 #endif
 
@@ -106,6 +106,15 @@ public:
 		}
 		return *this;
 	}
+
+//	CUDA_HOST_DEVICE inline GlobalLink<ConfigurationPattern,USETEXTURE>& operator=( const LocalLink<typename ConfigurationPattern::PARAMTYPE>& arg )
+//	{
+//		for( lat_group_index_t i = 0; i < ConfigurationPattern::PARAMTYPE::SIZE; i++ )
+//		{
+//			set( i, arg.get(i) );
+//		}
+//		return *this;
+//	}
 
 	static inline lat_array_index_t getArraySize( LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim )
 	{

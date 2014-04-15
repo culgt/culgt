@@ -13,10 +13,10 @@
 #ifndef SITECOORD_HXX_
 #define SITECOORD_HXX_
 
+#include "ParityType.h"
 #include "../cudacommon/cuda_host_device.h"
 #include "../common/culgt_typedefs.h"
 #include "../lattice/LatticeDimension.h"
-#include "ParityType.h"
 #include <assert.h>
 
 /**
@@ -34,12 +34,14 @@ public:
 	CUDA_HOST_DEVICE inline SiteCoord( const lat_coord_t size[Nd], lat_index_t* nn=NULL );
 	CUDA_HOST_DEVICE inline SiteCoord( const SiteCoord<Nd,par> &s );
 	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd>& dim, lat_index_t* nn=NULL );
+	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd> dim, NeigbourTableType type ); // init without neighbour table not allowed (this is a new interface)
 //	CUDA_HOST_DEVICE inline virtual ~SiteCoord();
 	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
 	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();} ; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline lat_index_t getIndexNonSplit() const; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline lat_coord_t getLatticeSizeDirection( lat_dim_t i );
+	CUDA_HOST_DEVICE inline void setIndex( lat_index_t latticeIndex ) { setLatticeIndex( latticeIndex); };
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex );
@@ -71,6 +73,14 @@ template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const lat
 }
 
 template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const culgt::LatticeDimension<Nd>& dim, lat_index_t* nn )
+{
+	for( int i = 0; i < Nd; i++ )
+	{
+		this->size[i] = dim.getDimension( i );
+	}
+}
+
+template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const culgt::LatticeDimension<Nd> dim, NeigbourTableType type )
 {
 	for( int i = 0; i < Nd; i++ )
 	{

@@ -29,9 +29,7 @@
 namespace culgt
 {
 
-enum NeigbourTableType {
-	DO_NOT_USE_NEIGHBOURS
-};
+
 
 template<lat_dim_t Nd, ParityType par> class SiteIndex
 {
