@@ -11,6 +11,7 @@ template<typename PatternType> class LinkFileStub: public LinkFile<PatternType>
 public:
 	LinkFileStub( LatticeDimension<4> dim ) : LinkFile<PatternType>::LinkFile( dim ) {};
 	MOCK_METHOD0(loadImplementation,void());
+	MOCK_METHOD0(saveImplementation,void());
 };
 
 class GaugeConfigurationIteratingApplicationMock: public GaugeConfigurationIteratingApplication<PatternStub<float>, LinkFileStub<PatternStub<float> > >
@@ -64,5 +65,11 @@ TEST_F( GaugeConfigurationIteratingApplicationWithFixedSettings, LoadDelegatesLo
 {
 	EXPECT_CALL( app.getLinkFile(), loadImplementation() );
 	app.load();
+}
+
+TEST_F( GaugeConfigurationIteratingApplicationWithFixedSettings, SaveDelegatesSaveToLinkFileObject )
+{
+	EXPECT_CALL( app.getLinkFile(), saveImplementation() );
+	app.save( "test" );
 }
 

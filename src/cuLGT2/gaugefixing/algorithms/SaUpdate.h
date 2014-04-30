@@ -9,6 +9,10 @@
 #include "../../common/culgt_typedefs.h"
 #include "../../util/rng/PhiloxWrapper.h"
 
+namespace culgt
+{
+
+
 template<typename T, typename InternalT=T> class SaUpdate
 {
 public:
@@ -70,6 +74,8 @@ template<typename T, typename InternalT> __device__ void SaUpdate<T,InternalT>::
 //	28 flop
 
 //	sum: 86 flop
+
+}
 
 }
 #endif

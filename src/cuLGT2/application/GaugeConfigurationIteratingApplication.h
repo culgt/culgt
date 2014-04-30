@@ -33,6 +33,8 @@ public:
 
 	virtual void iterate() = 0;
 
+//	virtual void addProgramOptions() = 0;
+
 	void run()
 	{
 		for( fileiterator.reset(); fileiterator.hasElement(); fileiterator.next() )
@@ -49,15 +51,40 @@ public:
 		return false;
 	}
 
+	bool loadToDevice()
+	{
+		bool returnVal = load();
+		configuration.copyToDevice();
+		return returnVal;
+	}
+
+	void save( string appendix )
+	{
+		linkFile.setFilename( fileiterator.getFilename( appendix ) );
+		std::cout << fileiterator.getFilename( appendix ) << std::endl;
+		linkFile.save( configuration.getHostPointer() );
+	}
+
+	void saveFromDevice( string appendix )
+	{
+		configuration.copyToHost();
+		save( appendix );
+	}
+
 	template<typename ConcreteApplicationType> static ConcreteApplicationType* init( const int argc, const char* argv[] )
 	{
 		// do the command line interpretation here.
 		ProgramOptions* po = new ProgramOptions( argc, argv );
+//		ConcreteApplicationType::addProgramOptions( po );
+		po->parseOptions( argc, argv, true );
 
 		int fileNumberEnd = po->getFileNumberStart()+(po->getNConf()-1)*po->getFileNumberStep();
 		FileIterator fileiterator( po->getFileBasename(), po->getFileEnding(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd );
 
 		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::Ndim>(32,32,32,32), fileiterator, po );
+
+		// parse again for options that where added in the constructor
+		po->parseOptions( argc, argv );
 
 		return dynamic_cast<ConcreteApplicationType*>(APP);
 	}

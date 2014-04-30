@@ -147,6 +147,45 @@ public:
 		flipSign( store[7] );
 	}
 
+	/**
+	 * Ignores second line
+	 */
+	static const int FlopsGetSU2Subgroup = 0;
+	static CUDA_HOST_DEVICE typename Real4<REALTYPE>::VECTORTYPE inline getSU2Subgroup( TYPE store[SIZE], lat_group_index_t i, lat_group_index_t j )
+	{
+		typename Real4<REALTYPE>::VECTORTYPE result;
+		result.x = store[0];
+		result.y = store[1];
+		result.z = store[2];
+		result.w = store[3];
+		return result;
+	}
+
+	static const int FlopsSubgroupMult = 4*7;
+	static CUDA_HOST_DEVICE void inline rightSubgroupMult( TYPE store[SIZE], const typename Real4<REALTYPE>::VECTORTYPE& mat, lat_group_index_t i, lat_group_index_t j )
+	{
+		store[6] = store[0]*mat.x - store[3]*mat.w - store[1]*mat.y - store[2]*mat.z;
+		store[7] = -(store[2]*mat.w + store[1]*mat.x + store[0]*mat.y - store[3]*mat.z);
+		store[4] = -(store[2]*mat.x - store[1]*mat.w + store[3]*mat.y + store[0]*mat.z);
+		store[5] = store[0]*mat.w + store[3]*mat.x - store[2]*mat.y + store[1]*mat.z;
+		store[2] = -store[4];
+		store[3] = store[5];
+		store[0] = store[6];
+		store[1] = -store[7];
+	}
+
+	static CUDA_HOST_DEVICE void inline leftSubgroupMult( TYPE store[SIZE], const typename Real4<REALTYPE>::VECTORTYPE& mat, lat_group_index_t i, lat_group_index_t j )
+	{
+		store[6] = store[0]*mat.x - store[3]*mat.w - store[1]*mat.y - store[2]*mat.z;
+		store[7] = -(store[1]*mat.x - store[2]*mat.w + store[0]*mat.y + store[3]*mat.z);
+		store[4] = -(store[1]*mat.w + store[2]*mat.x - store[3]*mat.y + store[0]*mat.z);
+		store[5] = store[0]*mat.w + store[3]*mat.x + store[2]*mat.y - store[1]*mat.z;
+		store[2] = -store[4];
+		store[3] = store[5];
+		store[0] = store[6];
+		store[1] = -store[7];
+	}
+
 };
 
 template<typename T> class SUNRealFull<3,T>

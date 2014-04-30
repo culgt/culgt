@@ -12,6 +12,7 @@ template<typename MemoryConfigurationPattern> class LinkFileStub: public LinkFil
 {
 public:
 	MOCK_METHOD0( loadImplementation, void() );
+	MOCK_METHOD0( saveImplementation, void() );
 };
 
 TEST( ALinkFile, OpenFileThrowsExceptionIfNoFilenameSet )
@@ -66,6 +67,12 @@ TEST_F( ALinkFileWithDestination, OverriddenLoadIsCalledByLoad )
 {
 	EXPECT_CALL( linkfile, loadImplementation() );
 	linkfile.load( U );
+}
+
+TEST_F( ALinkFileWithDestination, OverriddenSaveIsCalledByLoad )
+{
+	EXPECT_CALL( linkfile, saveImplementation() );
+	linkfile.save( U );
 }
 
 

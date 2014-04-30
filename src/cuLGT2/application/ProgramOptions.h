@@ -38,23 +38,40 @@ public:
 		("fstartnumber", boost::program_options::value<int>(&fileNumberStart)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
 		("fstepnumber", boost::program_options::value<int>(&fileNumberStep)->default_value(1), "load every <fstepnumber>-th file")
 		("nconf,m", boost::program_options::value<int>(&nConf)->default_value(1), "how many files to iterate")
-		;
 
+		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
+		;
+	}
+
+	void parseOptions( const int argc, const char* argv[], bool beQuiet = false )
+	{
 		boost::program_options::positional_options_description options_p;
 		options_p.add("config-file", -1);
 
-		boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
-				options(options_desc).positional(options_p).run(), options_vm);
+		if( beQuiet )
+		{
+			boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
+					options(options_desc).positional(options_p).allow_unregistered().run(), options_vm);
+		}
+		else
+		{
+			boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
+					options(options_desc).positional(options_p).run(), options_vm);
+		}
 		boost::program_options::notify(options_vm);
 
 		ifstream cfg( configFile.c_str() );
+
 		boost::program_options::store(boost::program_options::parse_config_file( cfg, options_desc), options_vm);
 		boost::program_options::notify(options_vm);
 
-		if (options_vm.count("help")) {
-			std::cout << "Usage: " << argv[0] << " [options] [config-file]" << std::endl;
-			std::cout << options_desc << "\n";
-			exit(1);
+		if( !beQuiet )
+		{
+			if (options_vm.count("help")) {
+				std::cout << "Usage: " << argv[0] << " [options] [config-file]" << std::endl;
+				std::cout << options_desc << "\n";
+				exit(1);
+			}
 		}
 	}
 
@@ -93,6 +110,16 @@ public:
 		return nConf;
 	}
 
+	void addOption( boost::program_options::options_description option )
+	{
+		options_desc.add( option );
+	}
+
+	long getSeed() const
+	{
+		return seed;
+	}
+
 private:
 	boost::program_options::variables_map options_vm;
 	boost::program_options::options_description options_desc;
@@ -107,6 +134,8 @@ private:
 	int fileNumberStart;
 	int fileNumberStep;
 	int nConf;
+
+	long seed;
 };
 
 

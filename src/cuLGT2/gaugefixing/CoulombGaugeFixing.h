@@ -5,6 +5,7 @@
 
 #ifndef COULOMBGAUGEFIXING_H_
 #define COULOMBGAUGEFIXING_H_
+#include "gaugefixing_thread_types.h"
 #include <assert.h>
 #include "../lattice/parameterization_types/SU2Vector4.h"
 #include "../lattice/SubgroupIterator.h"
@@ -24,9 +25,17 @@
 #include "../lattice/GlobalLink.h"
 #include "../util/rng/PhiloxWrapper.h"
 
+#include "GaugeSettings.h"
+
+#include "CoulombGaugeFixingOverrelaxation.h"
+#include "CoulombGaugeFixingSimulatedAnnealing.h"
+#include "AutoTuner.h"
+#include "RandomGaugeTrafo.h"
+
+#include "GaugeFixingSaOr.h"
+
 using std::string;
 
-#include "gaugefixing_thread_types.h"
 
 namespace culgt
 {
@@ -63,7 +72,7 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	}
 
 	// TODO: verify that the following statement indeed drops out, then remove it
-	Sum -= Sum.trace()/Real(GlobalLinkType::PARAMTYPE::NC);
+	Sum -= Sum.trace()/(LocalLinkType::PARAMTYPE::REALTYPE)(GlobalLinkType::PARAMTYPE::NC);
 
 	LocalLinkType SumHerm;
 	SumHerm = Sum;
@@ -75,62 +84,18 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	dGff[index] = gff;
 }
 
-
-template<typename GlobalLinkType, typename GlobalLinkType2, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(8*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep8( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter)
-{
-	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm orupdate( orParameter );
-	GaugeFixing8Threads<Algorithm, LandauCoulombGaugeType<COULOMB>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
-	gaugefixing.applyAlgorithmTimeslice( Ut, UtDown, nn, latticeSize, parity );
 }
 
-template<typename GlobalLinkType, typename GlobalLinkType2,  typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(4*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep4( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter )
-{
-	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm orupdate( orParameter );
-	GaugeFixing4Threads<Algorithm, LandauCoulombGaugeType<COULOMB>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
-	gaugefixing.applyAlgorithmTimeslice( Ut, UtDown, nn, latticeSize, parity );
-}
-
-template<typename GlobalLinkType, typename GlobalLinkType2, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(8*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelSaStep8( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE temperature, int rngSeed, int rngCounter)
-{
-	PhiloxWrapper<typename LocalLinkType::PARAMTYPE::REALTYPE> rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
-	typedef SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm saupdate( temperature, rng );
-	GaugeFixing8Threads<Algorithm, LandauCoulombGaugeType<COULOMB>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( saupdate );
-	gaugefixing.applyAlgorithmTimeslice( Ut, UtDown, nn, latticeSize, parity );
-}
-
-template<typename GlobalLinkType, typename GlobalLinkType2,  typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(4*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelSaStep4( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE temperature, int rngSeed, int rngCounter )
-{
-	PhiloxWrapper<typename LocalLinkType::PARAMTYPE::REALTYPE> rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
-	typedef SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm saupdate( temperature, rng );
-	GaugeFixing4Threads<Algorithm, LandauCoulombGaugeType<COULOMB>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( saupdate );
-	gaugefixing.applyAlgorithmTimeslice( Ut, UtDown, nn, latticeSize, parity );
-}
-
-}
-
-template<typename GlobalLinkType, typename LocalLinkType> class CoulombGaugefixing
+template<typename GlobalLinkType, typename LocalLinkType> class CoulombGaugefixing: public GaugeFixingSaOr
 {
 public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 	COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 
-	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim ) : dimTimeslice(dim), totalTime(0), totalIter(0)
+	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), totalTime(0), totalIter(0), overrelaxation( Ut, UtDown, dim, seed, 1.5 ), simulatedAnnealing( Ut, UtDown, dim, seed, 1. ), seed(seed)
 	{
-		CUDA_SAFE_CALL( cudaMalloc( &dA, dim.getSize()*sizeof(double) ), "malloc dA");
-		CUDA_SAFE_CALL( cudaMalloc( &dGff, dim.getSize()*sizeof(double) ), "malloc dGff");
-
 		setTimeslice( Ut, UtDown );
-	}
-
-	~CoulombGaugefixing()
-	{
-		cudaFree( dA );
-		cudaFree( dGff );
 	}
 
 	void setTimeslice( T* Ut, T* UtDown )
@@ -159,108 +124,83 @@ public:
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), totalTime, totalIter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
-	template<GaugeFixingThreadsPerSite ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> RunInfo orsteps( float orParameter, int iter )
+	RunInfo runOverrelaxation( float orParameter, int iter, int id = -1 )
 	{
-		if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
-		{
-			cudaFuncSetCacheConfig( CoulombGaugefixingKernel::kernelOrStep4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
-		}
-		else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
-		{
-			cudaFuncSetCacheConfig( CoulombGaugefixingKernel::kernelOrStep8<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
-		}
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dimTimeslice, true, SitesPerBlock );
+		overrelaxation.setOrParameter( orParameter );
 
-		Chronotimer timer;
-		timer.reset();
-		timer.start();
-		cudaDeviceSynchronize();
+		overrelaxation.startTime();
 
 		for( int i = 0; i < iter; i++ )
 		{
-			if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
-			{
-				CoulombGaugefixingKernel::kernelOrStep8<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, orParameter );
-				CoulombGaugefixingKernel::kernelOrStep8<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, orParameter );
-			}
-			else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
-			{
-				CoulombGaugefixingKernel::kernelOrStep4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, orParameter );
-				CoulombGaugefixingKernel::kernelOrStep4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, orParameter );
-			}
-			else
-			{
-				assert( false );
-			}
+			overrelaxation.run( id );
 		}
+		overrelaxation.stopTime();
 
-		cudaDeviceSynchronize();
-		timer.stop();
 		CUDA_LAST_ERROR( "kernelOrStep" );
 
-		totalTime += timer.getTime();
+		totalTime += overrelaxation.getTime();
 		totalIter += iter;
 
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), timer.getTime(), iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), overrelaxation.getTime(), iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
-	template<GaugeFixingThreadsPerSite ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> RunInfo sasteps( float saMax, float saMin, int steps, int seed )
+	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )
 	{
-		if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
-		{
-			cudaFuncSetCacheConfig( CoulombGaugefixingKernel::kernelSaStep4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
-		}
-		else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
-		{
-			cudaFuncSetCacheConfig( CoulombGaugefixingKernel::kernelSaStep8<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
-		}
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dimTimeslice, true, SitesPerBlock );
+		overrelaxation.setOrParameter( orParameter );
+		overrelaxation.tune();
+	}
 
-		Chronotimer timer;
-		timer.reset();
-		timer.start();
-		cudaDeviceSynchronize();
+	RunInfo runSimulatedAnnealing( float saMax, float saMin, int steps, int id = -1 )
+	{
+		simulatedAnnealing.startTime();
 
 		float tStep = (saMax-saMin)/(float)steps;
 		float temperature = saMax;
 		for( int i = 0; i < steps; i++ )
 		{
-			if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
-			{
-				CoulombGaugefixingKernel::kernelSaStep8<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, temperature, seed, PhiloxWrapper<REALT>::getNextCounter() );
-				CoulombGaugefixingKernel::kernelSaStep8<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, temperature, seed, PhiloxWrapper<REALT>::getNextCounter() );
-			}
-			else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
-			{
-				CoulombGaugefixingKernel::kernelSaStep4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, temperature, seed, PhiloxWrapper<REALT>::getNextCounter() );
-				CoulombGaugefixingKernel::kernelSaStep4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, temperature, seed, PhiloxWrapper<REALT>::getNextCounter() );
-			}
-			else
-			{
-				assert( false );
-			}
+			simulatedAnnealing.setTemperature( temperature );
+			simulatedAnnealing.run( id );
 			temperature -= tStep;
 		}
 
-		cudaDeviceSynchronize();
-		timer.stop();
-		CUDA_LAST_ERROR( "kernelOrStep" );
+		simulatedAnnealing.stopTime();
+		CUDA_LAST_ERROR( "kernelSaStep" );
 
-		totalTime += timer.getTime();
+		totalTime += simulatedAnnealing.getTime();
 		totalIter += steps;
 
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), timer.getTime(), steps, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), simulatedAnnealing.getTime(), steps, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
+
+	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int Id = -1 )
+	{
+		simulatedAnnealing.setTemperature( temperature );
+		simulatedAnnealing.tune();
+	}
+
+	void randomTrafo()
+	{
+		RandomGaugeTrafo<GlobalLinkType,LocalLinkType>::randomTrafo( Ut, UtDown, dimTimeslice, seed );
+	}
+
+
 
 private:
 	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice;
 	T* Ut;
 	T* UtDown;
-	double* dA;
-	double* dGff;
+
+
+	CoulombGaugeFixingOverrelaxation<GlobalLinkType,LocalLinkType> overrelaxation;
+	CoulombGaugeFixingSimulatedAnnealing<GlobalLinkType,LocalLinkType> simulatedAnnealing;
 
 	double totalTime;
 	int totalIter;
+
+	int orOptimalTunedId;
+	int saOptimalTunedId;
+
+	long seed;
 };
 
 

@@ -47,6 +47,15 @@ private:
 		}
 	}
 
+	void writeSize()
+	{
+		for( int i = 0; i < memoryNdim; i++ )
+		{
+			short mySize = this->getLatticeDimension().getDimension(i);
+			LinkFile<MemoryConfigurationPattern>::file.write( (char*)&mySize, sizeof(short) );
+		}
+	}
+
 	void throwException( std::string msg, short expected, short inFile )
 	{
 		std::stringstream message;
@@ -66,6 +75,17 @@ public:
 	LinkFileVogt( const LatticeDimension<memoryNdim> size ) : LinkFile<MemoryConfigurationPattern>( size )
 	{
 	}
+
+#if __cplusplus == 201103L
+	virtual void saveImplementation() override
+#else
+	void saveImplementation()
+#endif
+	{
+		saveHeader();
+		saveBody();
+	}
+
 #if __cplusplus == 201103L
 	virtual void loadImplementation() override
 #else
@@ -85,6 +105,17 @@ public:
 		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&sizeOfReal, sizeof(short) );
 	}
 
+	void saveHeader()
+	{
+		short myMemoryNdim = memoryNdim;
+		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&myMemoryNdim, sizeof(short) );
+		short myNc= MemoryConfigurationPattern::PARAMTYPE::NC;
+		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&myNc, sizeof(short) );
+		writeSize();
+		short mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
+		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&mySizeOfReal, sizeof(short) );
+	}
+
 	LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > getNextLink()
 	{
 		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> LocalLinkParamType;
@@ -99,6 +130,18 @@ public:
 		}
 		return link;
 	}
+
+	void writeNextLink( LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > link )
+	{
+		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> LocalLinkParamType;
+
+		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
+		{
+			typename LocalLinkParamType::TYPE value = link.get( i );
+			LinkFile<MemoryConfigurationPattern>::file.write( (char*)&value, sizeof(typename LocalLinkParamType::TYPE) );
+		}
+	}
+
 
 	void loadBody()
 	{
@@ -115,6 +158,26 @@ public:
 				src = getNextLink();
 
 				dest = src;
+			}
+		}
+	}
+
+	void saveBody()
+	{
+		for( int i = 0; i < this->getLatticeDimension().getSize(); i++ )
+		{
+			for( int mu = 0; mu < memoryNdim; mu++ )
+			{
+				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
+				site.setLatticeIndexFromNonParitySplitOrder( i );
+
+				GlobalLink<MemoryConfigurationPattern> src( this->getPointerToU(), site, mu );
+
+				LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > dest;
+
+				dest = src;
+
+				writeNextLink( dest );
 			}
 		}
 	}

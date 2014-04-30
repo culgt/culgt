@@ -30,6 +30,15 @@ template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock> __g
 	gaugefixing.applyAlgorithm( U, nn, latticeSize, parity );
 }
 
+template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock> __global__  void kernelRandom4( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, int rngSeed, int rngCounter )
+{
+	PhiloxWrapper<typename LocalLinkType::PARAMTYPE::REALTYPE> rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
+	typedef RandomUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+	Algorithm randomupdate( rng );
+	GaugeFixing4Threads<Algorithm, RandomTrafoType, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( randomupdate );
+	gaugefixing.applyAlgorithmTimeslice( Ut, UtDown, nn, latticeSize, parity );
+}
+
 }
 
 template<typename GlobalLinkType, typename LocalLinkType> class RandomGaugeTrafo
@@ -38,15 +47,7 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	RandomGaugeTrafo( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim ) : dim(dim), U(U)
-	{
-	}
-
-	~RandomGaugeTrafo()
-	{
-	}
-
-	void randomTrafo( int seed )
+	static void randomTrafo( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, int seed )
 	{
 		const int SitesPerBlock = 32;
 
@@ -61,9 +62,23 @@ public:
 		CUDA_LAST_ERROR( "kernelRandomTrafo" );
 	}
 
-private:
-	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim;
-	T* U;
+	static void randomTrafo( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, int seed )
+	{
+		const int SitesPerBlock = 32;
+		COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
+
+		GlobalLinkType::bindTexture( Ut, GlobalLinkType::getArraySize( dim ) );
+		GlobalLinkType2::bindTexture( UtDown, GlobalLinkType2::getArraySize( dim ) );
+
+//		cudaFuncSetCacheConfig( RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock>, cudaFuncCachePreferL1 );
+
+		std::cout << "random trafo" << std::endl;
+
+		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim, true, SitesPerBlock );
+		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, seed, PhiloxWrapper<REALT>::getNextCounter() );
+		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), true, seed, PhiloxWrapper<REALT>::getNextCounter() );
+		CUDA_LAST_ERROR( "kernelRandomTrafo" );
+	}
 };
 
 

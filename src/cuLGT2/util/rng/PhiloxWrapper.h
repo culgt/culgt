@@ -151,7 +151,7 @@ template<> __device__ float PhiloxWrapper<float>::rand2()
 	switch( localCounter )
 	{
 	case 0:
-		localCounter = 3;
+		localCounter = 1;
 		c[0]++; // inkrement the kernel counter
 		u.res = philox4x32(c,k);
 		return u01_open_open_32_24( u.i[localCounter] );
@@ -164,6 +164,21 @@ template<> __device__ float PhiloxWrapper<float>::rand2()
 	default:
 		localCounter = 2;
 		return u01_open_open_32_24( u.i[localCounter] );
+	}
+}
+
+template<> __device__ double PhiloxWrapper<double>::rand2()
+{
+	switch( localCounter )
+	{
+	case 0:
+		localCounter = 1;
+		c[0]++; // inkrement the kernel counter
+		u.res = philox4x32(c,k);
+		return u01_open_open_64_53( u.i[localCounter] );
+	default:
+		localCounter = 0;
+		return u01_open_open_64_53( u.i[localCounter] );
 	}
 }
 

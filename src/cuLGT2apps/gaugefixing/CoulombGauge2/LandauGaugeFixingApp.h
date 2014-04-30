@@ -1,12 +1,11 @@
 /**
- * CoulombGaugeFixingApp2.h
  *
  *  Created on: Apr 15, 2014
  *      Author: vogt
  */
 
-#ifndef COULOMBGAUGEFIXINGAPP2_H_
-#define COULOMBGAUGEFIXINGAPP2_H_
+#ifndef LANDAUGAUGEFIXINGAPP_H_
+#define LANDAUGAUGEFIXINGAPP_H_
 
 #include "lattice/parameterization_types/ParameterizationMediatorSU2_Vector4_Real8.h"
 #include "application/GaugeConfigurationIteratingApplication.h"
@@ -18,38 +17,49 @@
 #include "observables/PlaquetteAverage.h"
 #include "lattice/GlobalLink.h"
 #include "gaugefixing/LandauGaugeFixing.h"
+#include "util/rng/PhiloxWrapper.h"
 
 namespace culgt
 {
 
-typedef float REAL;
+typedef double REAL;
 typedef SU2Vector4<REAL> PARAMTYPE;
 typedef SiteIndex<4,FULL_SPLIT> SITE;
 typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
-typedef GlobalLink<PATTERNTYPE,false> GLOBALLINK;
+typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
+typedef PhiloxWrapper<REAL> RNG;
 
 /*
  *
  */
-class CoulombGaugeFixingApp2: public GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >
+class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >
 {
 public:
-	CoulombGaugeFixingApp2( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >(  dim, fileiterator, programOptions )
+	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >(  dim, fileiterator, programOptions )
 	{
+		boost::program_options::options_description gaugeOptions("Gaugefixing options");
+		gaugeOptions.add_options()
+				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)");
+
+		programOptions->addOption( gaugeOptions );
 		landau = new LandauGaugefixing<GLOBALLINK,LOCALLINK>( configuration.getDevicePointer(), dimension );
+
+		landau->orstepsAutoTune<RNG>( programOptions->getSeed() );
 	}
 private:
 	void iterate()
 	{
-		load();
+		loadToDevice();
 		configuration.copyToDevice();
 
 		GaugeStats stats = landau->getGaugeStats();
 		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
 
-		landau->orsteps<EIGHT_THREAD_PER_SITE,64,5>( 1.7, 1 );
-		RunInfo info = landau->orsteps<EIGHT_THREAD_PER_SITE,64,5>( 1.7, 100 );
+//		RandomGaugeTrafo<GLOBALLINK,LOCALLINK> random( configuration.getDevicePointer(), dimension );
+//		random.randomTrafo( programOptions->getSeed() );
+
+		RunInfo info = landau->orstepsTuned( 1.7, 100 );
 		std::cout << "Overrelaxtion: " << info.getGflops() << " GFlops at " <<  info.getThroughput() << " GByte/s memory throughput." << std::endl;
 
 		stats = landau->getGaugeStats();
@@ -57,10 +67,13 @@ private:
 
 		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
 		std::cout << "Plaquette: " << plaquette.getPlaquette() << std::endl;
+
+		saveFromDevice( fileAppendix );
 	};
 
 	LandauGaugefixing<GLOBALLINK,LOCALLINK>* landau;
+	string fileAppendix;
 };
 
 } /* namespace culgt */
-#endif /* COULOMBGAUGEFIXINGAPP2_H_ */
+#endif

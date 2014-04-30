@@ -25,12 +25,15 @@
 #include <string>
 
 #include "gaugefixing_thread_types.h"
-
+#include "../lattice/GaugeConfigurationCudaHelper.h"
+#include "AutoTuner.h"
 
 using std::string;
 
 namespace culgt
 {
+
+
 
 
 
@@ -150,6 +153,7 @@ public:
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), totalTime, totalIter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
+
 	template<GaugeFixingThreadsPerSite ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> RunInfo orsteps( float orParameter, int iter )
 	{
 
@@ -231,6 +235,71 @@ public:
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), timer.getTime(), iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
+	RunInfo orstepsTuned( float orParameter, int iter, int Id = -1 )
+	{
+		if( Id == -1 ) Id = orOptimalTunedId;
+		switch( Id )
+		{
+		case 0:
+			return orsteps<EIGHT_THREAD_PER_SITE,32,1>( orParameter, iter );
+		case 1:
+			return orsteps<EIGHT_THREAD_PER_SITE,32,2>( orParameter, iter );
+		case 2:
+			return orsteps<EIGHT_THREAD_PER_SITE,32,3>( orParameter, iter );
+		case 3:
+			return orsteps<EIGHT_THREAD_PER_SITE,32,4>( orParameter, iter );
+		case 4:
+			return orsteps<EIGHT_THREAD_PER_SITE,32,5>( orParameter, iter );
+		case 5:
+			return orsteps<EIGHT_THREAD_PER_SITE,32,6>( orParameter, iter );
+		case 6:
+			return orsteps<EIGHT_THREAD_PER_SITE,64,1>( orParameter, iter );
+		case 7:
+			return orsteps<EIGHT_THREAD_PER_SITE,64,2>( orParameter, iter );
+		case 8:
+			return orsteps<EIGHT_THREAD_PER_SITE,64,3>( orParameter, iter );
+		case 9:
+			return orsteps<EIGHT_THREAD_PER_SITE,128,1>( orParameter, iter );
+		case 10:
+			return orsteps<FOUR_THREAD_PER_SITE,32,1>( orParameter, iter );
+		case 11:
+			return orsteps<FOUR_THREAD_PER_SITE,32,2>( orParameter, iter );
+		case 12:
+			return orsteps<FOUR_THREAD_PER_SITE,32,3>( orParameter, iter );
+		case 13:
+			return orsteps<FOUR_THREAD_PER_SITE,32,4>( orParameter, iter );
+		case 14:
+			return orsteps<FOUR_THREAD_PER_SITE,32,5>( orParameter, iter );
+		case 15:
+			return orsteps<FOUR_THREAD_PER_SITE,32,6>( orParameter, iter );
+		case 16:
+			return orsteps<FOUR_THREAD_PER_SITE,64,1>( orParameter, iter );
+		case 17:
+			return orsteps<FOUR_THREAD_PER_SITE,64,2>( orParameter, iter );
+		case 18:
+			return orsteps<FOUR_THREAD_PER_SITE,64,3>( orParameter, iter );
+		case 19:
+			return orsteps<FOUR_THREAD_PER_SITE,128,1>( orParameter, iter );
+		default:
+			throw LastElementReachedException();
+		}
+	}
+
+	template<typename RNG> void orstepsAutoTune( int seed, float orParameter = 1.5, int iter = 1000 )
+	{
+		AutoTuner<LandauGaugefixing> autoTuner( *this );
+		autoTuner.template tuneOr<RNG>( orOptimalTunedId, seed, orParameter, iter );
+	}
+
+	/**
+	 * Needed by the AutoTuner
+	 * @param seed
+	 */
+	template<typename RNG> void setHot( long seed )
+	{
+		GaugeConfigurationCudaHelper<T>::template setHot<typename GlobalLinkType::PATTERNTYPE,RNG>( U, dim, seed, RNG::getNextCounter() );
+	}
+
 private:
 	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim;
 	T* U;
@@ -239,6 +308,8 @@ private:
 
 	double totalTime;
 	int totalIter;
+
+	int orOptimalTunedId;
 };
 
 

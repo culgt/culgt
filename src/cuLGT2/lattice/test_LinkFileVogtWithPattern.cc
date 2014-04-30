@@ -75,4 +75,27 @@ TEST( ALinkFileVogtWithPatternLoadingSample, LoadViaAbstractLoadReadsCorrectFirs
 	ASSERT_FLOAT_EQ( -4.711566e-01, U[0] );
 }
 
+TEST( ALinkFileVogtWithPatternSavingSample, LoadAfterSaveWorks )
+{
+	const float someValue = 54.2345;
+
+	typedef GPUPattern<SiteIndex<4,NO_SPLIT>, SU2Real4<float> > MyPattern;
+	float* U = new float[8*4*4*4*4*8];
+	LatticeDimension<4> dim(8,4,4,4);
+	LinkFile<MyPattern>* aLinkFileVogt;
+	aLinkFileVogt = new LinkFileVogt<MyPattern,float>( dim );
+
+	U[0] = someValue;
+
+	aLinkFileVogt->setFilename( "test_save.vogt" );
+
+	aLinkFileVogt->save( U );
+
+	U[0] = 0;
+	aLinkFileVogt->load( U );
+
+
+	ASSERT_FLOAT_EQ( someValue, U[0] );
+}
+
 

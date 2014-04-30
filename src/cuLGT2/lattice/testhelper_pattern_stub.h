@@ -51,6 +51,14 @@ public:
 
 	};
 };
+template<typename T, int NC, int NDIM> class ParameterizationMediator<SUNRealFull<NC, T>, ParamStub<T, NC>,LocalLink<SUNRealFull<NC, T> >,GlobalLink<PatternStub<T, NDIM, NC> > >
+{
+public:
+	CUDA_HOST_DEVICE static void assign( LocalLink<SUNRealFull<NC, T> >& l1, const GlobalLink<PatternStub<T, NDIM, NC> >& l2 )
+	{
+
+	};
+};
 }
 
 #endif /* TESTHELPER_PATTERN_STUB_H_ */

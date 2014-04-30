@@ -69,3 +69,74 @@ TEST_F( SU2RealFull, Hermitian )
 
 	ASSERT_FLOAT_EQ( -someValue, store[5] );
 }
+
+TEST_F( SU2RealFull, GetSU2Subgroup )
+{
+	store[1] = someValue;
+
+	typename Real4<float>::VECTORTYPE subgroup = SUNRealFull<2,float>::getSU2Subgroup( store, 0, 1 );
+
+	ASSERT_FLOAT_EQ( someValue, subgroup.y );
+}
+
+void fillSU2( float* store )
+{
+	store[0] = 0.1980;
+	store[1] = 0.5189;
+	store[2] = 0.4720;
+	store[3] = 0.6847;
+	store[4] = -0.4720;
+	store[5] = 0.6847;
+	store[6] = 0.1980;
+	store[7] = -0.5189;
+}
+
+void assertRightSubgroup( float store[8] )
+{
+	float result[8] = {-0.8468152, 0.6493795,  0.5535316, 0.4073048,
+			 -0.5535316, 0.4073048, -0.8468152, -0.6493795};
+	for( int i = 0; i < 8; i++ )
+	{
+		ASSERT_FLOAT_EQ( result[i], store[i] );
+	}
+}
+
+void assertLeftSubgroup( float store[8] )
+{
+	float result[8] = {-0.8468152, 0.3856970, 0.2254380, 0.8333088,
+			 -0.2254380, 0.8333088, -0.8468152, -0.3856970};
+	for( int i = 0; i < 8; i++ )
+	{
+		ASSERT_FLOAT_EQ( result[i], store[i] );
+	}
+}
+
+TEST_F( SU2RealFull, RightSubgroupMult )
+{
+	fillSU2( store );
+
+	typename Real4<float>::VECTORTYPE subgroup;
+	subgroup.x = 0.7094;
+	subgroup.y = 0.7547;
+	subgroup.z = 0.2760;
+	subgroup.w = 0.6797;
+
+	SUNRealFull<2,float>::rightSubgroupMult( store, subgroup, 0, 1 );
+
+	assertRightSubgroup( store );
+}
+
+TEST_F( SU2RealFull, LeftSubgroupMult )
+{
+	fillSU2( store );
+
+	typename Real4<float>::VECTORTYPE subgroup;
+	subgroup.x = 0.7094;
+	subgroup.y = 0.7547;
+	subgroup.z = 0.2760;
+	subgroup.w = 0.6797;
+
+	SUNRealFull<2,float>::leftSubgroupMult( store, subgroup, 0, 1 );
+
+	assertLeftSubgroup( store );
+}

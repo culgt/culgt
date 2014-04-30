@@ -73,6 +73,37 @@ public:
 		this->closeFile();
 	};
 
+#if __cplusplus == 201103L
+	virtual void save( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) final
+#else
+	void save( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U )
+#endif
+	{
+		this->U = U;
+		this->openFileWrite();
+		this->saveImplementation();
+		this->closeFile();
+	};
+
+	void openFileWrite()
+	{
+		if( !filenameIsSet )
+		{
+			throw IOException( "Filename not set." );
+		}
+
+		file.open( filename.c_str(), std::ios::out | std::ios::binary);
+
+		if( file.good() )
+		{
+			fileIsOpen = true;
+		}
+		else
+		{
+			throw FileNotFoundException( filename );
+		}
+	};
+
 	void openFile()
 	{
 		if( !filenameIsSet )
@@ -128,6 +159,7 @@ public:
 protected:
 	std::fstream file;
 	virtual void loadImplementation(){};
+	virtual void saveImplementation(){};
 
 private:
 	bool fileIsOpen;

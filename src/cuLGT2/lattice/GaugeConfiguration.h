@@ -210,6 +210,13 @@ public:
 		return Udevice;
 	}
 
+	T* getDevicePointer( lat_coord_t timeslice )
+	{
+		// TODO assert we have a timeslice split pattern.
+		lat_array_index_t configurationSizeTimeslice = Ndim*dim.getSizeTimeslice()*LinkSize;
+		return &Udevice[timeslice*configurationSizeTimeslice];
+	}
+
 	T* getHostPointer() const
 	{
 		return Uhost;
@@ -240,7 +247,7 @@ private:
 	bool UhostIsAllocated;
 	bool UdeviceIsAllocated;
 	LatticeDimension<Ndim> dim;
-	int configurationSize;
+	lat_array_index_t configurationSize;
 };
 
 
