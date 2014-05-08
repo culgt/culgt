@@ -1,5 +1,5 @@
 /**
- * CoulombGaugeFIxingOverrelaxation.h
+ * CoulombGaugeFixingOverrelaxation.h
  *
  *  Created on: Apr 29, 2014
  *      Author: vogt
@@ -49,7 +49,7 @@ public:
 
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	CoulombGaugeFixingOverrelaxation( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, float orParameter, long seed ) : CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType>( Ut, UtDown, dimTimeslice, seed ), orParameter(orParameter)
+	CoulombGaugeFixingOverrelaxation( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, float orParameter, long seed ) : CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType>( Ut, UtDown, dimTimeslice, seed ), orParameter(orParameter)
 	{
 	}
 
@@ -59,8 +59,8 @@ public:
 
 		cudaFuncSetCacheConfig( CoulombGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
 
-		CoulombGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( super::Ut, super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), false, orParameter );
-		CoulombGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( super::Ut, super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), true, orParameter );
+		CoulombGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( *super::Ut, *super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), false, orParameter );
+		CoulombGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( *super::Ut, *super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), true, orParameter );
 	}
 
 	void run( int id = -1 )

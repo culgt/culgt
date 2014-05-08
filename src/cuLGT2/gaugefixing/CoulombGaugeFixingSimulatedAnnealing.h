@@ -49,7 +49,7 @@ public:
 
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	inline CoulombGaugeFixingSimulatedAnnealing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, long seed, float temperature ) : super(Ut,UtDown,dimTimeslice,seed), temperature(temperature)
+	inline CoulombGaugeFixingSimulatedAnnealing( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, long seed, float temperature ) : super(Ut,UtDown,dimTimeslice,seed), temperature(temperature)
 	{
 	}
 
@@ -59,8 +59,8 @@ public:
 
 		cudaFuncSetCacheConfig( CoulombGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkType,LocalLinkType,ThreadsPerSite, SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
 
-		CoulombGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( super::Ut, super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), false, temperature, super::seed, PhiloxWrapper<REALT>::getNextCounter() );
-		CoulombGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( super::Ut, super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), true, temperature, super::seed, PhiloxWrapper<REALT>::getNextCounter() );
+		CoulombGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( *super::Ut, *super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), false, temperature, super::seed, PhiloxWrapper<REALT>::getNextCounter() );
+		CoulombGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkType,LocalLinkType,ThreadsPerSite,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( *super::Ut, *super::UtDown, super::dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( super::dimTimeslice ), true, temperature, super::seed, PhiloxWrapper<REALT>::getNextCounter() );
 	}
 
 	void run( int id = -1 )

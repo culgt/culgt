@@ -18,14 +18,14 @@ template<typename GlobalLinkType, typename LocalLinkType> class CoulombGaugeTuna
 public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	CoulombGaugeTunableObject( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, long seed ) : Ut(Ut), UtDown(UtDown), dimTimeslice(dimTimeslice), seed(seed)
+	CoulombGaugeTunableObject( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, long seed ) : Ut(Ut), UtDown(UtDown), dimTimeslice(dimTimeslice), seed(seed)
 	{
 	}
 
 	void preTuneAction()
 	{
-		GaugeConfigurationCudaHelper<T>::template setHot<typename GlobalLinkType::PATTERNTYPE,PhiloxWrapper<REALT> >( Ut, dimTimeslice, seed, PhiloxWrapper<REALT>::getNextCounter() );
-		GaugeConfigurationCudaHelper<T>::template setHot<typename GlobalLinkType::PATTERNTYPE,PhiloxWrapper<REALT> >( UtDown, dimTimeslice, seed, PhiloxWrapper<REALT>::getNextCounter() );
+		GaugeConfigurationCudaHelper<T>::template setHot<typename GlobalLinkType::PATTERNTYPE,PhiloxWrapper<REALT> >( *Ut, dimTimeslice, seed, PhiloxWrapper<REALT>::getNextCounter() );
+		GaugeConfigurationCudaHelper<T>::template setHot<typename GlobalLinkType::PATTERNTYPE,PhiloxWrapper<REALT> >( *UtDown, dimTimeslice, seed, PhiloxWrapper<REALT>::getNextCounter() );
 	}
 
 	void setSeed( long seed )
@@ -34,8 +34,8 @@ public:
 	}
 
 protected:
-	T* Ut;
-	T* UtDown;
+	T** Ut;
+	T** UtDown;
 	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice;
 	long seed;
 };

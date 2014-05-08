@@ -193,6 +193,12 @@ public:
 		return *this;
 	}
 
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& reproject()
+	{
+		ParamType::reproject( store );
+		return *this;
+	}
+
 	/**
 	 * This introduces a hardcoding to a Parameterization. Should be avoided if possible.
 	 */

@@ -35,6 +35,7 @@ public:
 	template<typename ConfigurationPattern, typename LinkType> static void setLink( T* pointer, const typename ConfigurationPattern::SITETYPE site, const int mu, const LinkType link  );
 	template<typename ConfigurationPattern, typename LinkType> static LinkType getLink( T* pointer, const typename ConfigurationPattern::SITETYPE site, const int mu );
 	template<typename ConfigurationPattern, typename RNG> static void setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter );
+	template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> static void reproject( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter );
 	template<typename ConfigurationPattern> static void setCold( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim );
 	static T getElement( T* pointer, int i );
 	static void copyToDevice( T* dest, T* src, size_t size );
@@ -124,6 +125,35 @@ namespace GaugeConfigurationCudaHelperKernel
 		RNG& rng;
 	};
 
+
+	template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> __global__ void reproject( typename ConfigurationPattern::PARAMTYPE::TYPE* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
+	{
+		int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+		RNG rng( index, rngSeed, rngCounter );
+
+		typename ConfigurationPattern::SITETYPE site( dim, DO_NOT_USE_NEIGHBOURS );
+		site.setIndex( index );
+		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::Ndim; mu++ )
+		{
+			LocalLinkType local;
+			culgt::GlobalLink<ConfigurationPattern> global( pointer, site, mu );
+
+			local = global;
+
+			local.reproject();
+
+			global = local;
+		}
+	}
+
+	/**
+	 * TODO: why not use the same template parameters as reproject??
+	 * @param pointer
+	 * @param dim
+	 * @param rngSeed
+	 * @param rngCounter
+	 */
 	template<typename T, typename ConfigurationPattern, typename RNG> __global__ void setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
 	{
 		typedef culgt::LocalLink<culgt::SUNRealFull<ConfigurationPattern::PARAMTYPE::NC, typename ConfigurationPattern::PARAMTYPE::REALTYPE> > LocalLinkType;
@@ -166,6 +196,13 @@ namespace GaugeConfigurationCudaHelperKernel
 			global = local;
 		}
 	}
+}
+
+template<typename T> template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> void GaugeConfigurationCudaHelper<T>::reproject( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
+{
+	KernelSetup<ConfigurationPattern::SITETYPE::Ndim> setup(dim);
+	GaugeConfigurationCudaHelperKernel::reproject<ConfigurationPattern,LocalLinkType,RNG><<<setup.getGridSize(),setup.getBlockSize()>>>( pointer, dim, rngSeed, rngCounter );
+	CUDA_LAST_ERROR( "kernel reproject" );
 }
 
 template<typename T> template<typename ConfigurationPattern, typename RNG> void GaugeConfigurationCudaHelper<T>::setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )

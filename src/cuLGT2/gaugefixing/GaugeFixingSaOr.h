@@ -11,6 +11,7 @@
 #include "RunInfo.h"
 #include "GaugeSettings.h"
 #include "GaugeStats.h"
+#include "../cuLGT1legacy/Chronotimer.h"
 
 namespace culgt
 {
@@ -18,7 +19,7 @@ namespace culgt
 class GaugeFixingSaOr
 {
 public:
-	GaugeFixingSaOr( lat_index_t size )
+	GaugeFixingSaOr( lat_index_t size ): iterSa(0), iterOr(0), iterMicro(0), copyMemoryIsAllocated( false )
 	{
 		CUDA_SAFE_CALL( cudaMalloc( &dA, size*sizeof(double) ), "malloc dA");
 		CUDA_SAFE_CALL( cudaMalloc( &dGff, size*sizeof(double) ), "malloc dGff");
@@ -31,98 +32,178 @@ public:
 	}
 
 	virtual void randomTrafo() = 0;
-	virtual RunInfo runOverrelaxation( float orParameter, int iter, int id = -1 ) = 0;
-	virtual RunInfo runSimulatedAnnealing( float saMax, float saMin, int steps, int id = -1 ) = 0;
+	virtual void reproject() = 0;
+	virtual void runOverrelaxation( float orParameter, int id = -1 ) = 0;
+	virtual RunInfo getRunInfoOverrelaxation( double time, long iter ) = 0;
+	virtual void runSimulatedAnnealing( float temperature, int id = -1 ) = 0;
+	virtual RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro ) = 0;
+	virtual void runMicrocanonical( int id = -1 ) = 0;
 	virtual GaugeStats getGaugeStats() = 0;
+
+	virtual void allocateCopyMemory() = 0;
+	virtual void freeCopyMemory() = 0;
+	virtual void saveCopy() = 0;
+	virtual void writeBackCopy() = 0;
+	virtual void storeCleanCopy() = 0;
+	virtual void takeCleanCopy() = 0;
 
 	void fix( GaugeSettings settings )
 	{
+		this->settings = settings;
 
+		GaugeStats stats = getGaugeStats();
+		double bestGff = stats.getGff();
 
-		double lastGff = 0;
+		if( settings.getGaugeCopies() > 1 && !copyMemoryIsAllocated )
+		{
+			allocateCopyMemory();
+			copyMemoryIsAllocated = true;
+		}
+
+		if( settings.getGaugeCopies() > 1 ) storeCleanCopy();
 
 		for( int copy = 0; copy < settings.getGaugeCopies(); copy++ )
 		{
+			if( settings.getGaugeCopies() > 1 ) takeCleanCopy();
+
 			if( settings.isRandomTrafo() )
 			{
-				std::cout << "fix: random Trafo" << std::endl;
+				std::cout << "Applying random trafo" << std::endl;
 				randomTrafo();
 			}
 
 			if( settings.isPrintStats() )
 			{
-				// TODO print stats
+				checkPrecision(0);
 			}
 
-			if( settings.getSaSteps() > 0 )
+			fixSimulatedAnnealing();
+
+			fixOverrelaxation();
+
+			stats = getGaugeStats();
+
+			if( stats.getGff() > bestGff )
 			{
-				std::cout << "fix: Simulated Annealing" << std::endl;
-				// TODO pass checkPrecision to saSteps if (isPrintStats)
-				// TODO pass reproject to saSteps
-				runSimulatedAnnealing( settings.getSaMax(), settings.getSaMin(), settings.getSaSteps() );
-			}
+				std::cout << "Found BETTER Copy! (" << std::setprecision(16) << stats.getGff() << ")"  << std::endl;
+				bestGff = stats.getGff();
 
-			if( settings.getOrMaxIter() > 0 )
+				// this might be an infinite loop
+				while( !(stats.getPrecision() < settings.getPrecision() ) )
+				{
+					// we have the best GFF but the precision is not reached
+					fixOverrelaxation();
+					stats = getGaugeStats();
+				}
+
+				if( settings.getGaugeCopies() > 1 ) saveCopy();
+			}
+			else
 			{
-				std::cout << "fix: Overrelaxation" << std::endl;
-				// TODO pass reproject to orSteps
-				runOverrelaxation( settings.getOrParameter(), settings.getOrMaxIter() );
+				std::cout << "DID NOT FIND BETTER COPY! (" << std::setprecision(16) << stats.getGff() << ")" << std::endl;
 			}
+		}
+		if( settings.getGaugeCopies() > 1 ) writeBackCopy();
 
-			GaugeStats stats = getGaugeStats();
-
-			if( stats.getGff() > lastGff )
-			{
-				// TODO check if precision is reached
-				// TODO saveConfig
-			}
+		if( copyMemoryIsAllocated )
+		{
+			freeCopyMemory();
+			copyMemoryIsAllocated = false;
 		}
 	}
 
+
 protected:
+	bool copyMemoryIsAllocated;
 
 	double* dA;
 	double* dGff;
 
+	GaugeSettings settings;
+
+	Chronotimer timerSa;
+	Chronotimer timerOr;
+
+	long iterSa;
+	long iterOr;
+	long iterMicro;
 
 
+	bool check( int iteration )
+	{
+		if( (iteration) % settings.getReproject() == 0 )
+		{
+			reproject();
+		}
 
-//	template<typename GaugeFixingType> static void fix( GaugeFixingType& gaugefixing, GaugeSettings settings )
-//	{
-//		for( int copy = 0; copy < settings.getGaugeCopies(); copy++ )
-//		{
-//			if( settings.isRandomTrafo() )
-//			{
-//				gaugefixing.randomTrafo();
-//			}
-//
-//			if( settings.isPrintStats() )
-//			{
-//				// TODO print stats
-//			}
-//
-//			if( settings.getSaSteps() > 0 )
-//			{
-//				// TODO pass checkPrecision to saSteps if (isPrintStats)
-//				// TODO pass reproject to saSteps
-//				gaugefixing.sasteps( settings.getSaMax(), settings.getSaMin(), settings.getSaSteps() );
-//			}
-//
-//			if( settings.getOrMaxIter() > 0 )
-//			{
-//				// TODO pass reproject to orSteps
-//				gaugefixing.orSteps( settings.getOrParameter(), settings.getOrMaxIter() );
-//			}
-//
-//			GaugeStats stats = gaugefixing.getGaugeStats();
-//
-//			if( stats.getGff() > lastGff )
-//			{
-//				// TODO check if precision is reached
-//				// TODO saveConfig
-//			}
-//		}
-//	}
+		if( (iteration) % settings.getCheckPrecision() == 0 )
+		{
+			return checkPrecision( iteration );
+		}
+
+		return false;
+	}
+
+	bool checkPrecision( int iteration )
+	{
+		GaugeStats stats = getGaugeStats();
+		if( settings.isPrintStats() ) std::cout << std::setw(14) << iteration << std::fixed << std::setprecision( 14) << std::setw(24) << stats.getGff() << std::setprecision( 10 ) << std::setw(20) << std::scientific << stats.getPrecision() << std::endl;
+		return stats.getPrecision() < settings.getPrecision();
+	}
+
+	void fixSimulatedAnnealing()
+	{
+		if( settings.getSaSteps() > 0 )
+		{
+			std::cout << "Simulated Annealing" << std::endl;
+
+			float tStep = ( settings.getSaMax()-settings.getSaMin() )/(float)settings.getSaSteps();
+			float temperature = settings.getSaMax();
+			cudaDeviceSynchronize();
+			timerSa.start();
+			for( int i = 0; i < settings.getSaSteps(); i++ )
+			{
+				runSimulatedAnnealing( temperature );
+				iterSa++;
+				temperature -= tStep;
+
+				runMicrocanonical();
+				iterMicro++;
+				runMicrocanonical();
+				iterMicro++;
+				runMicrocanonical();
+				iterMicro++;
+
+				check( i+1 );
+			}
+			cudaDeviceSynchronize();
+			timerSa.stop();
+
+			if( settings.isPrintStats() ) getRunInfoSimulatedAnnealing( timerSa.getTime(), iterSa, iterMicro ).print();
+		}
+	}
+
+	void fixOverrelaxation()
+	{
+		if( settings.getOrMaxIter() > 0 )
+		{
+			cudaDeviceSynchronize();
+			timerOr.start();
+			std::cout << "Overrelaxation" << std::endl;
+			for( int i = 0; i < settings.getOrMaxIter(); i++ )
+			{
+				runOverrelaxation( settings.getOrParameter() );
+				iterOr++;
+
+				if( check( i+1 ) ) break;
+			}
+			cudaDeviceSynchronize();
+			timerOr.stop();
+
+			if( settings.isPrintStats() ) getRunInfoOverrelaxation( timerOr.getTime(), iterOr ).print();
+		}
+	}
+
 };
 
 }

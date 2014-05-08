@@ -107,6 +107,18 @@ TEST_F( ASU2Vector4, Hermitian )
 	ASSERT_FLOAT_EQ( -4.1, store[0].w );
 }
 
+TEST_F( ASU2Vector4, Reproject )
+{
+	store[0].x = .25;
+	store[0].y = .25;
+	store[0].z = .25;
+	store[0].w = .25;
+
+	SU2Vector4<float>::reproject( store );
+
+	ASSERT_FLOAT_EQ( .5, store[0].w );
+}
+
 
 class ASpecialSU2Vector4: public Test
 {

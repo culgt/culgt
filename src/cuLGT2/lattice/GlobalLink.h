@@ -35,11 +35,15 @@ public:
 	static const bool USETEXTURE=UseTexture;
 
 #ifdef __CUDACC__
-	static void bindTexture( typename PARAMTYPE::TYPE* pointerToStore, lat_array_index_t arraySize )
+	static cudaError_t bindTexture( typename PARAMTYPE::TYPE* pointerToStore, lat_array_index_t arraySize )
 	{
 		cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<typename TextureManager<typename PARAMTYPE::TYPE>::Type>();
 		size_t offset;
-		cudaBindTexture(&offset, TextureManager<typename PARAMTYPE::TYPE>::getTextureReference( TextureID ), pointerToStore, channelDesc, arraySize*sizeof(typename PARAMTYPE::TYPE) );
+		return cudaBindTexture(&offset, TextureManager<typename PARAMTYPE::TYPE>::getTextureReference( TextureID ), pointerToStore, channelDesc, arraySize*sizeof(typename PARAMTYPE::TYPE) );
+	}
+	static void unbindTexture()
+	{
+		cudaUnbindTexture( TextureManager<typename PARAMTYPE::TYPE>::getTextureReference( TextureID ) );
 	}
 #endif
 

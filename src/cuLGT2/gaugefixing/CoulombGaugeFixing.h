@@ -29,6 +29,7 @@
 
 #include "CoulombGaugeFixingOverrelaxation.h"
 #include "CoulombGaugeFixingSimulatedAnnealing.h"
+#include "CoulombGaugeFixingMicrocanonical.h"
 #include "AutoTuner.h"
 #include "RandomGaugeTrafo.h"
 
@@ -93,15 +94,17 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 	COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 
-	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), totalTime(0), totalIter(0), overrelaxation( Ut, UtDown, dim, seed, 1.5 ), simulatedAnnealing( Ut, UtDown, dim, seed, 1. ), seed(seed)
+	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), seed(seed)
 	{
 		setTimeslice( Ut, UtDown );
 	}
 
 	void setTimeslice( T* Ut, T* UtDown )
 	{
+		GlobalLinkType::unbindTexture();
 		this->Ut = Ut;
 		GlobalLinkType::bindTexture( Ut, GlobalLinkType::getArraySize( dimTimeslice ) );
+		GlobalLinkType2::unbindTexture();
 		this->UtDown = UtDown;
 		GlobalLinkType2::bindTexture( UtDown, GlobalLinkType2::getArraySize( dimTimeslice ) );
 	}
@@ -119,63 +122,48 @@ public:
 		return GaugeStats( dGffAvg, dAAvg );
 	}
 
-	RunInfo getTotalRunInfo()
-	{
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), totalTime, totalIter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
-	}
-
-	RunInfo runOverrelaxation( float orParameter, int iter, int id = -1 )
+	void runOverrelaxation( float orParameter, int id = -1 )
 	{
 		overrelaxation.setOrParameter( orParameter );
+		overrelaxation.run( id );
+	}
 
-		overrelaxation.startTime();
+	RunInfo getRunInfoOverrelaxation( double time, long iter )
+	{
+		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+	}
 
-		for( int i = 0; i < iter; i++ )
-		{
-			overrelaxation.run( id );
-		}
-		overrelaxation.stopTime();
-
-		CUDA_LAST_ERROR( "kernelOrStep" );
-
-		totalTime += overrelaxation.getTime();
-		totalIter += iter;
-
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), overrelaxation.getTime(), iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+	void runMicrocanonical( int id = -1 )
+	{
+		microcanonical.run( id );
 	}
 
 	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )
 	{
 		overrelaxation.setOrParameter( orParameter );
-		overrelaxation.tune();
+		overrelaxation.tune( iter );
 	}
 
-	RunInfo runSimulatedAnnealing( float saMax, float saMin, int steps, int id = -1 )
-	{
-		simulatedAnnealing.startTime();
-
-		float tStep = (saMax-saMin)/(float)steps;
-		float temperature = saMax;
-		for( int i = 0; i < steps; i++ )
-		{
-			simulatedAnnealing.setTemperature( temperature );
-			simulatedAnnealing.run( id );
-			temperature -= tStep;
-		}
-
-		simulatedAnnealing.stopTime();
-		CUDA_LAST_ERROR( "kernelSaStep" );
-
-		totalTime += simulatedAnnealing.getTime();
-		totalIter += steps;
-
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), simulatedAnnealing.getTime(), steps, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
-	}
-
-	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int Id = -1 )
+	void runSimulatedAnnealing( float temperature, int id = -1 )
 	{
 		simulatedAnnealing.setTemperature( temperature );
-		simulatedAnnealing.tune();
+		simulatedAnnealing.run( id );
+	}
+
+	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
+	{
+		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iterSa, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops, iterMicro, MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+	}
+
+	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int iter = 1000 )
+	{
+		simulatedAnnealing.setTemperature( temperature );
+		simulatedAnnealing.tune( iter );
+	}
+
+	template<typename RNG> void microcanonicalAutoTune( int iter = 1000 )
+	{
+		microcanonical.tune( iter );
 	}
 
 	void randomTrafo()
@@ -183,19 +171,65 @@ public:
 		RandomGaugeTrafo<GlobalLinkType,LocalLinkType>::randomTrafo( Ut, UtDown, dimTimeslice, seed );
 	}
 
+	void reproject()
+	{
+		GaugeConfigurationCudaHelper<T>::template reproject<typename GlobalLinkType::PATTERNTYPE,LocalLinkType, PhiloxWrapper<REALT> >( Ut, dimTimeslice, seed, PhiloxWrapper<REALT>::getNextCounter() );
+		GaugeConfigurationCudaHelper<T>::template reproject<typename GlobalLinkType::PATTERNTYPE,LocalLinkType, PhiloxWrapper<REALT> >( UtDown, dimTimeslice, seed, PhiloxWrapper<REALT>::getNextCounter() );
+	}
 
+	void allocateCopyMemory()
+	{
+		GaugeConfigurationCudaHelper<T>::allocateMemory( &UtBest, GlobalLinkType::getArraySize(dimTimeslice) );
+		GaugeConfigurationCudaHelper<T>::allocateMemory( &UtDownBest, GlobalLinkType::getArraySize(dimTimeslice) );
+		GaugeConfigurationCudaHelper<T>::allocateMemory( &UtClean, GlobalLinkType::getArraySize(dimTimeslice) );
+		GaugeConfigurationCudaHelper<T>::allocateMemory( &UtDownClean, GlobalLinkType::getArraySize(dimTimeslice) );
+	}
+
+	void freeCopyMemory()
+	{
+		GaugeConfigurationCudaHelper<T>::freeMemory( UtBest );
+		GaugeConfigurationCudaHelper<T>::freeMemory( UtDownBest );
+		GaugeConfigurationCudaHelper<T>::freeMemory( UtClean );
+		GaugeConfigurationCudaHelper<T>::freeMemory( UtDownClean );
+	}
+
+	void saveCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( UtBest, Ut, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+		CUDA_SAFE_CALL( cudaMemcpy( UtDownBest, UtDown, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+	}
+
+	void writeBackCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( Ut, UtBest, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+		CUDA_SAFE_CALL( cudaMemcpy( UtDown, UtDownBest, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+	}
+
+	void storeCleanCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( UtClean, Ut, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+		CUDA_SAFE_CALL( cudaMemcpy( UtDownClean, UtDown, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+	}
+
+	void takeCleanCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( Ut, UtClean, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+		CUDA_SAFE_CALL( cudaMemcpy( UtDown, UtDownClean, GlobalLinkType::getArraySize(dimTimeslice)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+	}
 
 private:
 	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice;
 	T* Ut;
 	T* UtDown;
 
+	T* UtBest;
+	T* UtDownBest;
+	T* UtClean;
+	T* UtDownClean;
 
 	CoulombGaugeFixingOverrelaxation<GlobalLinkType,LocalLinkType> overrelaxation;
 	CoulombGaugeFixingSimulatedAnnealing<GlobalLinkType,LocalLinkType> simulatedAnnealing;
-
-	double totalTime;
-	int totalIter;
+	CoulombGaugeFixingMicrocanonical<GlobalLinkType,LocalLinkType> microcanonical;
 
 	int orOptimalTunedId;
 	int saOptimalTunedId;

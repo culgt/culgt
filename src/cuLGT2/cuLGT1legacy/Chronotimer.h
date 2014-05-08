@@ -20,6 +20,8 @@ class Chronotimer {
 		bool resetted;
 		timeval begin;
 		timeval end;
+		double savedTime;
+		double getElapsedSeconds();
 };
 
 #endif /* CHRONOTIMER_H_ */
