@@ -13,7 +13,7 @@
 #include "LocalLink.h"
 #include "parameterization_types/SUNRealFull.h"
 
-template<int NDIM = 4> class SiteStub
+template<int NDIM = 4, int INDEX=0> class SiteStub
 {
 public:
 	SiteStub(){};
@@ -21,6 +21,7 @@ public:
 	static const int Ndim=NDIM;
 	void setLatticeIndex( const int i ){};
 	void setLatticeIndexFromNonParitySplitOrder( const int i ){};
+	int getIndex()  const { return INDEX; };
 };
 
 template<typename T, int TNC=3> class ParamStub

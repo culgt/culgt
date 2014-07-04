@@ -3,9 +3,9 @@
 #include "parameterization_types/SU3Real12.h"
 #include "parameterization_types/SUNRealFull.h"
 #include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
-#include "../cudatest/cuda_test_compare.h"
+//#include "../cudatest/cuda_test_compare.h"
 #include "../cudatest/cuda_gtest_plugin.h"
-#include "../cudatest/cuda_test_outputtypes.h"
+//#include "../cudatest/cuda_test_outputtypes.h"
 
 using namespace culgt;
 using namespace ::testing;
@@ -44,24 +44,24 @@ CUDA_TEST( ALocalLinkOnDevice, OperatorAssignCopiesFromReal18ToReal12 )
 	ASSERT_FLOAT_EQ( someValue, link12.get( 1 ) );
 }
 
-struct OperatorAssignCopiesFromReal12ToReal18AndReconstructsThirdLineFunc
-{
-	__host__ __device__ void operator()( CudaTestOutputFloat& out ) const
-	{
-		LocalLink<SU3Real12<float> > link12;
-		LocalLink<SUNRealFull<3,float> > link18;
-
-		link12.zero();
-		link12.set(0, 1.);
-		link12.set(8, 1.);
-
-		link18 = link12;
-		out.result = link18.get(16);
-#ifndef  __CUDA_ARCH__
-		EXPECT_FLOAT_EQ( 1., out.result );
-#endif
-	}
-};
+//struct OperatorAssignCopiesFromReal12ToReal18AndReconstructsThirdLineFunc
+//{
+//	__host__ __device__ void operator()( CudaTestOutputFloat& out ) const
+//	{
+//		LocalLink<SU3Real12<float> > link12;
+//		LocalLink<SUNRealFull<3,float> > link18;
+//
+//		link12.zero();
+//		link12.set(0, 1.);
+//		link12.set(8, 1.);
+//
+//		link18 = link12;
+//		out.result = link18.get(16);
+//#ifndef  __CUDA_ARCH__
+//		EXPECT_FLOAT_EQ( 1., out.result );
+//#endif
+//	}
+//};
 
 CUDA_TEST( ALocalLinkOnDevice, OperatorAssignCopiesFromReal12ToReal18AndReconstructsThirdLine )
 {

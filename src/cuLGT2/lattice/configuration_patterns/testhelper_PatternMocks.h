@@ -16,11 +16,15 @@ public:
 	static const int Ndim = TNdim;
 	const int size;
 	const int sizeTimeslice;
-	const int index;
-	const int indexTimeslice;
+	int index;
+	int indexTimeslice;
 	SiteTypeMock( int size, int sizeTimeslice, int index, int indexTimeslice ) : size(size), sizeTimeslice(sizeTimeslice), index(index), indexTimeslice(indexTimeslice) {};
 	SiteTypeMock( int size, int index ) : size(size), sizeTimeslice(0), index(index), indexTimeslice(0) {};
 	SiteTypeMock( int index ) : size(0), sizeTimeslice(0), index(index), indexTimeslice(0) {};
+	void setIndex( int index )
+	{
+		this->index = index;
+	}
 	int getIndex() const
  	{
 		return index;

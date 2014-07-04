@@ -13,6 +13,8 @@
 #include "LatticeDimension.h"
 #include "../common/culgt_typedefs.h"
 
+#include "filetype_typedefs.h"
+
 namespace culgt
 {
 
@@ -44,7 +46,7 @@ public:
 	virtual ~LinkFile() {};
 
 
-	LinkFile() : fileIsOpen( false ), filenameIsSet( false )
+	LinkFile() : reinterpretReal(STANDARD), fileIsOpen( false ), filenameIsSet( false )
 	{
 	};
 
@@ -53,11 +55,11 @@ public:
 //		U = copy.getPointerToU();
 //	};
 
-	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::Ndim] ) : fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
+	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::Ndim] ) :reinterpretReal(STANDARD), fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
 
-	LinkFile( const LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> size ) : fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
+	LinkFile( const LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> size ) : reinterpretReal(STANDARD),fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
 
@@ -155,9 +157,14 @@ public:
 		return latticeDimension;
 	}
 
+	void setReinterpretReal(ReinterpretReal reinterpretReal)
+	{
+		this->reinterpretReal = reinterpretReal;
+	}
 
 protected:
 	std::fstream file;
+	ReinterpretReal reinterpretReal;
 	virtual void loadImplementation(){};
 	virtual void saveImplementation(){};
 

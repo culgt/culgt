@@ -68,6 +68,8 @@ private:
 	}
 
 public:
+	typedef LinkFile<MemoryConfigurationPattern> super;
+
 	LinkFileVogt(){};
 	LinkFileVogt( const int size[memoryNdim] ) : LinkFile<MemoryConfigurationPattern>( size )
 	{
@@ -112,7 +114,10 @@ public:
 		short myNc= MemoryConfigurationPattern::PARAMTYPE::NC;
 		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&myNc, sizeof(short) );
 		writeSize();
-		short mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
+		short mySizeOfReal;
+		if( super::reinterpretReal == STANDARD) mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
+		else if( super::reinterpretReal == FLOAT ) mySizeOfReal = sizeof( float );
+		else if( super::reinterpretReal == DOUBLE ) mySizeOfReal = sizeof( double );
 		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&mySizeOfReal, sizeof(short) );
 	}
 
@@ -125,7 +130,22 @@ public:
 		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
 		{
 			typename LocalLinkParamType::TYPE value;
-			LinkFile<MemoryConfigurationPattern>::file.read( (char*)&value, sizeof(typename LocalLinkParamType::TYPE) );
+			if( super::reinterpretReal == STANDARD )
+			{
+				LinkFile<MemoryConfigurationPattern>::file.read( (char*)&value, sizeof(typename LocalLinkParamType::TYPE) );
+			}
+			else if( super::reinterpretReal == FLOAT )
+			{
+				float tempValue;
+				LinkFile<MemoryConfigurationPattern>::file.read( (char*)&tempValue, sizeof(float) );
+				value = (typename LocalLinkParamType::TYPE) tempValue;
+			}
+			else if( super::reinterpretReal == DOUBLE )
+			{
+				double tempValue;
+				LinkFile<MemoryConfigurationPattern>::file.read( (char*)&tempValue, sizeof(double) );
+				value = (typename LocalLinkParamType::TYPE) tempValue;
+			}
 			link.set( i, value );
 		}
 		return link;
@@ -137,8 +157,21 @@ public:
 
 		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
 		{
-			typename LocalLinkParamType::TYPE value = link.get( i );
-			LinkFile<MemoryConfigurationPattern>::file.write( (char*)&value, sizeof(typename LocalLinkParamType::TYPE) );
+			if( super::reinterpretReal == STANDARD )
+			{
+				typename LocalLinkParamType::TYPE value = link.get( i );
+				LinkFile<MemoryConfigurationPattern>::file.write( (char*)&value, sizeof(typename LocalLinkParamType::TYPE) );
+			}
+			else if( super::reinterpretReal == FLOAT )
+			{
+				float value = (float)link.get(i);
+				LinkFile<MemoryConfigurationPattern>::file.write( (char*)&value, sizeof(float) );
+			}
+			else if( super::reinterpretReal == DOUBLE )
+			{
+				double value = (double)link.get(i);
+				LinkFile<MemoryConfigurationPattern>::file.write( (char*)&value, sizeof(double) );
+			}
 		}
 	}
 
@@ -194,7 +227,13 @@ public:
 			throwException( "Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
 		}
 
-		if( sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE ) != sizeOfReal )
+
+		short mySizeOfReal;
+		if( super::reinterpretReal == STANDARD) mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
+		else if( super::reinterpretReal == FLOAT ) mySizeOfReal = sizeof( float );
+		else if( super::reinterpretReal == DOUBLE ) mySizeOfReal = sizeof( double );
+
+		if( mySizeOfReal != sizeOfReal )
 		{
 			throwException( "Wrong size of real", sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE ), sizeOfReal );
 		}

@@ -57,6 +57,11 @@ public:
 	 */
 	typedef ParamType PARAMTYPE;
 
+//	template<typename LinkType> CUDA_HOST_DEVICE inline LocalLink( const LinkType& arg )
+//	{
+//		*this = arg;
+//	}
+//
 //	CUDA_HOST_DEVICE inline LocalLink()
 //	{
 //	}
@@ -152,9 +157,26 @@ public:
 		return *this;
 	}
 
+	/**
+	 * Assignment operator needs to call Mediator for different ParamTypes and/or LinkTypes
+	 * @param arg
+	 * @return
+	 */
+	template<typename LinkType> CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator=( const LinkType& arg )
+	{
+		ParameterizationMediator<ParamType,typename LinkType::PARAMTYPE,LocalLink<ParamType>, LinkType >::assign( *this, arg );
+		return *this;
+	}
+
 	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const typename ParamType::REALTYPE scalar )
 	{
 		ParamType::multAssignScalar( store, scalar );
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const Complex<typename ParamType::REALTYPE> scalar )
+	{
+		ParamType::multAssignScalarComplex( store, scalar );
 		return *this;
 	}
 
@@ -164,9 +186,25 @@ public:
 		return *this;
 	}
 
+	template<typename LinkType> CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const LinkType& b )
+	{
+		LocalLink<ParamType> local;
+		local = b;
+		ParamType::multAssign( store, local.store );
+		return *this;
+	}
+
 	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator+=( const LocalLink<ParamType>& b )
 	{
 		ParamType::addAssign( store, b.store );
+		return *this;
+	}
+
+	template<typename LinkType> CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator+=( const LinkType& b )
+	{
+		LocalLink<ParamType> local;
+		local = b;
+		ParamType::addAssign( store, local.store );
 		return *this;
 	}
 
@@ -221,16 +259,6 @@ public:
 
 
 
-	/**
-	 * Assignment operator needs to call Mediator for different ParamTypes and/or LinkTypes
-	 * @param arg
-	 * @return
-	 */
-	template<typename LinkType> CUDA_HOST_DEVICE inline  LocalLink<ParamType>& operator=( const LinkType arg )
-	{
-		ParameterizationMediator<ParamType,typename LinkType::PARAMTYPE,LocalLink<ParamType>, LinkType >::assign( *this, arg );
-		return *this;
-	}
 
 	static CUDA_HOST_DEVICE inline LocalLink<ParamType> getIdentity()
 	{
@@ -269,7 +297,12 @@ template<typename ParamType> CUDA_HOST_DEVICE inline bool operator!=(LocalLink<P
 
 
 
-
+template<typename ParamType> inline std::ostream& operator<<(std::ostream& out, LocalLink<ParamType> t)
+{
+	for( int i = 0; i < ParamType::SIZE; i++ )
+    	out << t.get(i) << "\n";
+    return out;
+}
 
 
 

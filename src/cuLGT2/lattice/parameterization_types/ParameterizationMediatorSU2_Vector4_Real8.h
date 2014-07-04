@@ -43,7 +43,6 @@ public:
 //};
 
 /**
- * Copy from 12 to 18 parameterization needs reconstruction of "third row"
  */
 template<typename LinkType1, typename LinkType2, typename T>class ParameterizationMediator<SUNRealFull<2,T>,SU2Vector4<T>, LinkType1, LinkType2>
 {

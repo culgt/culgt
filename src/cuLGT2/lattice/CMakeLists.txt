@@ -25,6 +25,8 @@ set(sources
 	test_LinkFileVogtWithPattern.cc
 	test_LinkFile.cc
 	test_KernelSetup.cc
+	field_structures/test_DiracColorFieldStructure.cc
+	test_LinkToGaugefieldConverter.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})
 target_link_libraries(test_lattice_host pthread)
@@ -47,6 +49,8 @@ set(sources_cuda
 	test_LatticeDimension.cu
 	../cudacommon/test_DeviceCommunicator.cu
 	parameterization_types/test_SU2Vector4.cu
+	test_Field.cu
+	test_FieldElement.cu
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )

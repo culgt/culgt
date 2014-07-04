@@ -222,6 +222,11 @@ public:
 		return Uhost;
 	}
 
+	void takeCopyDeviceToDevice( GaugeConfiguration<PatternType>& src )
+	{
+		GaugeConfigurationCudaHelper<T>::copyDeviceToDevice( Udevice, src.getDevicePointer(), configurationSize );
+	}
+
 #ifdef __CUDACC__
 	template<typename RNG> void setHotOnDevice( int rngSeed, int rngCounter )
 	{

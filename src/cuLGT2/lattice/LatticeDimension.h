@@ -14,6 +14,17 @@
 namespace culgt
 {
 
+template<int Ndim> class SetSizeHelper
+{
+public:
+	template<int dir> CUDA_HOST_DEVICE static inline void set( lat_coord_t* array, lat_coord_t size )
+	{
+		if( dir < Ndim )
+			array[dir] = size;
+	}
+};
+
+
 template<int Ndim> class LatticeDimension
 {
 private:
@@ -50,7 +61,9 @@ public:
 	}
 
 	/**
-	 * TODO: should use variadic templates to ensure correct size constructor (but not supported in CUDA 6.0RC)
+	 * TODO:
+	 * - should use variadic templates to ensure correct size constructor (but not supported in CUDA 6.0RC)
+	 * - naive code raises a warning "subscript out of range" if Ndim < 4, SetSizeHelper avoids this but i don't like it (and not well tested)
 	 * @param dir0
 	 * @param dir1
 	 * @param dir2
@@ -58,14 +71,23 @@ public:
 	 */
 	CUDA_HOST_DEVICE inline LatticeDimension( lat_coord_t dir0 = 0, lat_coord_t dir1 = 0, lat_coord_t dir2 = 0, lat_coord_t dir3 = 0)
 	{
-		if( Ndim > 0 )
-			size[0] = dir0;
-		if( Ndim > 1 )
-			size[1] = dir1;
-		if( Ndim > 2 )
-			size[2] = dir2;
-		if( Ndim > 3 )
-			size[3] = dir3;
+		SetSizeHelper<Ndim>::template set<0>( size, dir0 );
+		SetSizeHelper<Ndim>::template set<1>( size, dir1 );
+		SetSizeHelper<Ndim>::template set<2>( size, dir2 );
+		SetSizeHelper<Ndim>::template set<3>( size, dir3 );
+
+//#pragma GCC diagnostic ignored "-Warray-bounds" // DOES NOT WORK
+
+//		if( Ndim > 0 )
+//			size[0] = dir0;
+//		if( Ndim > 1 )
+//			size[1] = dir1;
+//		if( Ndim > 2 )
+//			size[2] = dir2;
+//		if( Ndim > 3 )
+//			size[3] = dir3;
+
+//#pragma GCC diagnostic pop
 
 		updateLatticeSize();
 	}
@@ -95,6 +117,22 @@ public:
 		result.setDimension( 0, 1 );
 		return result;
 	}
+
+	CUDA_HOST_DEVICE inline LatticeDimension<Ndim-1> getReducedDimension( int dir ) const
+	{
+		LatticeDimension<Ndim-1> result;
+		int counter = 0;
+		for( int i = 0; i < Ndim; i++ )
+		{
+			if( i != dir )
+			{
+				result.setDimension( counter, this->getDimension( i ) );
+				counter++;
+			}
+		}
+		return result;
+	}
+
 
 	/**
 	 * I don't know if this is a wise choice or if we should keep a local variable for latSizeTimeslice (but probably the compiler is smart enough to do so).
