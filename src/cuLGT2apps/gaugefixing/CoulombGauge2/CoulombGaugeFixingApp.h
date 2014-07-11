@@ -24,13 +24,14 @@
 namespace culgt
 {
 
+//typedef float REAL;
 typedef double REAL;
 typedef SU2Vector4<REAL> PARAMTYPE;
 typedef SiteIndex<4,TIMESLICE_SPLIT> SITE;
 typedef GPUPatternTimesliceParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
-typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
-typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,true> GLOBALLINKTIMESLICE;
+typedef GlobalLink<PATTERNTYPE,false> GLOBALLINK;
+typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,false> GLOBALLINKTIMESLICE;
 typedef PhiloxWrapper<REAL> RNG;
 
 /*
@@ -41,79 +42,83 @@ class CoulombGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTE
 public:
 	CoulombGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >(  dim, fileiterator, programOptions )
 	{
-		boost::program_options::options_description gaugeOptions("Gaugefixing options");
+		programOptions->addOption( settings.getGaugeOptions() );
+
+		boost::program_options::options_description gaugeOptions;
 		gaugeOptions.add_options()
 				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)");
 
 		programOptions->addOption( gaugeOptions );
-		coulomb = new CoulombGaugefixing<GLOBALLINKTIMESLICE,LOCALLINK>( configuration.getDevicePointer( 0 ), configuration.getDevicePointer( dim.getDimension(0)-1 ), dim.getDimensionTimeslice(), programOptions->getSeed() );
 
-		coulomb->orstepsAutoTune<RNG>(1.5, 200);
-		coulomb->sastepsAutoTune<RNG>(.5, 200);
-		coulomb->microcanonicalAutoTune<RNG>( 200 );
-//		coulomb->sastepsAutoTune<RNG>(0.01);
+
+		coulomb = new CoulombGaugefixing<GLOBALLINKTIMESLICE,LOCALLINK>( configuration.getDevicePointer( 0 ), configuration.getDevicePointer( dim.getDimension(0)-1 ), dim.getDimensionTimeslice(), programOptions->getSeed() );
 	}
 private:
+	GaugeSettings settings;
+
+	void setup()
+	{
+		coulomb->orstepsAutoTune<RNG>(1.5, 200);
+		coulomb->cornellAutoTune<RNG>(.5, 200);
+		coulomb->sastepsAutoTune<RNG>(.5, 200);
+		coulomb->microcanonicalAutoTune<RNG>( 200 );
+	}
+
 	void iterate()
 	{
 		loadToDevice();
 
-		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
-		std::cout << "Plaquette: " << plaquette.getPlaquette() << std::endl;
+//		configuration.setColdOnDevice();
 
-		coulomb->randomTrafo();
+		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
+		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
+
+		int t = 0;
+		int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
+		std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
+		coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
 
 		GaugeStats stats = coulomb->getGaugeStats();
 		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+		stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
+		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+
+//		coulomb->randomTrafo();
+
+//		coulomb->fix( settings );
+		for( int j = 0; j < 10000; j++ )
+		{
+			int iter = 100;
+			for( int i = 0; i < iter; i++ )
+			{
+				coulomb->runCornell( .1, 5 );
+//				coulomb->runOverrelaxation( 1.5 );
+				CUDA_LAST_ERROR( "Cornell ");
+			}
+				coulomb->reproject();
+
+
+			stats = coulomb->getGaugeStats();
+			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+			if( stats.getPrecision() < settings.getPrecision() ) break;
+			stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
+			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+		}
+		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
+//		exit( 1 );
 
 		RunInfo info;
-//		info = coulomb->runSimulatedAnnealing( 3, 2, 10 );
-//		std::cout << "Simulated Annealing: " << info.getGflops() << " GFlops at " <<  info.getThroughput() << " GByte/s memory throughput." << std::endl;
-//
-//		stats = coulomb->getGaugeStats();
-//		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
 
-//		info = coulomb->runSimulatedAnnealing( 1.4, 0.01, 1000 );
-//		std::cout << "Simulated Annealing: " << info.getGflops() << " GFlops at " <<  info.getThroughput() << " GByte/s memory throughput." << std::endl;
+//		for( int t = 0; t < dimension.getDimension(0); t++ )
+//		{
+//			int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
+//			std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
+//			coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
+////			coulomb->randomTrafo();
+//			coulomb->fix( settings );
+//		}
 
-//		stats = coulomb->getGaugeStats();
-//		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-
-//		info = coulomb->runOverrelaxation( 1.7, 1000 );
-//		std::cout << "Overrelaxtion: " << info.getGflops() << " GFlops at " <<  info.getThroughput() << " GByte/s memory throughput." << std::endl;
-//
-//		stats = coulomb->getGaugeStats();
-//		std::cout << 1 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-
-
-
-		GaugeSettings settings;
-		settings.setGaugeCopies( 1000 );
-		settings.setPrintStats( true );
-		settings.setCheckPrecision( 100 );
-		settings.setReproject( 100 );
-		settings.setPrecision( 1e-14 );
-		settings.setRandomTrafo( true );
-		settings.setOrMaxIter( 5000 );
-		settings.setOrParameter( 1.8 );
-
-		settings.setSaSteps( 600 );
-		settings.setSaMax( 1.4 );
-		settings.setSaMin( 0.05 );
-
-		for( int t = 0; t < dimension.getDimension(0); t++ )
-		{
-			int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
-			std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
-			coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
-			coulomb->fix( settings );
-		}
-
-
-//		stats = coulomb->getGaugeStats();
-//		std::cout << 1 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-
-		std::cout << "Plaquette: " << plaquette.getPlaquette() << std::endl;
+		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
 
 		saveFromDevice( fileAppendix );
 	};

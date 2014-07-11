@@ -135,6 +135,13 @@ TEST_F( LinkToGaugefieldConverterSU3, ExtractsLogarithmicGaugefield )
 {
 	LinkToGaugefieldConverter<3,gaugefieldtype::LOGARITHMIC>::convert( A, link );
 
+	std::cout << link.reDet() << std::endl;
+
+	for( int i = 0; i < 8; i++ )
+	{
+		std::cout<< A[i] << std::endl;
+	}
+
 	ASSERT_NEAR_EQ_ARRAY( Alog, A, 8 );
 }
 

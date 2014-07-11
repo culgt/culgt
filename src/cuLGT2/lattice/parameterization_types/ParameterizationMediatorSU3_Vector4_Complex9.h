@@ -91,7 +91,7 @@ public:
 		COMPLEX c = l1.get(getIndex(0,0)).conj() * l1.get(getIndex(1,1)).conj() - l1.get(getIndex(0,1)).conj() * l1.get(getIndex(1,0)).conj();
 
 		T norm = a.abs_squared() + b.abs_squared() + c.abs_squared();
-		norm = 1./sqrt( norm );
+		norm = 1./::sqrt( norm );
 
 		l1.set( 6, a*norm );
 		l1.set( 7, b*norm );

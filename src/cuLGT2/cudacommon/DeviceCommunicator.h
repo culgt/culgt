@@ -18,7 +18,7 @@ template<typename T> class DeviceCommunicator
 public:
 	static T getValue( T* devPtr, int index )
 	{
-		T hostVal = 0;
+		T hostVal;// = (T)0;
 		CUDA_SAFE_CALL( cudaMemcpy( &hostVal, &devPtr[index], sizeof(T), cudaMemcpyDeviceToHost ), "DeviceCommunicator memCpy to host" );
 		return hostVal;
 	}

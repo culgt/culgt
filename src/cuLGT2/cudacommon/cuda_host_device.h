@@ -11,4 +11,6 @@
 #define CUDA_HOST_DEVICE
 #endif
 
+enum HostDeviceType{ HOST, DEVICE, UNDEFINED };
+
 #endif /* CUDA_HOST_DEVICE_H_ */

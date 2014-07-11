@@ -69,6 +69,7 @@ public:
 
 		// warmup
 		measure( 0 );
+		CUDA_LAST_ERROR("TunableObject::measure()" );
 
 		while( true )
 		{
@@ -76,6 +77,7 @@ public:
 			{
 				preTuneAction();
 				double performance = 1./measure( id, iter );
+				CUDA_LAST_ERROR("TunableObject::measure()" );
 
 				std::cout << "Tuning option " << id << ": " << performance << std::endl;
 

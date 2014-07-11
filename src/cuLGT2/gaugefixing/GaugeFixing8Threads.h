@@ -8,15 +8,17 @@
 #define GAUGEFIXING8THREADS_H_
 #include "../lattice/LocalLink.h"
 #include "../lattice/parameterization_types/SU2Vector4.h"
+#include "../lattice/GlobalLink.h"
 
 using culgt::LocalLink;
 using culgt::SU2Vector4;
+using culgt::GlobalLink;
 
 
-template<typename Algorithm, typename GaugeType, typename GlobalLinkType, typename LocalLinkType, int NSB, typename GlobalLinkType2 = GlobalLinkType> class GaugeFixing8Threads
+template<typename Algorithm, typename GaugeType, typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock = 32> class GaugeFixing8Threads
 {
 public:
-	__device__ inline GaugeFixing8Threads( Algorithm algorithm ) : algorithm(algorithm), updown( threadIdx.x / (4*NSB) ), mu((threadIdx.x % (4*NSB)) / NSB), id((threadIdx.x % (4*NSB)) % NSB)
+	__device__ inline GaugeFixing8Threads( Algorithm algorithm ) : algorithm(algorithm), updown( threadIdx.x / (4*SitesPerBlock) ), mu((threadIdx.x % (4*SitesPerBlock)) / SitesPerBlock), id((threadIdx.x % (4*SitesPerBlock)) % SitesPerBlock)
 	{
 	}
 
@@ -65,6 +67,7 @@ public:
 		// load Link
 		if((mu==0)&&(updown==1))
 		{
+			COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 			GlobalLinkType2 globalLink(Udown, site, mu );
 			localLink = globalLink;
 
@@ -88,13 +91,13 @@ public:
 
 	__device__ inline void subgroupStep( lat_group_index_t iSub, lat_group_index_t jSub )
 	{
-		extern __shared__ typename LocalLinkType::PARAMTYPE::REALTYPE shA[]; // define size in kernel call (size needs to be 4*NSB)!
-		initializeSharedMemory( shA );
+		extern __shared__ typename LocalLinkType::PARAMTYPE::REALTYPE shA[]; // define size in kernel call (size needs to be 4*SitesPerBlock)!
+		initializeSharedMemory( shA, GaugeType::SharedArraySize );
 
 		LocalLink<SU2Vector4<typename LocalLinkType::PARAMTYPE::REALTYPE> > quaternion = localLink.getSU2Subgroup( iSub, jSub );
 		typename Real4<typename LocalLinkType::PARAMTYPE::REALTYPE>::VECTORTYPE& q = quaternion[0];
 
-		GaugeType::gatherInfo( shA, q, id, mu, updown, NSB );
+		GaugeType::gatherInfo( shA, q, id, mu, updown, SitesPerBlock );
 
 		// calc update
 		__syncthreads();
@@ -102,12 +105,13 @@ public:
 		{
 			if( updown == 0 )
 			{
-				algorithm.calculateUpdate( shA, id, NSB );
+				GaugeType::prepareUpdate( shA, id, SitesPerBlock );
+				algorithm.calculateUpdate( shA, id, SitesPerBlock );
 			}
 		}
 		__syncthreads();
 
-		GaugeType::collectUpdate( shA, q, id, mu, updown, NSB );
+		GaugeType::collectUpdate( shA, q, id, mu, updown, SitesPerBlock );
 		__syncthreads(); // this is necessary otherwise the next subgroup already overwrites shA!
 		quaternion.set( 0, q );
 
@@ -130,16 +134,16 @@ private:
 	const bool updown;
 	LocalLinkType localLink;
 
-	__device__ inline void initializeSharedMemory( typename LocalLinkType::PARAMTYPE::REALTYPE* shA )
+	__device__ inline void initializeSharedMemory( typename LocalLinkType::PARAMTYPE::REALTYPE* shA, int sharedArraySize )
 	{
 		if( mu == 0 )
 		{
 			if( updown == 0 )
 			{
-				shA[id]	= 0;
-				shA[id+NSB] = 0;
-				shA[id+2*NSB] = 0;
-				shA[id+3*NSB] = 0;
+				for( int i = 0; i < sharedArraySize; i++ )
+				{
+					shA[id+i*SitesPerBlock] = 0;
+				}
 			}
 		}
 		__syncthreads();

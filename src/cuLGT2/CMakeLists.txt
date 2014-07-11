@@ -9,6 +9,7 @@ set( allsources "" )
 add_subdirectory( lattice )
 add_subdirectory( cuLGT1legacy )
 add_subdirectory( propagators )
+add_subdirectory( fft )
 
 message( "allsources = ${allsources}" )
 
@@ -16,3 +17,4 @@ CUDA_ADD_EXECUTABLE(test test_main.cpp ${allsources} )
 target_link_libraries(test pthread)
 target_link_libraries(test gmock)
 target_link_libraries(test gtest)
+target_link_libraries(test cufft)

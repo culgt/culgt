@@ -16,6 +16,8 @@
 namespace culgt
 {
 
+enum GaugeFieldDefinition { GAUGEFIELD_STANDARD, GAUGEFIELD_LOGARITHMIC };
+
 class GaugeFixingSaOr
 {
 public:
@@ -38,7 +40,7 @@ public:
 	virtual void runSimulatedAnnealing( float temperature, int id = -1 ) = 0;
 	virtual RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro ) = 0;
 	virtual void runMicrocanonical( int id = -1 ) = 0;
-	virtual GaugeStats getGaugeStats() = 0;
+	virtual GaugeStats getGaugeStats( GaugeFieldDefinition definition = GAUGEFIELD_STANDARD ) = 0;
 
 	virtual void allocateCopyMemory() = 0;
 	virtual void freeCopyMemory() = 0;
@@ -54,21 +56,27 @@ public:
 		GaugeStats stats = getGaugeStats();
 		double bestGff = stats.getGff();
 
-		if( settings.getGaugeCopies() > 1 && !copyMemoryIsAllocated )
+		bool useCopyMemory = ( settings.getGaugeCopies() > 1 );
+
+		if( useCopyMemory && !copyMemoryIsAllocated )
 		{
 			allocateCopyMemory();
 			copyMemoryIsAllocated = true;
 		}
 
-		if( settings.getGaugeCopies() > 1 ) storeCleanCopy();
+		if( useCopyMemory )
+		{
+			storeCleanCopy();
+			saveCopy();
+		}
 
 		for( int copy = 0; copy < settings.getGaugeCopies(); copy++ )
 		{
-			if( settings.getGaugeCopies() > 1 ) takeCleanCopy();
+			if( useCopyMemory ) takeCleanCopy();
 
 			if( settings.isRandomTrafo() )
 			{
-				std::cout << "Applying random trafo" << std::endl;
+				if( settings.isPrintStats() ) std::cout << "Applying random trafo" << std::endl;
 				randomTrafo();
 			}
 
@@ -85,7 +93,7 @@ public:
 
 			if( stats.getGff() > bestGff )
 			{
-				std::cout << "Found BETTER Copy! (" << std::setprecision(16) << stats.getGff() << ")"  << std::endl;
+				if( settings.isPrintStats() )std::cout << "Found BETTER Copy! (" << std::setprecision(16) << stats.getGff() << ")"  << std::endl;
 				bestGff = stats.getGff();
 
 				// this might be an infinite loop
@@ -96,14 +104,14 @@ public:
 					stats = getGaugeStats();
 				}
 
-				if( settings.getGaugeCopies() > 1 ) saveCopy();
+				if( useCopyMemory ) saveCopy();
 			}
 			else
 			{
-				std::cout << "DID NOT FIND BETTER COPY! (" << std::setprecision(16) << stats.getGff() << ")" << std::endl;
+				if( settings.isPrintStats() )std::cout << "DID NOT FIND BETTER COPY! (" << std::setprecision(16) << stats.getGff() << ")" << std::endl;
 			}
 		}
-		if( settings.getGaugeCopies() > 1 ) writeBackCopy();
+		if( useCopyMemory ) writeBackCopy();
 
 		if( copyMemoryIsAllocated )
 		{
@@ -155,7 +163,7 @@ protected:
 	{
 		if( settings.getSaSteps() > 0 )
 		{
-			std::cout << "Simulated Annealing" << std::endl;
+			if( settings.isPrintStats() )std::cout << "Simulated Annealing" << std::endl;
 
 			float tStep = ( settings.getSaMax()-settings.getSaMin() )/(float)settings.getSaSteps();
 			float temperature = settings.getSaMax();
@@ -189,7 +197,7 @@ protected:
 		{
 			cudaDeviceSynchronize();
 			timerOr.start();
-			std::cout << "Overrelaxation" << std::endl;
+			if( settings.isPrintStats() )std::cout << "Overrelaxation" << std::endl;
 			for( int i = 0; i < settings.getOrMaxIter(); i++ )
 			{
 				runOverrelaxation( settings.getOrParameter() );

@@ -62,6 +62,7 @@ public:
 	CUDA_HOST_DEVICE inline void calculateNeighbourTable( lat_index_t* nn );
 
 	static const lat_dim_t Ndim = Nd;
+	static const lat_dim_t NDIM = Nd;
 	static const ParityType PARITYTYPE = par;
 	lat_index_t* nn;
 

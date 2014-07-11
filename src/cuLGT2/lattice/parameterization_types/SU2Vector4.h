@@ -114,7 +114,7 @@ public:
 
 	static CUDA_HOST_DEVICE void inline reproject( TYPE store[SIZE] )
 	{
-		T fac = 1./sqrt( reDet( store ) );
+		T fac = 1./::sqrt( reDet( store ) );
 
 		store[0].x *= fac;
 		store[0].y *= fac;

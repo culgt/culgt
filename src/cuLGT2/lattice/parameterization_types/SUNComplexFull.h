@@ -168,6 +168,20 @@ public:
 		}
 	}
 
+	static CUDA_HOST_DEVICE REALTYPE inline reDet( TYPE store[SIZE] )
+	{
+		Complex<T> result(0.,0.);
+
+		result += store[0] * store[4] * store[8];
+		result += store[1] * store[5] * store[6];
+		result += store[2] * store[3] * store[7];
+		result -= store[2] * store[4] * store[6];
+		result -= store[0] * store[5] * store[7];
+		result -= store[1] * store[3] * store[8];
+
+		return result.x;
+	}
+
 
 	static CUDA_HOST_DEVICE void inline subtractAssign( TYPE dest[SIZE], const TYPE b[SIZE] )
 	{

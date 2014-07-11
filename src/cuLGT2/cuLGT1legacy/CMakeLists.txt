@@ -20,6 +20,7 @@ endif()
 
 set(sources_cuda 
 	test_SiteNeighbourTableManager.cu
+	test_Complex.cu
 	)
 
 cuda_add_executable(test_cuLGT1legacy_cuda ../test_main.cpp ${sources_cuda} )

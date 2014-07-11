@@ -30,10 +30,11 @@
 #include "CoulombGaugeFixingOverrelaxation.h"
 #include "CoulombGaugeFixingSimulatedAnnealing.h"
 #include "CoulombGaugeFixingMicrocanonical.h"
-#include "AutoTuner.h"
+#include "CoulombGaugeFixingCornell.h"
 #include "RandomGaugeTrafo.h"
 
 #include "GaugeFixingSaOr.h"
+#include <boost/mpl/assert.hpp>
 
 using std::string;
 
@@ -85,7 +86,50 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	dGff[index] = gff;
 }
 
+template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSiteLogarithmic( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, lat_index_t* nn, double *dGff, double *dA )
+{
+	// only for SU(2)
+	BOOST_MPL_ASSERT_RELATION( LocalLinkType::PARAMTYPE::NC, ==, 2 );
+
+	typename GlobalLinkType::PATTERNTYPE::SITETYPE site( dim, nn );
+
+	lat_index_t index = blockIdx.x * blockDim.x + threadIdx.x;
+
+	typename LocalLinkType::PARAMTYPE::REALTYPE A[3] = {0,0,0};
+
+	typedef LocalLink<SUNRealFull<LocalLinkType::PARAMTYPE::NC,typename LocalLinkType::PARAMTYPE::REALTYPE> > LOCALLINKREALFULL;
+
+
+	double gff = 0;
+	for( int mu = 1; mu < 4; mu++ )
+	{
+		LOCALLINKREALFULL temp;
+
+		site.setLatticeIndex( index );
+		GlobalLinkType globalLink( U, site, mu );
+		temp = globalLink;
+		typename LocalLinkType::PARAMTYPE::REALTYPE norm = sqrt( temp.get(1)*temp.get(1) + temp.get(2)*temp.get(2) + temp.get(3)*temp.get(3) );
+		for( int i = 0; i < 3; i++ )
+//			A[i] += temp.get(i+1)/norm*sin(norm/2);
+			A[i] += 2*temp.get(i+1)*acos(temp.get(0))/norm;
+
+		gff += 2. - acos( temp.reTrace() / 2. )*acos( temp.reTrace() / 2. );
+
+		site.setNeighbour(mu,false);
+		GlobalLinkType globDw( U, site, mu );
+		temp = globDw;
+		norm = sqrt( temp.get(1)*temp.get(1) + temp.get(2)*temp.get(2) + temp.get(3)*temp.get(3) );
+		for( int i = 0; i < 3; i++ )
+//			A[i] -= temp.get(i+1)/norm*sin(norm/2);
+			A[i] -= 2*temp.get(i+1)*acos(temp.get(0))/norm;
+	}
+
+	dA[index] = sqrt( A[0]*A[0] +  A[1]*A[1]+ A[2]*A[2]); // check this
+	dGff[index] = gff;
 }
+
+}
+
 
 template<typename GlobalLinkType, typename LocalLinkType> class CoulombGaugefixing: public GaugeFixingSaOr
 {
@@ -94,7 +138,7 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 	COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 
-	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), seed(seed)
+	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), cornell( &this->Ut, &this->UtDown, dim, seed, 0.1 ), seed(seed)
 	{
 		setTimeslice( Ut, UtDown );
 	}
@@ -109,10 +153,17 @@ public:
 		GlobalLinkType2::bindTexture( UtDown, GlobalLinkType2::getArraySize( dimTimeslice ) );
 	}
 
-	GaugeStats getGaugeStats()
+	GaugeStats getGaugeStats( GaugeFieldDefinition defintion = GAUGEFIELD_STANDARD )
 	{
 		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupNoSplit( dimTimeslice, false );
-		CoulombGaugefixingKernel::generateGaugeQualityPerSite<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( Ut, dimTimeslice, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), dGff, dA );
+		if( defintion == GAUGEFIELD_STANDARD )
+		{
+			CoulombGaugefixingKernel::generateGaugeQualityPerSite<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( Ut, dimTimeslice, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), dGff, dA );
+		}
+		else
+		{
+			CoulombGaugefixingKernel::generateGaugeQualityPerSiteLogarithmic<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( Ut, dimTimeslice, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), dGff, dA );
+		}
 		CUDA_LAST_ERROR( "generateGaugeQualityPerSite" );
 
 		Reduction<double> reducer(dimTimeslice.getSize());
@@ -133,15 +184,15 @@ public:
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
+	void runCornell( float alpha, int id = -1 )
+	{
+		cornell.setAlpha( alpha );
+		cornell.run( id );
+	}
+
 	void runMicrocanonical( int id = -1 )
 	{
 		microcanonical.run( id );
-	}
-
-	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )
-	{
-		overrelaxation.setOrParameter( orParameter );
-		overrelaxation.tune( iter );
 	}
 
 	void runSimulatedAnnealing( float temperature, int id = -1 )
@@ -153,6 +204,18 @@ public:
 	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
 	{
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iterSa, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops, iterMicro, MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+	}
+
+	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )
+	{
+		overrelaxation.setOrParameter( orParameter );
+		overrelaxation.tune( iter );
+	}
+
+	template<typename RNG> void cornellAutoTune( float alpha = .5, int iter = 1000 )
+	{
+		cornell.setAlpha( alpha );
+		cornell.tune( iter );
 	}
 
 	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int iter = 1000 )
@@ -230,9 +293,7 @@ private:
 	CoulombGaugeFixingOverrelaxation<GlobalLinkType,LocalLinkType> overrelaxation;
 	CoulombGaugeFixingSimulatedAnnealing<GlobalLinkType,LocalLinkType> simulatedAnnealing;
 	CoulombGaugeFixingMicrocanonical<GlobalLinkType,LocalLinkType> microcanonical;
-
-	int orOptimalTunedId;
-	int saOptimalTunedId;
+	CoulombGaugeFixingCornell<GlobalLinkType,LocalLinkType> cornell;
 
 	long seed;
 };

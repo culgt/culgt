@@ -8,6 +8,9 @@
 #ifndef LATTICE_TYPEDEFS_H_
 #define LATTICE_TYPEDEFS_H_
 
+#include "../cudacommon/cuda_host_device.h"
+#include "cuda_functions.h"
+
 #if !defined(__VECTOR_TYPES_H__)
 	struct float4 {
 		float x;
@@ -36,6 +39,23 @@ template<> struct Real4<double>
 {
 	typedef double4 VECTORTYPE;
 };
+
+inline bool operator==(float4 const& lhs, float4 const& rhs)
+{
+	return (lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w);
+}
+inline bool operator!=(float4 const& lhs, float4 const& rhs)
+{
+	return !(lhs == rhs);
+}
+inline bool operator==(double4 const& lhs, double4 const& rhs)
+{
+	return (lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w);
+}
+inline bool operator!=(double4 const& lhs, double4 const& rhs)
+{
+	return !(lhs == rhs);
+}
 
 
 // type for lattic dimension, i.e. 3 or 4, ...

@@ -54,7 +54,7 @@ public:
 		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
 //		cudaFuncSetCacheConfig( RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock>, cudaFuncCachePreferL1 );
 
-		std::cout << "random trafo" << std::endl;
+//		std::cout << "random trafo" << std::endl;
 
 		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim, true, SitesPerBlock );
 		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, seed, PhiloxWrapper<REALT>::getNextCounter() );
@@ -72,7 +72,7 @@ public:
 
 //		cudaFuncSetCacheConfig( RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock>, cudaFuncCachePreferL1 );
 
-		std::cout << "random trafo" << std::endl;
+//		std::cout << "random trafo" << std::endl;
 
 		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim, true, SitesPerBlock );
 		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, seed, PhiloxWrapper<REALT>::getNextCounter() );

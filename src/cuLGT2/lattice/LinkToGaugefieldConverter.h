@@ -15,6 +15,11 @@
 #include "parameterization_types/SUNComplexFull.h"
 #include "LocalLink.h"
 #include "../util/math/GellMannMatrices.h"
+#include "../eigensolver/Matrix.h"
+#include "../eigensolver/Cardano3x3.h"
+#include <boost/algorithm/string.hpp>
+
+using boost::algorithm::iequals;
 
 namespace culgt
 {
@@ -22,6 +27,28 @@ namespace culgt
 namespace gaugefieldtype
 {
 	enum GaugefieldType {LINEAR, LOGARITHMIC};
+
+	inline std::istream& operator>>(std::istream& in, gaugefieldtype::GaugefieldType& t)
+	{
+	    std::string token;
+	    in >> token;
+	    if ( boost::iequals(token, "LINEAR" ) )
+	        t = LINEAR;
+	    else if (boost::iequals(token, "LOGARITHMIC" ))
+	        t = LOGARITHMIC;
+	    return in;
+	}
+
+	inline std::ostream& operator<<(std::ostream& out, gaugefieldtype::GaugefieldType t)
+	{
+	    std::string token;
+	    if (t == LINEAR)
+	        token = "LINEAR";
+	    else if (t == LOGARITHMIC)
+	    	token = "LOGARITHMIC";
+	    out << token;
+	    return out;
+	}
 }
 
 template<int Nc, gaugefieldtype::GaugefieldType GFType> class LinkToGaugefieldConverter
@@ -50,7 +77,7 @@ public:
 		temp.w = A[0]*.5;
 		temp.z = A[1]*.5;
 		temp.y = A[2]*.5;
-		temp.x = sqrt( 1. - ( temp.y*temp.y + temp.z*temp.z + temp.w*temp.w ) );
+		temp.x = ::sqrt( 1. - ( temp.y*temp.y + temp.z*temp.z + temp.w*temp.w ) );
 
 		linkConverted.set( 0, temp );
 		link = linkConverted;
@@ -62,10 +89,11 @@ template<> class LinkToGaugefieldConverter<2, gaugefieldtype::LOGARITHMIC>
 public:
 	template<typename LinkType, typename T> static CUDA_HOST_DEVICE void convert( T* A, LinkType& link )
 	{
-		LocalLink<SU2Vector4<typename LinkType::PARAMTYPE::REALTYPE> > linkConverted = link;
+		LocalLink<SU2Vector4<typename LinkType::PARAMTYPE::REALTYPE> > linkConverted;
+		linkConverted = link;
 
 		T rUAbs = rsqrt( linkConverted.get(0).w*linkConverted.get(0).w + linkConverted.get(0).z*linkConverted.get(0).z + linkConverted.get(0).y*linkConverted.get(0).y );
-		T acosU0 = acos( linkConverted.get(0).x );
+		T acosU0 = ::acos( linkConverted.get(0).x );
 
 		A[0] = 2.*(T)linkConverted.get(0).w*rUAbs*acosU0;
 		A[1] = 2.*(T)linkConverted.get(0).z*rUAbs*acosU0;
@@ -74,15 +102,15 @@ public:
 
 	template<typename LinkType, typename T> static CUDA_HOST_DEVICE void convert( LinkType& link, T* A )
 	{
-		T aAbs = sqrt( A[0]*A[0] + A[1]*A[1] + A[2]*A[2] );
+		T aAbs = ::sqrt( A[0]*A[0] + A[1]*A[1] + A[2]*A[2] );
 
 		LocalLink<SU2Vector4<typename LinkType::PARAMTYPE::REALTYPE> > linkConverted;
 		typename Real4<typename LinkType::PARAMTYPE::REALTYPE>::VECTORTYPE temp;
 
-		temp.x = cos( .5 * aAbs );
-		temp.w = sin( .5 * aAbs ) * A[0]/aAbs;
-		temp.z = sin( .5 * aAbs ) * A[1]/aAbs;
-		temp.y = sin( .5 * aAbs ) * A[2]/aAbs;
+		temp.x = ::cos( .5 * aAbs );
+		temp.w = ::sin( .5 * aAbs ) * A[0]/aAbs;
+		temp.z = ::sin( .5 * aAbs ) * A[1]/aAbs;
+		temp.y = ::sin( .5 * aAbs ) * A[2]/aAbs;
 
 		linkConverted.set(0, temp );
 		link = linkConverted;
@@ -127,25 +155,21 @@ public:
 	{
 		typedef typename LinkType::PARAMTYPE::REALTYPE REALTYPE;
 		LocalLink<SUNComplexFull<3,REALTYPE> > linkConverted;
-		LocalLink<SUNComplexFull<3,REALTYPE> > linkConvertedHerm;
+		LocalLink<SUNComplexFull<3,REALTYPE> > temp;
 		linkConverted = link;
-		linkConvertedHerm = linkConverted;
-		linkConvertedHerm.hermitian();
 
-		linkConverted -= linkConvertedHerm;
+		Matrix<Complex<T>,3>* mat = reinterpret_cast<Matrix<Complex<T>,3>*>( &linkConverted );
 
-		Complex<T> trace = linkConverted.trace();
-		linkConvertedHerm.identity();
-		linkConvertedHerm *= (trace/3.);
+		Cardano3x3<Complex<T> > eigensolver( *mat );
+		eigensolver.logAssumeUnitary();
 
-		linkConverted -= linkConvertedHerm;
-		linkConverted *= 1./(2.*Complex<T>::I());
+		*mat*=Complex<T>(0,-1);
 
 		for( int i = 0; i < 8; i++ )
 		{
-			linkConvertedHerm = linkConverted;
-			linkConvertedHerm *= GellMannMatrices<LocalLink<SUNComplexFull<3,REALTYPE> > >::get(i+1);
-			A[i] = linkConvertedHerm.reTrace();
+			temp = linkConverted;
+			temp *= GellMannMatrices<LocalLink<SUNComplexFull<3,REALTYPE> > >::get(i+1);
+			A[i] = temp.reTrace();
 		}
 	}
 

@@ -10,7 +10,7 @@
 
 #include "gmock/gmock.h"
 #ifdef __CUDACC__
-#include "../../lattice/cuda/CudaError.h"
+#include "../cudacommon/cuda_error.h"
 
 struct TestTransporter
 {
@@ -113,14 +113,14 @@ struct TestTransporter
 	{\
 		TestTransporter* dTestTransporter;\
 		cudaMalloc( (void**)(&dTestTransporter), sizeof( TestTransporter ) );\
-		CudaError::getLastError( "malloc" );\
+		CUDA_LAST_ERROR( "malloc" );\
 		TESTTRANSPORTERDEFANDINSTANCE\
 		cudaMemcpy( dTestTransporter, testTransporter, sizeof(TestTransporter), cudaMemcpyHostToDevice );\
-		CudaError::getLastError( "memcopyhosttodevice" );\
+		CUDA_LAST_ERROR( "memcopyhosttodevice" );\
 		CUDA_TEST_FUNCTION_NAME_(test_case_name, test_name) test;CUDA_TEST_CLASS_NAME_(test_case_name, test_name)<<<1,1>>>(test,dTestTransporter);\
-		CudaError::getLastError( "kernel call" );\
+		CUDA_LAST_ERROR( "kernel call" );\
 		cudaMemcpy( testTransporter, dTestTransporter, sizeof(TestTransporter), cudaMemcpyDeviceToHost );\
-		CudaError::getLastError( "memcopydevicetohost" );\
+		CUDA_LAST_ERROR( "memcopydevicetohost" );\
 		for( int i = 0; i < testTransporter->evaluateFloat; i++ ) ASSERT_FLOAT_EQ( testTransporter->tfloat[i].x, testTransporter->tfloat[i].y );\
 		for( int i = 0; i < testTransporter->evaluateInt; i++ ) GTEST_ASSERT_EQ( testTransporter->tint[i].x, testTransporter->tint[i].y );\
 	};\

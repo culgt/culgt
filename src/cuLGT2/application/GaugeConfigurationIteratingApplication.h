@@ -21,7 +21,7 @@ namespace culgt
 template<typename PatternType, typename LinkFileType> class GaugeConfigurationIteratingApplication
 {
 public:
-	GaugeConfigurationIteratingApplication( const LatticeDimension<PatternType::SITETYPE::Ndim> dimension, FileIterator fileiterator, ProgramOptions* programOptions ): dimension(dimension), linkFile(  dimension ), configuration(dimension), fileiterator(fileiterator), programOptions(programOptions)
+	GaugeConfigurationIteratingApplication( const LatticeDimension<PatternType::SITETYPE::Ndim> dimension, FileIterator fileiterator, ProgramOptions* programOptions ): dimension(dimension), configuration(dimension), fileiterator(fileiterator), programOptions(programOptions)
 	{
 		configuration.allocateMemory();
 	}
@@ -32,37 +32,54 @@ public:
 	}
 
 	virtual void iterate() = 0;
+	virtual void setup() = 0;
+	virtual void teardown() = 0;
 
 //	virtual void addProgramOptions() = 0;
 
 	void run()
 	{
+		setup();
 		for( fileiterator.reset(); fileiterator.hasElement(); fileiterator.next() )
 		{
 			iterate();
 		}
+		teardown();
 	}
 
 	bool load()
 	{
-		linkFile.setFilename( fileiterator.getFilename() );
-		std::cout << fileiterator.getFilename() << std::endl;
-		linkFile.load( configuration.getHostPointer() );
-		return false;
+		linkFile->setFilename( fileiterator.getFilename() );
+		std::cout << fileiterator.getFilename() ;
+		try
+		{
+			linkFile->load( configuration.getHostPointer() );
+			std::cout << " loaded!" << std::endl;
+			return true;
+		}
+		catch( FileNotFoundException& e )
+		{
+			std::cout << " not found! Skipping..." << std::endl;
+			return false;
+		}
 	}
 
 	bool loadToDevice()
 	{
-		bool returnVal = load();
-		configuration.copyToDevice();
-		return returnVal;
+		bool isLoaded = load();
+		if( isLoaded )
+		{
+			configuration.copyToDevice();
+			std::cout << "Copied to device!" << std::endl;
+		}
+		return isLoaded;
 	}
 
 	void save( string appendix )
 	{
-		linkFile.setFilename( fileiterator.getFilename( appendix ) );
+		linkFile->setFilename( fileiterator.getFilename( appendix ) );
 		std::cout << fileiterator.getFilename( appendix ) << std::endl;
-		linkFile.save( configuration.getHostPointer() );
+		linkFile->save( configuration.getHostPointer() );
 	}
 
 	void saveFromDevice( string appendix )
@@ -74,14 +91,22 @@ public:
 	template<typename ConcreteApplicationType> static ConcreteApplicationType* init( const int argc, const char* argv[] )
 	{
 		// do the command line interpretation here.
-		ProgramOptions* po = new ProgramOptions( argc, argv );
+		ProgramOptions* po = new ProgramOptions();
 //		ConcreteApplicationType::addProgramOptions( po );
 		po->parseOptions( argc, argv, true );
 
 		int fileNumberEnd = po->getFileNumberStart()+(po->getNConf()-1)*po->getFileNumberStep();
 		FileIterator fileiterator( po->getFileBasename(), po->getFileEnding(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd );
 
-		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::Ndim>(32,32,32,32), fileiterator, po );
+
+		LatticeDimension<PatternType::SITETYPE::Ndim> dimtest(po->getNt(),po->getNx(),po->getNy(),po->getNz());
+
+		// TODO in principle we could read the sizes from the gaugeconfig file!
+		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::Ndim>(po->getNt(),po->getNx(),po->getNy(),po->getNz()), fileiterator, po );
+
+
+		APP->linkFile = new LinkFileType( APP->dimension, po->getReinterpretReal() );
+//		APP->linkFile.setReinterpretReal( po->getReinterpretReal() );
 
 		// parse again for options that where added in the constructor
 		po->parseOptions( argc, argv );
@@ -113,7 +138,7 @@ public:
 
 protected:
 	LatticeDimension<PatternType::SITETYPE::Ndim> dimension;
-	LinkFileType linkFile;
+	LinkFileType* linkFile;
 	GaugeConfiguration<PatternType> configuration;
 	FileIterator fileiterator;
 	ProgramOptions* programOptions;

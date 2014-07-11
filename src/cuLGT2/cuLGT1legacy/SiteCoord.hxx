@@ -58,6 +58,7 @@ public:
 
 	lat_coord_t size[Nd];
 	static const lat_dim_t Ndim = Nd;
+	static const lat_dim_t NDIM = Nd;
 	static const ParityType PARITYTYPE = par;
 	lat_coord_t site[Nd];
 };

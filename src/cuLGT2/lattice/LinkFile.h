@@ -50,16 +50,20 @@ public:
 	{
 	};
 
+	LinkFile( ReinterpretReal reinterpret ) : reinterpretReal(reinterpret), fileIsOpen( false ), filenameIsSet( false )
+	{
+	};
+
 //	LinkFile( const LinkFile<MemoryConfigurationPattern>& copy ) : fileIsOpen( false ), filenameIsSet( false ), latticeDimension(copy.getLatticeDimension() )
 //	{
 //		U = copy.getPointerToU();
 //	};
 
-	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::Ndim] ) :reinterpretReal(STANDARD), fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
+	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::Ndim], ReinterpretReal reinterpret ) :reinterpretReal(reinterpret), fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
 
-	LinkFile( const LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> size ) : reinterpretReal(STANDARD),fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
+	LinkFile( const LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> size, ReinterpretReal reinterpret ) : reinterpretReal(reinterpret),fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
 
@@ -157,10 +161,15 @@ public:
 		return latticeDimension;
 	}
 
-	void setReinterpretReal(ReinterpretReal reinterpretReal)
-	{
-		this->reinterpretReal = reinterpretReal;
-	}
+//	void setReinterpretReal(ReinterpretReal reinterpretReal)
+//	{
+//		this->reinterpretReal = reinterpretReal;
+//	}
+//
+//	ReinterpretReal getReinterpretReal()
+//	{
+//		return reinterpretReal;
+//	}
 
 protected:
 	std::fstream file;
