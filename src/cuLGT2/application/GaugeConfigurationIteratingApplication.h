@@ -116,12 +116,14 @@ public:
 
 	static void destroy()
 	{
+//		delete APP->programOptions;
+//		delete APP->linkFile;
 		delete APP;
 	}
 
 	LinkFileType& getLinkFile()
 	{
-		return linkFile;
+		return *linkFile;
 	}
 
 	const LatticeDimension<PatternType::SITETYPE::Ndim>& getDimension() const

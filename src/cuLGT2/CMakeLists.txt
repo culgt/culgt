@@ -6,10 +6,14 @@ include( addWithDirectory.cmake )
 
 set( allsources "" )
 
-add_subdirectory( lattice )
+add_subdirectory( application )
 add_subdirectory( cuLGT1legacy )
-add_subdirectory( propagators )
+add_subdirectory( eigensolver )
 add_subdirectory( fft )
+add_subdirectory( gaugefixing )
+add_subdirectory( lattice )
+add_subdirectory( observables )
+add_subdirectory( propagators )
 
 message( "allsources = ${allsources}" )
 
@@ -18,3 +22,4 @@ target_link_libraries(test pthread)
 target_link_libraries(test gmock)
 target_link_libraries(test gtest)
 target_link_libraries(test cufft)
+target_link_libraries(test boost_program_options)

@@ -43,7 +43,7 @@ TEST(ASiteIndex, ConvertSplitIndexToNoSplitIndex )
 
 		siteIndexFullSplit.setIndex( siteCoordFullSplit.getIndex() );
 
-		cout << siteIndexFullSplit.getIndex() << endl;
+//		cout << siteIndexFullSplit.getIndex() << endl;
 		ASSERT_EQ( siteCoordNoSplit.getIndex(), siteIndexFullSplit.getIndexNonSplit() );
 	}
 }

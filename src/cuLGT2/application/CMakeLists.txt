@@ -13,7 +13,7 @@ target_link_libraries(test_application_host gtest)
 target_link_libraries(test_application_host boost_program_options)
 
 if( DEFINED allsources )
-addWithDirectory( cuLGT1legacy "${sources}" )
+addWithDirectory( application "${sources}" )
 endif()
 
 set(sources_cuda 

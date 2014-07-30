@@ -27,22 +27,21 @@ struct TestTransporter
 
 	template<typename T> static __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, T expected, T actual );
 
-	template<> static __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, float expected, float actual )
+	template<> __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, float expected, float actual )
 	{
-
 		transporter->tfloat[transporter->evaluateFloat].x = expected;
 		transporter->tfloat[transporter->evaluateFloat].y = actual;
 		transporter->evaluateFloat++;
 	}
 
-	template<> static __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, int expected, int actual )
+	template<> __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, int expected, int actual )
 	{
 		transporter->tint[transporter->evaluateInt].x = expected;
 		transporter->tint[transporter->evaluateInt].y = actual;
 		transporter->evaluateInt++;
 	}
 
-	template<> static __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, bool expected, bool actual )
+	template<> __host__ __device__ void setTestTransporterValue( TestTransporter* transporter, bool expected, bool actual )
 	{
 		transporter->tint[transporter->evaluateInt].x = (int)expected;
 		transporter->tint[transporter->evaluateInt].y = (int)actual;

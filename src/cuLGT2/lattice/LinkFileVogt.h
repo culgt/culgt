@@ -71,10 +71,10 @@ public:
 	typedef LinkFile<MemoryConfigurationPattern> super;
 
 	LinkFileVogt(){};
-	LinkFileVogt( const int size[memoryNdim] ) : LinkFile<MemoryConfigurationPattern>( size )
+	LinkFileVogt( const int size[memoryNdim], ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
 	{
 	}
-	LinkFileVogt( const LatticeDimension<memoryNdim> size ) : LinkFile<MemoryConfigurationPattern>( size )
+	LinkFileVogt( const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
 	{
 	}
 

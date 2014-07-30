@@ -168,13 +168,24 @@ public:
 		return *this;
 	}
 
-	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const typename ParamType::REALTYPE scalar )
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const float scalar )
+	{
+		ParamType::multAssignScalar( store, scalar );
+		return *this;
+	}
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const double scalar )
 	{
 		ParamType::multAssignScalar( store, scalar );
 		return *this;
 	}
 
-	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const Complex<typename ParamType::REALTYPE> scalar )
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const Complex<float> scalar )
+	{
+		ParamType::multAssignScalarComplex( store, scalar );
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline LocalLink<ParamType>& operator*=( const Complex<double> scalar )
 	{
 		ParamType::multAssignScalarComplex( store, scalar );
 		return *this;

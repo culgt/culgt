@@ -321,7 +321,7 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> log( Complex<T> b )
 /**
  * acos and asin are rather experimental...
  * They may end up in an infinite loop which will be indicated by a memory read error in cuda execution. Did not happen in may codes...
- * If you have the time to think carefully about a fail proof version of that you are very welcome!
+ * If you have the time to think carefully about a fail proof version of that, you are very welcome!
  * (or implement the boost way after checking license)
  */
 template<typename T> CUDA_HOST_DEVICE static Complex<T> asin( Complex<T> b, bool calledFromAcos = false )

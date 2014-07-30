@@ -9,7 +9,7 @@ using namespace culgt;
 template<typename PatternType> class LinkFileStub: public LinkFile<PatternType>
 {
 public:
-	LinkFileStub( LatticeDimension<4> dim ) : LinkFile<PatternType>::LinkFile( dim ) {};
+	LinkFileStub( LatticeDimension<4> dim, ReinterpretReal reinterpret ) : LinkFile<PatternType>::LinkFile( dim, reinterpret ) {};
 	MOCK_METHOD0(loadImplementation,void());
 	MOCK_METHOD0(saveImplementation,void());
 };
@@ -20,16 +20,21 @@ public:
 	GaugeConfigurationIteratingApplicationMock( LatticeDimension<4> dim, FileIterator fileiterator ) : 									GaugeConfigurationIteratingApplication<PatternStub<float>, LinkFileStub<PatternStub<float> > >( dim, fileiterator, NULL ){}
 	GaugeConfigurationIteratingApplicationMock( LatticeDimension<4> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : 	GaugeConfigurationIteratingApplication<PatternStub<float>, LinkFileStub<PatternStub<float> > >( dim, fileiterator, programOptions ){}
 	MOCK_METHOD0(iterate,void());
+	MOCK_METHOD0(setup,void());
+	MOCK_METHOD0(teardown,void());
 };
 
-TEST( AGaugeConfigurationIteratingApplication, RunCallsIterateNTimes )
+TEST( AGaugeConfigurationIteratingApplication, RunCallsSetup_IterateNTimes_Teardown )
 {
 	const int N = 10;
 	LatticeDimension<4> dim( 4,4,4,4 );
 	FileIterator fileiterator( "out_", ".dat", 4, 0, N-1, 1 );
 	GaugeConfigurationIteratingApplicationMock app( dim, fileiterator );
 
+
+	EXPECT_CALL( app, setup() );
 	EXPECT_CALL( app, iterate() ).Times(N);
+	EXPECT_CALL( app, teardown() );
 
 	app.run();
 }
@@ -41,35 +46,55 @@ TEST( AGaugeConfigurationIteratingApplication, ConstructorWithCommandLineParamet
 
 	GaugeConfigurationIteratingApplicationMock* app = GaugeConfigurationIteratingApplicationMock::init<GaugeConfigurationIteratingApplicationMock>( argc_test, argv_test );
 
+	EXPECT_CALL( *app, setup() );
 	EXPECT_CALL( *app, iterate() ).Times(10);
+	EXPECT_CALL( *app, teardown() );
 
 	app->run();
 
 	app->destroy();
 }
 
-class GaugeConfigurationIteratingApplicationWithFixedSettings: public Test
-{
-public:
-	static const int N = 10;
-	LatticeDimension<4> dim;
-	FileIterator fileiterator;
-	GaugeConfigurationIteratingApplicationMock app;
+//class GaugeConfigurationIteratingApplicationWithFixedSettings: public Test
+//{
+//public:
+//	static const int N = 10;
+//	LatticeDimension<4> dim;
+//	FileIterator fileiterator;
+////	GaugeConfigurationIteratingApplicationMock app;
+//
+//	static const int argc_test = 1;
+//	const char* argv_test[argc_test];
+//
+//	GaugeConfigurationIteratingApplicationMock* app;
+//
+//	GaugeConfigurationIteratingApplicationWithFixedSettings() : dim(4,4,4,4), fileiterator( "test_object_", ".dat", 4, 0, N-1, 1 )//, app( dim, fileiterator )
+//	{
+//	}
+//
+//	~GaugeConfigurationIteratingApplicationWithFixedSettings()
+//	{
+////		app->destroy();
+//	}
+//
+//	void TearDown()
+//	{
+//	}
+//};
+//
+//TEST_F( GaugeConfigurationIteratingApplicationWithFixedSettings, LoadDelegatesLoadToLinkFileObject )
+//{
+//	app = GaugeConfigurationIteratingApplicationMock::init<GaugeConfigurationIteratingApplicationMock>( argc_test, argv_test );
+//
+//	EXPECT_CALL( app->getLinkFile(), loadImplementation() );
+//	app->load();
+//
+////	Mock::VerifyAndClearExpectations(&app->getLinkFile());
+//}
 
-	GaugeConfigurationIteratingApplicationWithFixedSettings() : dim(4,4,4,4), fileiterator( "test_object_", ".dat", 4, 0, N-1, 1 ), app( dim, fileiterator )
-	{
-	}
-};
-
-TEST_F( GaugeConfigurationIteratingApplicationWithFixedSettings, LoadDelegatesLoadToLinkFileObject )
-{
-	EXPECT_CALL( app.getLinkFile(), loadImplementation() );
-	app.load();
-}
-
-TEST_F( GaugeConfigurationIteratingApplicationWithFixedSettings, SaveDelegatesSaveToLinkFileObject )
-{
-	EXPECT_CALL( app.getLinkFile(), saveImplementation() );
-	app.save( "test" );
-}
+//TEST_F( GaugeConfigurationIteratingApplicationWithFixedSettings, SaveDelegatesSaveToLinkFileObject )
+//{
+//	EXPECT_CALL( app.getLinkFile(), saveImplementation() );
+//	app.save( "test" );
+//}
 
