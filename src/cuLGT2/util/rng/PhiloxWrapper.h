@@ -189,12 +189,12 @@ template<> __device__ double PhiloxWrapper<double>::randExp( double lambda)
 		localCounter = 1;
 		c[0]++; // inkrement the kernel counter
 		u.res = philox4x32(c,k);
-		return -log(u01_open_closed_64_53( u.i[localCounter] ))/lambda;
+		return -::log(u01_open_closed_64_53( u.i[localCounter] ))/lambda;
 	}
 	else  // we have another double available.
 	{
 		localCounter--;
-		return -log(u01_open_closed_64_53( u.i[localCounter] ))/lambda;
+		return -::log(u01_open_closed_64_53( u.i[localCounter] ))/lambda;
 	}
 }
 
@@ -205,12 +205,12 @@ template<> __device__ float PhiloxWrapper<float>::randExp( float lambda )
 		localCounter = 3;
 		c[0]++; // inkrement the kernel counter
 		u.res = philox4x32(c,k);
-		return -log(u01_open_closed_32_24( u.i[localCounter] ))/lambda;
+		return -::log(u01_open_closed_32_24( u.i[localCounter] ))/lambda;
 	}
 	else // we have another float available.
 	{
 		localCounter--;
-		return -log(u01_open_closed_32_24( u.i[localCounter] ))/lambda;
+		return -::log(u01_open_closed_32_24( u.i[localCounter] ))/lambda;
 	}
 }
 
@@ -230,7 +230,7 @@ template<> __device__ double2 PhiloxWrapper<double>::randNormal()
 
 	double2 normal;
 
-	double temp = sqrt( -2.*log(u01_open_open_64_53(u.i[0])));
+	double temp = ::sqrt( -2.*::log(u01_open_open_64_53(u.i[0])));
 	double temp2 = u01_open_open_64_53( u.i[1] );
 	normal.x = temp*cospi(2.*temp2);
 	normal.y = temp*sinpi(2.*temp2);
@@ -249,7 +249,7 @@ template<> __device__ float2 PhiloxWrapper<float>::randNormal()
 		c[0]++; // inkrement the kernel counter
 		u.res = philox4x32(c,k);
 
-		double temp = sqrt( -2.*log(u01_open_open_32_24(u.i[3])));
+		double temp = ::sqrt( -2.*::log(u01_open_open_32_24(u.i[3])));
 		double temp2 = u01_open_open_32_24(u.i[2]);
 		normal.x = temp*cospi(2.*temp2);
 		normal.y = temp*sinpi(2.*temp2);
@@ -258,7 +258,7 @@ template<> __device__ float2 PhiloxWrapper<float>::randNormal()
 	else // we have another float available.
 	{
 		localCounter--;
-		double temp = sqrt( -2.*log(u01_open_open_32_24(u.i[localCounter])));
+		double temp = ::sqrt( -2.*::log(u01_open_open_32_24(u.i[localCounter])));
 		localCounter--;
 		double temp2 = u01_open_open_32_24(u.i[localCounter]);
 		normal.x = temp*cospi(2.*temp2);

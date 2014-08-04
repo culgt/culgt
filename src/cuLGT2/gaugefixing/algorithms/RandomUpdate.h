@@ -28,7 +28,7 @@ template<typename T, typename InternalT> __device__ void RandomUpdate<T,Internal
 	alpha = rng.rand();
 	phi = 2.0 * rng.rand();
 	cos_theta = 2.0 * rng.rand() - 1.0;
-	sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+	sin_theta = ::sqrt(1.0 - cos_theta * cos_theta);
 	sin_alpha = sinpi(alpha);
 	shA[id] = cospi(alpha);
 	shA[id+NSB] = sin_alpha * sin_theta * cospi(phi);

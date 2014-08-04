@@ -7,6 +7,7 @@
 #include "../cudacommon/cuda_host_device.h"
 #include "../common/mathfunction_overload.h"
 #include <math.h>
+#include <fstream>
 
 namespace culgt
 {
