@@ -27,7 +27,6 @@
 
 #include "GaugeSettings.h"
 
-#include "CoulombGaugeFixingOverrelaxation.h"
 #include "CoulombGaugeFixingSimulatedAnnealing.h"
 #include "CoulombGaugeFixingMicrocanonical.h"
 #include "CoulombGaugeFixingCornell.h"
@@ -35,6 +34,7 @@
 
 #include "GaugeFixingSaOr.h"
 #include <boost/mpl/assert.hpp>
+#include "TimesliceGaugefixingOverrelaxation.h"
 
 using std::string;
 
@@ -89,7 +89,7 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSiteLogarithmic( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, lat_index_t* nn, double *dGff, double *dA )
 {
 	// only for SU(2)
-	BOOST_MPL_ASSERT_RELATION( LocalLinkType::PARAMTYPE::NC, ==, 2 );
+//	BOOST_MPL_ASSERT_RELATION( LocalLinkType::PARAMTYPE::NC, ==, 2 );
 
 	typename GlobalLinkType::PATTERNTYPE::SITETYPE site( dim, nn );
 
@@ -108,23 +108,23 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 		site.setLatticeIndex( index );
 		GlobalLinkType globalLink( U, site, mu );
 		temp = globalLink;
-		typename LocalLinkType::PARAMTYPE::REALTYPE norm = sqrt( temp.get(1)*temp.get(1) + temp.get(2)*temp.get(2) + temp.get(3)*temp.get(3) );
+		typename LocalLinkType::PARAMTYPE::REALTYPE norm = ::sqrt( temp.get(1)*temp.get(1) + temp.get(2)*temp.get(2) + temp.get(3)*temp.get(3) );
 		for( int i = 0; i < 3; i++ )
 //			A[i] += temp.get(i+1)/norm*sin(norm/2);
-			A[i] += 2*temp.get(i+1)*acos(temp.get(0))/norm;
+			A[i] += 2*temp.get(i+1)*::acos(temp.get(0))/norm;
 
-		gff += 2. - acos( temp.reTrace() / 2. )*acos( temp.reTrace() / 2. );
+		gff += 2. - ::acos( temp.reTrace() / 2. )*::acos( temp.reTrace() / 2. );
 
 		site.setNeighbour(mu,false);
 		GlobalLinkType globDw( U, site, mu );
 		temp = globDw;
-		norm = sqrt( temp.get(1)*temp.get(1) + temp.get(2)*temp.get(2) + temp.get(3)*temp.get(3) );
+		norm = ::sqrt( temp.get(1)*temp.get(1) + temp.get(2)*temp.get(2) + temp.get(3)*temp.get(3) );
 		for( int i = 0; i < 3; i++ )
 //			A[i] -= temp.get(i+1)/norm*sin(norm/2);
-			A[i] -= 2*temp.get(i+1)*acos(temp.get(0))/norm;
+			A[i] -= 2*temp.get(i+1)*::acos(temp.get(0))/norm;
 	}
 
-	dA[index] = sqrt( A[0]*A[0] +  A[1]*A[1]+ A[2]*A[2]); // check this
+	dA[index] = ::sqrt( A[0]*A[0] +  A[1]*A[1]+ A[2]*A[2]); // check this
 	dGff[index] = gff;
 }
 
@@ -162,7 +162,14 @@ public:
 		}
 		else
 		{
-			CoulombGaugefixingKernel::generateGaugeQualityPerSiteLogarithmic<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( Ut, dimTimeslice, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), dGff, dA );
+			if( GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC == 2 )
+			{
+				CoulombGaugefixingKernel::generateGaugeQualityPerSiteLogarithmic<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( Ut, dimTimeslice, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), dGff, dA );
+			}
+			else
+			{
+				assert( false );
+			}
 		}
 		CUDA_LAST_ERROR( "generateGaugeQualityPerSite" );
 
@@ -290,7 +297,7 @@ private:
 	T* UtClean;
 	T* UtDownClean;
 
-	CoulombGaugeFixingOverrelaxation<GlobalLinkType,LocalLinkType> overrelaxation;
+	TimesliceGaugeFixingOverrelaxation<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> > overrelaxation;
 	CoulombGaugeFixingSimulatedAnnealing<GlobalLinkType,LocalLinkType> simulatedAnnealing;
 	CoulombGaugeFixingMicrocanonical<GlobalLinkType,LocalLinkType> microcanonical;
 	CoulombGaugeFixingCornell<GlobalLinkType,LocalLinkType> cornell;

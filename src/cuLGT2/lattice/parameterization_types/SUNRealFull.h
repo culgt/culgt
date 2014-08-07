@@ -419,6 +419,10 @@ public:
 			store[getImagIndex(j,k)] = JKi;
 		}
 	}
+
+//	static CUDA_HOST_DEVICE void inline reproject( TYPE store[SIZE] )
+//	{
+//	}
 };
 
 

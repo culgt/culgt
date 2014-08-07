@@ -42,9 +42,9 @@ template<typename T, typename InternalT> __device__ void SaUpdate<T,InternalT>::
 	do
 	{
 	  do; while ((r1 = rng.rand2()) < 0.0001);
-	  r1 = -log(r1)*p0;
+	  r1 = -::log(r1)*p0;
 	  do; while ((r2 = rng.rand2()) < 0.0001);
-	  r2 = -log(r2)*p0;
+	  r2 = -::log(r2)*p0;
 	  r3 = cospi(2.0*rng.rand2());
 	  r3 = r3*r3;
 	  delta = r2+r1*r3;
@@ -53,8 +53,8 @@ template<typename T, typename InternalT> __device__ void SaUpdate<T,InternalT>::
 //	17 flop (if no loops, counting rand() as 1 operation, cospi and sinpi as 2)
 	a0=1.0-delta;
 	cos_theta=2.0*rng.rand2()-1.0;
-	sin_theta=sqrt(1.0-cos_theta*cos_theta);
-	sin_alpha=sqrt(1-a0*a0);
+	sin_theta=::sqrt(1.0-cos_theta*cos_theta);
+	sin_alpha=::sqrt(1-a0*a0);
 	phi=2.0*rng.rand2();
 	a1=sin_alpha*sin_theta*cospi(phi);
 	a2=sin_alpha*sin_theta*sinpi(phi);

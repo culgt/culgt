@@ -4,10 +4,8 @@
  *      Author: vogt
  */
 
-#ifndef COULOMBGAUGEFIXINGAPP_H_
-#define COULOMBGAUGEFIXINGAPP_H_
-
 #include "lattice/parameterization_types/ParameterizationMediatorSU2_Vector4_Real8.h"
+#include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector4_Real18.h"
 #include "application/GaugeConfigurationIteratingApplication.h"
 #include "cuLGT1legacy/SiteIndex.hxx"
 #include "lattice/configuration_patterns/GPUPatternTimesliceParityPriority.h"
@@ -20,18 +18,27 @@
 #include "util/rng/PhiloxWrapper.h"
 #include "gaugefixing/RandomGaugeTrafo.h"
 #include "gaugefixing/GaugeSettings.h"
+//#include "lattice/parameterization_types/SUNRealFull.h"
 
 namespace culgt
 {
-
-//typedef float REAL;
+#ifdef DOUBLEPRECISION
 typedef double REAL;
+#else
+typedef float REAL;
+#endif
+
+//typedef SU3Vector4<REAL> PARAMTYPE;
+//typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
+
 typedef SU2Vector4<REAL> PARAMTYPE;
+typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
+
+
 typedef SiteIndex<4,TIMESLICE_SPLIT> SITE;
 typedef GPUPatternTimesliceParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
-typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
-typedef GlobalLink<PATTERNTYPE,false> GLOBALLINK;
-typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,false> GLOBALLINKTIMESLICE;
+typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
+typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,true> GLOBALLINKTIMESLICE;
 typedef PhiloxWrapper<REAL> RNG;
 
 /*
@@ -64,6 +71,10 @@ private:
 		coulomb->microcanonicalAutoTune<RNG>( 200 );
 	}
 
+	void teardown()
+	{
+	}
+
 	void iterate()
 	{
 		loadToDevice();
@@ -80,30 +91,30 @@ private:
 
 		GaugeStats stats = coulomb->getGaugeStats();
 		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-		stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
-		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+//		stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
+//		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
 
-//		coulomb->randomTrafo();
+		coulomb->randomTrafo();
 
-//		coulomb->fix( settings );
-		for( int j = 0; j < 10000; j++ )
-		{
-			int iter = 100;
-			for( int i = 0; i < iter; i++ )
-			{
-				coulomb->runCornell( .1, 5 );
-//				coulomb->runOverrelaxation( 1.5 );
-				CUDA_LAST_ERROR( "Cornell ");
-			}
-				coulomb->reproject();
-
-
-			stats = coulomb->getGaugeStats();
-			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-			if( stats.getPrecision() < settings.getPrecision() ) break;
-			stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
-			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-		}
+		coulomb->fix( settings );
+//		for( int j = 0; j < 10000; j++ )
+//		{
+//			int iter = 100;
+//			for( int i = 0; i < iter; i++ )
+//			{
+//				coulomb->runCornell( .1, 5 );
+////				coulomb->runOverrelaxation( 1.5 );
+//				CUDA_LAST_ERROR( "Cornell ");
+//			}
+//				coulomb->reproject();
+//
+//
+//			stats = coulomb->getGaugeStats();
+//			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+//			if( stats.getPrecision() < settings.getPrecision() ) break;
+//			stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
+//			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+//		}
 		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
 //		exit( 1 );
 
@@ -128,4 +139,11 @@ private:
 };
 
 } /* namespace culgt */
-#endif
+
+
+using namespace culgt;
+
+int main( const int argc, const char* argv[] )
+{
+	CoulombGaugeFixingApp::main<CoulombGaugeFixingApp>( argc, argv );
+}
