@@ -26,7 +26,10 @@
 
 #include "gaugefixing_thread_types.h"
 #include "../lattice/GaugeConfigurationCudaHelper.h"
-#include "AutoTuner.h"
+#include "../util/performance/TunableObject.h"
+#include "FullGaugeFixingOverrelaxation.h"
+#include "GaugeFixingSaOr.h"
+#include "RandomGaugeTrafo.h"
 
 using std::string;
 
@@ -80,60 +83,59 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 }
 
 
-template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(8*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep8( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* U, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter)
-{
-	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm orupdate( orParameter );
-	GaugeFixing8Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
-	gaugefixing.applyAlgorithm( U, nn, latticeSize, parity );
+//template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(8*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep8( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* U, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter)
+//{
+//	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+//	Algorithm orupdate( orParameter );
+//	GaugeFixing8Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
+//	gaugefixing.applyAlgorithm( U, nn, latticeSize, parity );
+//}
+//
+//template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(4*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep4( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* U, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter )
+//{
+//	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+//	Algorithm orupdate( orParameter );
+//	GaugeFixing4Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
+//	gaugefixing.applyAlgorithm( U, nn, latticeSize, parity );
+//}
+//
+//template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(4*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep4Timeslice( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Uup, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Udown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter )
+//{
+//	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+//	Algorithm orupdate( orParameter );
+//	GaugeFixing4Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
+//	gaugefixing.applyAlgorithmTimeslice( Uup, Udown, nn, latticeSize, parity );
+//}
+//
+//template<typename GlobalLinkType, typename GlobalLinkType2, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(8*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep8Timeslice( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Uup, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Udown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter )
+//{
+//	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+//	Algorithm orupdate( orParameter );
+//	GaugeFixing8Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock,GlobalLinkType2> gaugefixing( orupdate );
+//	gaugefixing.applyAlgorithmTimeslice( Uup, Udown, nn, latticeSize, parity );
+//}
+
 }
 
-template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(4*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep4( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* U, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter )
-{
-	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm orupdate( orParameter );
-	GaugeFixing4Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
-	gaugefixing.applyAlgorithm( U, nn, latticeSize, parity );
-}
-
-template<typename GlobalLinkType, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(4*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep4Timeslice( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Uup, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Udown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter )
-{
-	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm orupdate( orParameter );
-	GaugeFixing4Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
-	gaugefixing.applyAlgorithmTimeslice( Uup, Udown, nn, latticeSize, parity );
-}
-
-template<typename GlobalLinkType, typename GlobalLinkType2, typename LocalLinkType, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(8*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep8Timeslice( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Uup, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Udown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter )
-{
-	typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-	Algorithm orupdate( orParameter );
-	GaugeFixing8Threads<Algorithm, LandauCoulombGaugeType<LANDAU>, GlobalLinkType, LocalLinkType, SitesPerBlock,GlobalLinkType2> gaugefixing( orupdate );
-	gaugefixing.applyAlgorithmTimeslice( Uup, Udown, nn, latticeSize, parity );
-}
-
-}
-
-template<typename GlobalLinkType, typename LocalLinkType> class LandauGaugefixing
+template<typename GlobalLinkType, typename LocalLinkType> class LandauGaugefixing: public GaugeFixingSaOr
 {
 public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim ) : dim(dim), U(U), totalTime(0), totalIter(0)
+	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, seed, 1.5 ), seed(seed)
 	{
+		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
 		// TODO we should assert here that we use GPUPatternParitySplit!
-		CUDA_SAFE_CALL( cudaMalloc( &dA, dim.getSize()*sizeof(double) ), "malloc dA");
-		CUDA_SAFE_CALL( cudaMalloc( &dGff, dim.getSize()*sizeof(double) ), "malloc dGff");
 	}
 
 	~LandauGaugefixing()
 	{
-		cudaFree( dA );
-		cudaFree( dGff );
+//		cudaFree( dA );
+//		cudaFree( dGff );
 	}
 
-	GaugeStats getGaugeStats()
+	GaugeStats getGaugeStats( GaugeFieldDefinition defintion = GAUGEFIELD_STANDARD )
 	{
 		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
 
@@ -148,168 +150,253 @@ public:
 		return GaugeStats( dGffAvg, dAAvg );
 	}
 
-	RunInfo getTotalRunInfo()
-	{
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), totalTime, totalIter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
-	}
+//	RunInfo getTotalRunInfo()
+//	{
+//		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), totalTime, totalIter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+//	}
 
 
-	template<GaugeFixingThreadsPerSite ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> RunInfo orsteps( float orParameter, int iter )
-	{
-
-		if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
-		{
-			GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
-			cudaFuncSetCacheConfig( LandauGaugefixingKernel::kernelOrStep8<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
-		}
-		else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
-		{
-			GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
-			cudaFuncSetCacheConfig( LandauGaugefixingKernel::kernelOrStep4<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
-		}
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim, true, SitesPerBlock );
-
-		Chronotimer timer;
-		timer.reset();
-		timer.start();
-		cudaDeviceSynchronize();
-
-		for( int i = 0; i < iter; i++ )
-		{
-			if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
-			{
-				LandauGaugefixingKernel::kernelOrStep8<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, orParameter );
-				LandauGaugefixingKernel::kernelOrStep8<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), true, orParameter );
-			}
-			else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
-			{
-				LandauGaugefixingKernel::kernelOrStep4<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, orParameter );
-				LandauGaugefixingKernel::kernelOrStep4<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), true, orParameter );
-			}
-//			else if( ThreadsPerSite == TIMESLICE )
+//	template<GaugeFixingThreadsPerSite ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> RunInfo orsteps( float orParameter, int iter )
+//	{
+//
+//		if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
+//		{
+//			GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
+//			cudaFuncSetCacheConfig( LandauGaugefixingKernel::kernelOrStep8<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
+//		}
+//		else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
+//		{
+//			GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
+//			cudaFuncSetCacheConfig( LandauGaugefixingKernel::kernelOrStep4<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
+//		}
+//		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim, true, SitesPerBlock );
+//
+//		Chronotimer timer;
+//		timer.reset();
+//		timer.start();
+//		cudaDeviceSynchronize();
+//
+//		for( int i = 0; i < iter; i++ )
+//		{
+//			if( ThreadsPerSite == EIGHT_THREAD_PER_SITE )
 //			{
-//				/*
-//				 * This is just a test part to prepare for Coulomb gauge (or maybe for multi-GPU)
-//				 * When you try this use GPUPatternTimesliceParitySplit (with a Site that is TIMESLICE_SPLIT) as the layout of U (in the kernel the work is done on a timeslice U[t] that then has size (1,x,x,x) with GPUPatternParitySplit layout and the Site to be used in the kernel is FULL_SPLIT
-//				 * Therefore, the neighbour table needs to be FULL_SPLIT on a (1,x,x,x) lattice (see below).
-//				 */
-//				typedef GlobalLink<typename GlobalLinkType::PATTERNTYPE::TIMESLICE_PATTERNTYPE, GlobalLinkType::USETEXTURE> GlobalLinkTypeTimeslice;
-////				typedef GlobalLink<typename GlobalLinkType::PATTERNTYPE::TIMESLICE_PATTERNTYPE, GlobalLinkType::USETEXTURE, 1> GlobalLinkTypeTimeslice2;
-//
-//
-//				COPY_GLOBALLINKTYPE( GlobalLinkTypeTimeslice, GlobalLinkTypeTimeslice2, 1 );
-//
-//				LatticeDimension<4> dimTimeslice( 1, dim.getDimension(1), dim.getDimension(2), dim.getDimension(3) );
-//				KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupTimeslice( dimTimeslice, true, SitesPerBlock );
-//
-//				lat_array_index_t arraySizeTimeslice = GlobalLinkTypeTimeslice::getArraySize( dimTimeslice );
-//
-//				for( int t = 0; t < dim.getDimension(0); t++ )
-//				{
-//					int tDown = (t>0)?(t-1):(dim.getDimension(0)-1);
-//
-//					/*
-//					 * Binding textures in every step is surely not a good choice. But it is not necessary in Coulomb gauge (only once per timeslice)
-//					 */
-//					GlobalLinkTypeTimeslice::bindTexture( &U[t*arraySizeTimeslice], arraySizeTimeslice );
-//					GlobalLinkTypeTimeslice2::bindTexture( &U[tDown*arraySizeTimeslice], arraySizeTimeslice );
-////					LandauGaugefixingKernel::kernelOrStep4Timeslice<GlobalLinkTypeTimeslice,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, orParameter );
-////					LandauGaugefixingKernel::kernelOrStep4Timeslice<GlobalLinkTypeTimeslice,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, orParameter );
-//					LandauGaugefixingKernel::kernelOrStep8Timeslice<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, orParameter );
-//					LandauGaugefixingKernel::kernelOrStep8Timeslice<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, orParameter );
-//				}
+//				LandauGaugefixingKernel::kernelOrStep8<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, orParameter );
+//				LandauGaugefixingKernel::kernelOrStep8<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), true, orParameter );
 //			}
-			else
-			{
-				assert( false );
-			}
-		}
+//			else if( ThreadsPerSite == FOUR_THREAD_PER_SITE )
+//			{
+//				LandauGaugefixingKernel::kernelOrStep4<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, orParameter );
+//				LandauGaugefixingKernel::kernelOrStep4<GlobalLinkType,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), true, orParameter );
+//			}
+////			else if( ThreadsPerSite == TIMESLICE )
+////			{
+////				/*
+////				 * This is just a test part to prepare for Coulomb gauge (or maybe for multi-GPU)
+////				 * When you try this use GPUPatternTimesliceParitySplit (with a Site that is TIMESLICE_SPLIT) as the layout of U (in the kernel the work is done on a timeslice U[t] that then has size (1,x,x,x) with GPUPatternParitySplit layout and the Site to be used in the kernel is FULL_SPLIT
+////				 * Therefore, the neighbour table needs to be FULL_SPLIT on a (1,x,x,x) lattice (see below).
+////				 */
+////				typedef GlobalLink<typename GlobalLinkType::PATTERNTYPE::TIMESLICE_PATTERNTYPE, GlobalLinkType::USETEXTURE> GlobalLinkTypeTimeslice;
+//////				typedef GlobalLink<typename GlobalLinkType::PATTERNTYPE::TIMESLICE_PATTERNTYPE, GlobalLinkType::USETEXTURE, 1> GlobalLinkTypeTimeslice2;
+////
+////
+////				COPY_GLOBALLINKTYPE( GlobalLinkTypeTimeslice, GlobalLinkTypeTimeslice2, 1 );
+////
+////				LatticeDimension<4> dimTimeslice( 1, dim.getDimension(1), dim.getDimension(2), dim.getDimension(3) );
+////				KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupTimeslice( dimTimeslice, true, SitesPerBlock );
+////
+////				lat_array_index_t arraySizeTimeslice = GlobalLinkTypeTimeslice::getArraySize( dimTimeslice );
+////
+////				for( int t = 0; t < dim.getDimension(0); t++ )
+////				{
+////					int tDown = (t>0)?(t-1):(dim.getDimension(0)-1);
+////
+////					/*
+////					 * Binding textures in every step is surely not a good choice. But it is not necessary in Coulomb gauge (only once per timeslice)
+////					 */
+////					GlobalLinkTypeTimeslice::bindTexture( &U[t*arraySizeTimeslice], arraySizeTimeslice );
+////					GlobalLinkTypeTimeslice2::bindTexture( &U[tDown*arraySizeTimeslice], arraySizeTimeslice );
+//////					LandauGaugefixingKernel::kernelOrStep4Timeslice<GlobalLinkTypeTimeslice,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, orParameter );
+//////					LandauGaugefixingKernel::kernelOrStep4Timeslice<GlobalLinkTypeTimeslice,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, orParameter );
+////					LandauGaugefixingKernel::kernelOrStep8Timeslice<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), false, orParameter );
+////					LandauGaugefixingKernel::kernelOrStep8Timeslice<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,SitesPerBlock,MinBlocksPerMultiprocessor><<<setupTimeslice.getGridSize(),setupTimeslice.getBlockSize()*8,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( &U[t*arraySizeTimeslice], &U[tDown*arraySizeTimeslice], dimTimeslice.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeTimeslice::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), true, orParameter );
+////				}
+////			}
+//			else
+//			{
+//				assert( false );
+//			}
+//		}
+//
+//		cudaDeviceSynchronize();
+//		timer.stop();
+//		CUDA_LAST_ERROR( "kernelOrStep" );
+//
+//		totalTime += timer.getTime();
+//		totalIter += iter;
+//
+//		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), timer.getTime(), iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+//	}
 
-		cudaDeviceSynchronize();
-		timer.stop();
-		CUDA_LAST_ERROR( "kernelOrStep" );
+//	RunInfo orstepsTuned( float orParameter, int iter, int Id = -1 )
+//	{
+//		if( Id == -1 ) Id = orOptimalTunedId;
+//		switch( Id )
+//		{
+//		case 0:
+//			return orsteps<EIGHT_THREAD_PER_SITE,32,1>( orParameter, iter );
+//		case 1:
+//			return orsteps<EIGHT_THREAD_PER_SITE,32,2>( orParameter, iter );
+//		case 2:
+//			return orsteps<EIGHT_THREAD_PER_SITE,32,3>( orParameter, iter );
+//		case 3:
+//			return orsteps<EIGHT_THREAD_PER_SITE,32,4>( orParameter, iter );
+//		case 4:
+//			return orsteps<EIGHT_THREAD_PER_SITE,32,5>( orParameter, iter );
+//		case 5:
+//			return orsteps<EIGHT_THREAD_PER_SITE,32,6>( orParameter, iter );
+//		case 6:
+//			return orsteps<EIGHT_THREAD_PER_SITE,64,1>( orParameter, iter );
+//		case 7:
+//			return orsteps<EIGHT_THREAD_PER_SITE,64,2>( orParameter, iter );
+//		case 8:
+//			return orsteps<EIGHT_THREAD_PER_SITE,64,3>( orParameter, iter );
+//		case 9:
+//			return orsteps<EIGHT_THREAD_PER_SITE,128,1>( orParameter, iter );
+//		case 10:
+//			return orsteps<FOUR_THREAD_PER_SITE,32,1>( orParameter, iter );
+//		case 11:
+//			return orsteps<FOUR_THREAD_PER_SITE,32,2>( orParameter, iter );
+//		case 12:
+//			return orsteps<FOUR_THREAD_PER_SITE,32,3>( orParameter, iter );
+//		case 13:
+//			return orsteps<FOUR_THREAD_PER_SITE,32,4>( orParameter, iter );
+//		case 14:
+//			return orsteps<FOUR_THREAD_PER_SITE,32,5>( orParameter, iter );
+//		case 15:
+//			return orsteps<FOUR_THREAD_PER_SITE,32,6>( orParameter, iter );
+//		case 16:
+//			return orsteps<FOUR_THREAD_PER_SITE,64,1>( orParameter, iter );
+//		case 17:
+//			return orsteps<FOUR_THREAD_PER_SITE,64,2>( orParameter, iter );
+//		case 18:
+//			return orsteps<FOUR_THREAD_PER_SITE,64,3>( orParameter, iter );
+//		case 19:
+//			return orsteps<FOUR_THREAD_PER_SITE,128,1>( orParameter, iter );
+//		default:
+//			throw LastElementReachedException();
+//		}
+//	}
+//
+//	template<typename RNG> void orstepsAutoTune( int seed, float orParameter = 1.5, int iter = 1000 )
+//	{
+//		AutoTuner<LandauGaugefixing> autoTuner( *this );
+//		autoTuner.template tuneOr<RNG>( orOptimalTunedId, seed, orParameter, iter );
+//	}
 
-		totalTime += timer.getTime();
-		totalIter += iter;
 
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), timer.getTime(), iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+	void runOverrelaxation( float orParameter, int id = -1 )
+	{
+		overrelaxation.setOrParameter( orParameter );
+		overrelaxation.run( id );
 	}
 
-	RunInfo orstepsTuned( float orParameter, int iter, int Id = -1 )
+	RunInfo getRunInfoOverrelaxation( double time, long iter )
 	{
-		if( Id == -1 ) Id = orOptimalTunedId;
-		switch( Id )
-		{
-		case 0:
-			return orsteps<EIGHT_THREAD_PER_SITE,32,1>( orParameter, iter );
-		case 1:
-			return orsteps<EIGHT_THREAD_PER_SITE,32,2>( orParameter, iter );
-		case 2:
-			return orsteps<EIGHT_THREAD_PER_SITE,32,3>( orParameter, iter );
-		case 3:
-			return orsteps<EIGHT_THREAD_PER_SITE,32,4>( orParameter, iter );
-		case 4:
-			return orsteps<EIGHT_THREAD_PER_SITE,32,5>( orParameter, iter );
-		case 5:
-			return orsteps<EIGHT_THREAD_PER_SITE,32,6>( orParameter, iter );
-		case 6:
-			return orsteps<EIGHT_THREAD_PER_SITE,64,1>( orParameter, iter );
-		case 7:
-			return orsteps<EIGHT_THREAD_PER_SITE,64,2>( orParameter, iter );
-		case 8:
-			return orsteps<EIGHT_THREAD_PER_SITE,64,3>( orParameter, iter );
-		case 9:
-			return orsteps<EIGHT_THREAD_PER_SITE,128,1>( orParameter, iter );
-		case 10:
-			return orsteps<FOUR_THREAD_PER_SITE,32,1>( orParameter, iter );
-		case 11:
-			return orsteps<FOUR_THREAD_PER_SITE,32,2>( orParameter, iter );
-		case 12:
-			return orsteps<FOUR_THREAD_PER_SITE,32,3>( orParameter, iter );
-		case 13:
-			return orsteps<FOUR_THREAD_PER_SITE,32,4>( orParameter, iter );
-		case 14:
-			return orsteps<FOUR_THREAD_PER_SITE,32,5>( orParameter, iter );
-		case 15:
-			return orsteps<FOUR_THREAD_PER_SITE,32,6>( orParameter, iter );
-		case 16:
-			return orsteps<FOUR_THREAD_PER_SITE,64,1>( orParameter, iter );
-		case 17:
-			return orsteps<FOUR_THREAD_PER_SITE,64,2>( orParameter, iter );
-		case 18:
-			return orsteps<FOUR_THREAD_PER_SITE,64,3>( orParameter, iter );
-		case 19:
-			return orsteps<FOUR_THREAD_PER_SITE,128,1>( orParameter, iter );
-		default:
-			throw LastElementReachedException();
-		}
+		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), time, iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
-	template<typename RNG> void orstepsAutoTune( int seed, float orParameter = 1.5, int iter = 1000 )
+	void runMicrocanonical( int id = -1 )
 	{
-		AutoTuner<LandauGaugefixing> autoTuner( *this );
-		autoTuner.template tuneOr<RNG>( orOptimalTunedId, seed, orParameter, iter );
+		assert( false );
 	}
 
-	/**
-	 * Needed by the AutoTuner
-	 * @param seed
-	 */
-	template<typename RNG> void setHot( long seed )
+	void runSimulatedAnnealing( float temperature, int id = -1 )
 	{
-		GaugeConfigurationCudaHelper<T>::template setHot<typename GlobalLinkType::PATTERNTYPE,RNG>( U, dim, seed, RNG::getNextCounter() );
+		assert( false );
+	}
+
+	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
+	{
+		return RunInfo( 0, 0 );
+	}
+
+	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )
+	{
+		overrelaxation.setOrParameter( orParameter );
+		overrelaxation.tune( iter );
+	}
+
+	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int iter = 1000 )
+	{
+		assert( false );
+	}
+
+	template<typename RNG> void microcanonicalAutoTune( int iter = 1000 )
+	{
+		assert( false );
+	}
+
+	void randomTrafo()
+	{
+		RandomGaugeTrafo<GlobalLinkType,LocalLinkType>::randomTrafo( U, dim, seed );
+	}
+
+	void reproject()
+	{
+		GaugeConfigurationCudaHelper<T>::template reproject<typename GlobalLinkType::PATTERNTYPE,LocalLinkType, PhiloxWrapper<REALT> >( U, dim, seed, PhiloxWrapper<REALT>::getNextCounter() );
+	}
+
+	void allocateCopyMemory()
+	{
+		GaugeConfigurationCudaHelper<T>::allocateMemory( &UBest, GlobalLinkType::getArraySize(dim) );
+		GaugeConfigurationCudaHelper<T>::allocateMemory( &UClean, GlobalLinkType::getArraySize(dim) );
+	}
+
+	void freeCopyMemory()
+	{
+		GaugeConfigurationCudaHelper<T>::freeMemory( UBest );
+		GaugeConfigurationCudaHelper<T>::freeMemory( UClean );
+	}
+
+	void saveCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( UBest, U, GlobalLinkType::getArraySize(dim)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+	}
+
+	void writeBackCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( U, UBest, GlobalLinkType::getArraySize(dim)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+	}
+
+	void storeCleanCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( UClean, U, GlobalLinkType::getArraySize(dim)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
+	}
+
+	void takeCleanCopy()
+	{
+		CUDA_SAFE_CALL( cudaMemcpy( U, UClean, GlobalLinkType::getArraySize(dim)*sizeof(T), cudaMemcpyDeviceToDevice ), "cudaMemcpy in saveCopy (device to device)" );
 	}
 
 private:
 	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim;
+
 	T* U;
-	double* dA;
-	double* dGff;
 
-	double totalTime;
-	int totalIter;
+	T* UBest;
+	T* UClean;
 
-	int orOptimalTunedId;
+	FullGaugeFixingOverrelaxation<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> > overrelaxation;
+
+//	double* dA;
+//	double* dGff;
+//
+//	double totalTime;
+//	int totalIter;
+//
+//	int orOptimalTunedId;
+
+	long seed;
 };
 
 

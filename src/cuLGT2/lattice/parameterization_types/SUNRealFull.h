@@ -420,9 +420,9 @@ public:
 		}
 	}
 
-//	static CUDA_HOST_DEVICE void inline reproject( TYPE store[SIZE] )
-//	{
-//	}
+	static CUDA_HOST_DEVICE void inline reproject( TYPE store[SIZE] )
+	{
+	}
 };
 
 
