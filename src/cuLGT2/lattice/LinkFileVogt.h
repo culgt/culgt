@@ -27,9 +27,6 @@ public:
 	LinkFileVogtException( std::string msg ) : IOException(msg){};
 };
 
-
-
-
 template<typename MemoryConfigurationPattern, typename TFloatFile> class LinkFileVogt: public LinkFile<MemoryConfigurationPattern>
 {
 private:

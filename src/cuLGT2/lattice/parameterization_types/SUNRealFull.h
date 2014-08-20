@@ -420,8 +420,69 @@ public:
 		}
 	}
 
+	static CUDA_HOST_DEVICE void inline normalizeRow( int row, TYPE store[SIZE] )
+	{
+		int baseIndex = row*6;
+		T norm = store[baseIndex]*store[baseIndex]+store[baseIndex+1]*store[baseIndex+1]+store[baseIndex+2]*store[baseIndex+2]+store[baseIndex+3]*store[baseIndex+3]+store[baseIndex+4]*store[baseIndex+4]+store[baseIndex+5]*store[baseIndex+5];
+		norm = 1./::sqrt( norm ); // TODO replace by rsqrt and make compatible with non-cuda compiler
+
+		store[baseIndex+0] *= norm;
+		store[baseIndex+1] *= norm;
+		store[baseIndex+2] *= norm;
+		store[baseIndex+3] *= norm;
+		store[baseIndex+4] *= norm;
+		store[baseIndex+5] *= norm;
+	}
+
 	static CUDA_HOST_DEVICE void inline reproject( TYPE store[SIZE] )
 	{
+		// normalize first row
+		normalizeRow( 0, store );
+//		T norm = store[0]*store[0]+store[1]*store[1]+store[2]*store[2]+store[3]*store[3]+store[4]*store[4]+store[5]*store[5];
+//		norm = 1./::sqrt( norm ); // TODO replace by rsqrt and make compatible with non-cuda compiler
+//
+//		store[0] *= norm;
+//		store[1] *= norm;
+//		store[2] *= norm;
+//		store[3] *= norm;
+//		store[4] *= norm;
+//		store[5] *= norm;
+
+		T a6 = store[6] - store[0]*(store[0]*store[6] + store[1]*store[7] + store[2]*store[8] + store[3]*store[9] + store[4]*store[10] + store[5]*store[11]) + store[1]*(store[0]*store[7] - store[1]*store[6] + store[2]*store[9] - store[3]*store[8] + store[4]*store[11] - store[5]*store[10]);
+		T a7 = store[7] - store[1]*(store[0]*store[6] + store[1]*store[7] + store[2]*store[8] + store[3]*store[9] + store[4]*store[10] + store[5]*store[11]) - store[0]*(store[0]*store[7] - store[1]*store[6] + store[2]*store[9] - store[3]*store[8] + store[4]*store[11] - store[5]*store[10]);
+		T a8 = store[8] - store[2]*(store[0]*store[6] + store[1]*store[7] + store[2]*store[8] + store[3]*store[9] + store[4]*store[10] + store[5]*store[11]) + store[3]*(store[0]*store[7] - store[1]*store[6] + store[2]*store[9] - store[3]*store[8] + store[4]*store[11] - store[5]*store[10]);
+		T a9 = store[9] - store[3]*(store[0]*store[6] + store[1]*store[7] + store[2]*store[8] + store[3]*store[9] + store[4]*store[10] + store[5]*store[11]) - store[2]*(store[0]*store[7] - store[1]*store[6] + store[2]*store[9] - store[3]*store[8] + store[4]*store[11] - store[5]*store[10]);
+		T a10 = store[10] - store[4]*(store[0]*store[6] + store[1]*store[7] + store[2]*store[8] + store[3]*store[9] + store[4]*store[10] + store[5]*store[11]) + store[5]*(store[0]*store[7] - store[1]*store[6] + store[2]*store[9] - store[3]*store[8] + store[4]*store[11] - store[5]*store[10]);
+		T a11 = store[11] - store[5]*(store[0]*store[6] + store[1]*store[7] + store[2]*store[8] + store[3]*store[9] + store[4]*store[10] + store[5]*store[11]) - store[4]*(store[0]*store[7] - store[1]*store[6] + store[2]*store[9] - store[3]*store[8] + store[4]*store[11] - store[5]*store[10]);
+
+		store[6] = a6;
+		store[7] = a7;
+		store[8] = a8;
+		store[9] = a9;
+		store[10] = a10;
+		store[11] = a11;
+
+		normalizeRow( 1, store );
+
+		store[12] = store[2]*store[10]-store[3]*store[11] - store[8]*store[4]+store[9]*store[5];
+		store[13] = -store[2]*store[11]-store[3]*store[10] + store[8]*store[5]+store[9]*store[4];
+		store[14] = store[4]*store[6]-store[5]*store[7] - store[10]*store[0]+store[11]*store[1] ;
+		store[15] = -store[4]*store[7]-store[5]*store[6] + store[10]*store[1]+store[11]*store[0];
+		store[16] = store[0]*store[8]-store[1]*store[9] - store[2]*store[6]+store[3]*store[7];
+		store[17] = -store[0]*store[9]-store[1]*store[8] + store[2]*store[7]+store[3]*store[6];
+
+		normalizeRow( 2, store );
+
+//		T norm = a12*a12+a13*a13+a14*a14+a15*a15+a16*a16+a17*a17;
+//		norm = 1./::sqrt( norm ); // TODO replace by rsqrt and make compatible with non-cuda compiler
+//
+//		l1.set(12, a12*norm );
+//		l1.set(13, a13*norm );
+//		l1.set(14, a14*norm );
+//		l1.set(15, a15*norm );
+//		l1.set(16, a16*norm );
+//		l1.set(17, a17*norm );
+
 	}
 };
 

@@ -297,6 +297,13 @@ TEST_F( ASpecialLocalLinkWithSU3Real18, MultWithScalarWorks )
 	ASSERT_FLOAT_EQ( originalVal*someVal, A.get(5) );
 }
 
+TEST_F( ASpecialLocalLinkWithSU3Real18, ReprojectWorks )
+{
+	AplusA.reproject();
+
+	ASSERT_FLOAT_EQ( 1., AplusA.reDet() );
+}
+
 TEST( ALocalLink, GetIdentityWorks )
 {
 	LocalLink<SUNRealFull<3,float> > link;

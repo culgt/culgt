@@ -21,7 +21,7 @@ enum GaugeFieldDefinition { GAUGEFIELD_STANDARD, GAUGEFIELD_LOGARITHMIC };
 class GaugeFixingSaOr
 {
 public:
-	GaugeFixingSaOr( lat_index_t size ): iterSa(0), iterOr(0), iterMicro(0), copyMemoryIsAllocated( false )
+	GaugeFixingSaOr( lat_index_t size ): fullTimeSa(0), fullTimeOr(0), iterSa(0), iterOr(0), iterMicro(0), copyMemoryIsAllocated( false )
 	{
 		CUDA_SAFE_CALL( cudaMalloc( &dA, size*sizeof(double) ), "malloc dA");
 		CUDA_SAFE_CALL( cudaMalloc( &dGff, size*sizeof(double) ), "malloc dGff");
@@ -132,9 +132,13 @@ protected:
 	Chronotimer timerSa;
 	Chronotimer timerOr;
 
+	double fullTimeSa;
+	double fullTimeOr;
+
 	long iterSa;
 	long iterOr;
 	long iterMicro;
+
 
 
 	bool check( int iteration )
@@ -187,7 +191,9 @@ protected:
 			cudaDeviceSynchronize();
 			timerSa.stop();
 
-			if( settings.isPrintStats() ) getRunInfoSimulatedAnnealing( timerSa.getTime(), iterSa, iterMicro ).print();
+			fullTimeSa += timerSa.getTime();
+
+			if( settings.isPrintStats() ) getRunInfoSimulatedAnnealing( fullTimeSa, iterSa, iterMicro ).print();
 		}
 	}
 
@@ -208,7 +214,9 @@ protected:
 			cudaDeviceSynchronize();
 			timerOr.stop();
 
-			if( settings.isPrintStats() ) getRunInfoOverrelaxation( timerOr.getTime(), iterOr ).print();
+			fullTimeOr += timerOr.getTime();
+
+			if( settings.isPrintStats() ) getRunInfoOverrelaxation( fullTimeOr, iterOr ).print();
 		}
 	}
 

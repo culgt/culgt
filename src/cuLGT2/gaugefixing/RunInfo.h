@@ -9,6 +9,7 @@
 #define RUNINFO_H_
 
 #include "../lattice/SubgroupIterator.h"
+#include <iomanip>
 
 class RunInfo
 {
