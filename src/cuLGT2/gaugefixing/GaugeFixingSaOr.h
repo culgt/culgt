@@ -202,6 +202,7 @@ protected:
 		if( settings.getOrMaxIter() > 0 )
 		{
 			cudaDeviceSynchronize();
+			timerOr.reset();
 			timerOr.start();
 			if( settings.isPrintStats() )std::cout << "Overrelaxation" << std::endl;
 			for( int i = 0; i < settings.getOrMaxIter(); i++ )

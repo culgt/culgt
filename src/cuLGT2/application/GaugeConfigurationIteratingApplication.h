@@ -88,7 +88,11 @@ public:
 		save( appendix );
 	}
 
+#if BOOST_VERSION < 105300
+	template<typename ConcreteApplicationType> static ConcreteApplicationType* init( int argc, char* argv[] )
+#else
 	template<typename ConcreteApplicationType> static ConcreteApplicationType* init( const int argc, const char* argv[] )
+#endif
 	{
 		// do the command line interpretation here.
 		ProgramOptions* po = new ProgramOptions();
@@ -131,7 +135,11 @@ public:
 		return dimension;
 	}
 
+#if BOOST_VERSION < 105300
+	template<typename ConcreteApplicationType> static void main( int argc, char* argv[] )
+#else
 	template<typename ConcreteApplicationType> static void main( const int argc, const char* argv[] )
+#endif
 	{
 		init<ConcreteApplicationType>( argc, argv );
 		APP->run();

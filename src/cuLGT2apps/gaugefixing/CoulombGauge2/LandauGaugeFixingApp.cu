@@ -63,7 +63,7 @@ private:
 
 	void setup()
 	{
-		landau->orstepsAutoTune<RNG>(1.5, 200);
+		landau->orstepsAutoTune<RNG>(1.5, 50);
 	}
 
 	void teardown()
@@ -113,7 +113,11 @@ private:
 
 using namespace culgt;
 
-int main( const int argc, const char* argv[] )
+#if BOOST_VERSION < 105300
+	int main( int argc, char* argv[] )
+#else
+	int main( const int argc, const char* argv[] )
+#endif
 {
 	LandauGaugeFixingApp::main<LandauGaugeFixingApp>( argc, argv );
 }

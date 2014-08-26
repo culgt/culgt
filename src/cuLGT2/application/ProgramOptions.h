@@ -52,7 +52,11 @@ public:
 		;
 	}
 
-	void parseOptions( const int argc, const char* argv[], bool beQuiet = false )
+#if BOOST_VERSION < 105300
+	void parseOptions( int argc, char* argv[], bool beQuiet = false )
+#else
+	void parseOptions( const int argc, const char* const argv[], bool beQuiet = false )
+#endif
 	{
 		try
 			{

@@ -12,7 +12,7 @@ find_package(CUDA)
 include(FindCUDA)
 set(CUDA_NVCC_FLAGS "-arch=sm_20 -Xptxas -v -Xptxas -dlcm=cg --use_fast_math")
 
-#set( CMAKE_VERBOSE_MAKEFILE on )
+set( CMAKE_VERBOSE_MAKEFILE on )
 
 #cuda_add_executable(DMCGaugeDP DirectMaximalCenterGaugeFixingApp.cu ../../../cuLGT2/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION )
 #target_link_libraries(DMCGaugeDP pthread)
@@ -55,5 +55,11 @@ target_link_libraries(LandauGaugeSP pthread)
 target_link_libraries(LandauGaugeSP cudart)
 target_link_libraries(LandauGaugeSP cufft)
 target_link_libraries(LandauGaugeSP boost_program_options)
+
+cuda_add_executable(LandauGaugeDP LandauGaugeFixingApp.cu ../../../cuLGT2/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION)
+target_link_libraries(LandauGaugeDP pthread)
+target_link_libraries(LandauGaugeDP cudart)
+target_link_libraries(LandauGaugeDP cufft)
+target_link_libraries(LandauGaugeDP boost_program_options)
 
 

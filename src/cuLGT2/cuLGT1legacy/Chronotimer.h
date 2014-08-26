@@ -5,8 +5,8 @@
 #ifndef CHRONOTIMER_H_
 #define CHRONOTIMER_H_
 
-#include <sys/time.h>
 #include <string.h>
+#include <sys/time.h>
 
 class Chronotimer {
 	public:
@@ -21,6 +21,12 @@ class Chronotimer {
 		timeval begin;
 		timeval end;
 		double savedTime;
+
+#ifdef __CUDACC__
+		cudaEvent_t cudastart; // this is for the ChronotimerCuda hack
+		cudaEvent_t cudastop; // this is for the ChronotimerCuda hack
+		float cudatime;
+#endif
 		double getElapsedSeconds();
 };
 

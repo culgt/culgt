@@ -31,6 +31,7 @@ public:
 	{
 		timer.reset();
 		timer.start();
+		CUDA_LAST_ERROR("TunableObject::reset()/start()" );
 		cudaDeviceSynchronize();
 
 		for( int i = 0; i < iter; i++ )
@@ -40,6 +41,7 @@ public:
 
 		cudaDeviceSynchronize();
 		timer.stop();
+		CUDA_LAST_ERROR("TunableObject::stop()" );
 		return timer.getTime();
 	}
 
