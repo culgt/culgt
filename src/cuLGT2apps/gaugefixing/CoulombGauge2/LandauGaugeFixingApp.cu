@@ -34,7 +34,6 @@ typedef float REAL;
 typedef SU3Vector4<REAL> PARAMTYPE;
 typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 
-
 typedef SiteIndex<4,FULL_SPLIT> SITE;
 typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;

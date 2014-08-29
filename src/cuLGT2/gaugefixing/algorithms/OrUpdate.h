@@ -26,7 +26,7 @@ template<typename T, typename InternalT> __device__ void OrUpdate<T,InternalT>::
 	InternalT ai_sq = shA[id+NSB]*shA[id+NSB]+shA[id+2*NSB]*shA[id+2*NSB]+shA[id+3*NSB]*shA[id+3*NSB];
 	InternalT a0_sq = shA[id]*shA[id];
 
-	InternalT b=(orParameter*a0_sq+ai_sq)/(a0_sq+ai_sq);
+	InternalT b=((InternalT)orParameter*a0_sq+ai_sq)/(a0_sq+ai_sq);
 	InternalT c=rsqrt(a0_sq+b*b*ai_sq);
 
 	shA[id]*=c;
@@ -47,7 +47,7 @@ template<typename T, typename InternalT> __device__ void OrUpdate<T,InternalT>::
 	InternalT ai_sq = shA[id+NSB]*shA[id+NSB]+shA[id+2*NSB]*shA[id+2*NSB]+shA[id+3*NSB]*shA[id+3*NSB];
 	InternalT a0_sq = shA[id]*shA[id];
 
-	InternalT b=(orParameter*a0_sq+ai_sq)/(a0_sq+ai_sq);
+	InternalT b=((InternalT)orParameter*a0_sq+ai_sq)/(a0_sq+ai_sq);
 	InternalT c=rsqrt(a0_sq+b*b*ai_sq);
 
 	q.x*=c;
