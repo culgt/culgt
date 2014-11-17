@@ -26,6 +26,14 @@
 #include "../../cudacommon/LaunchBounds.h"
 #include "SequenceRunner.h"
 #include "RuntimeChooser.h"
+#include <boost/mpl/int.hpp>
+#include <boost/mpl/bool.hpp>
+
+using mpl_::int_;
+using mpl_::bool_;
+
+//namespace mpl = boost::mpl;
+//using mpl::placeholders::_;
 
 /*
  * 1) make the lists
@@ -34,14 +42,22 @@ typedef mpl::vector< LaunchBounds<1,2>, LaunchBounds<3,4> > launchBoundsSequence
 typedef mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 typedef mpl::vector_c< int, 0, 1 > useTextureSequence;
 
+
+template<typename LaunchBounds, typename ThreadsPerSite, typename UseTexture> __global__ void someKernel( int* a )
+{
+	printf( "device: (%d,%d), %d, %d\n", LaunchBounds::maxThreadsPerBlock, LaunchBounds::minBlocksPerMultiprocessor, ThreadsPerSite::value, UseTexture::value );
+	a[threadIdx.x] = threadIdx.x;
+}
+
 /*
  * 2) define the method to call: here we just print out the values.
  */
 template<typename LaunchBounds, typename ThreadsPerSite, typename UseTexture> struct Printer
 {
-	template<typename T> static void exec( T object )
+	template<typename T> static void exec( T* object )
 	{
-		cout << "(" << LaunchBounds::maxThreadsPerBlock << "," << LaunchBounds::minBlocksPerMultiprocessor << "), " << ThreadsPerSite::value << ", " << UseTexture::value << ", the information: " << object->needSomeInformationFromHere << endl;
+		someKernel<LaunchBounds,ThreadsPerSite,UseTexture><<<1,1>>>( object->devPtr );
+		cout << "(" << LaunchBounds::maxThreadsPerBlock << "," << LaunchBounds::minBlocksPerMultiprocessor << "), " << ThreadsPerSite::value << ", " << UseTexture::value << endl;
 	}
 };
 
@@ -51,26 +67,38 @@ template<typename LaunchBounds, typename ThreadsPerSite, typename UseTexture> st
  */
 struct UniqueId
 {
-	float needSomeInformationFromHere;
+	int* devPtr;
+
+	void allocate()
+	{
+		cudaMalloc( &devPtr, sizeof(int) );
+	}
 };
 
 int main()
 {
+	UniqueId obj;
+	obj.allocate();
+
 	// 4) typedef the RuntimeChooser, here we want to call the Printer template with three arguments: Printer<_,_,_>
 	typedef RuntimeChooser<UniqueId,Printer<_,_,_> > MyChooser;
 
-	UniqueId containsNeededInformation;
-	containsNeededInformation.needSomeInformationFromHere = 1.232;
-	MyChooser::object = &containsNeededInformation;
+	MyChooser::object = &obj;
 
-	// 5) instantiate the frontend
+//	Printer<LaunchBounds<4,3>,int_<3>, bool_<true> >::exec( MyChooser::object );
+
+
+
+//	 5) instantiate the frontend
 	SequenceRunnerFrontend<MyChooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> test;
 
 	// 6) get an iterator and loop over all possible choices.
 	for( auto it = MyChooser::begin(); it != MyChooser::end(); ++it )
 	{
-		test.set( *it );
-		MyChooser::run( &containsNeededInformation );
+		test.run( *it );
 	}
+
+	int hostPtr[1];
+	cudaMemcpy( hostPtr, obj.devPtr, sizeof(int), cudaMemcpyDeviceToHost );
 
 }

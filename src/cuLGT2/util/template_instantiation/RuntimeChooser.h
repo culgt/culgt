@@ -10,15 +10,18 @@
 #include <vector>
 #include <boost/functional/hash.hpp>
 
-
 using std::vector;
 
-template<typename GiveAutoTuneClassHere, typename Run> class RuntimeChooser
+template<typename AutoTuneClass, typename Run> class RuntimeChooser
 {
 public:
 	static size_t id;
 	static vector<size_t> ids;
 	static bool init;
+	static AutoTuneClass* object;
+	typedef void (*FPTR)(AutoTuneClass*);
+	static FPTR run;
+	static bool functionPtrIsSet;
 
 	static vector<size_t>::iterator begin()
 	{
@@ -50,8 +53,8 @@ public:
 		else if( id ==  hashed )
 		{
 			typedef mpl::unpack_args<typename mpl::lambda<Run>::type > g;
-			typename mpl::apply< g, typename T::type >::type t;
-			t();
+//			mpl::apply< g, typename T::type >::type::exec( object );
+			run = mpl::apply< g, typename T::type >::type::exec;
 		}
 	}
 };
@@ -59,6 +62,9 @@ public:
 template<typename T0, typename T1> size_t RuntimeChooser<T0,T1>::id;
 template<typename T0, typename T1> vector<size_t> RuntimeChooser<T0,T1>::ids;
 template<typename T0, typename T1> bool RuntimeChooser<T0,T1>::init = false;
+template<typename T0, typename T1> T0* RuntimeChooser<T0,T1>::object;
+template<typename T0, typename T1> typename RuntimeChooser<T0,T1>::FPTR RuntimeChooser<T0,T1>::run;
+template<typename T0, typename T1> bool RuntimeChooser<T0,T1>::functionPtrIsSet = false;
 
 
 #endif /* RUNTIMECHOOSER_H_ */

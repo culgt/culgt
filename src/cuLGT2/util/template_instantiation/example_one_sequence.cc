@@ -4,6 +4,7 @@
 #include <boost/mpl/vector_c.hpp>
 #include <boost/mpl/placeholders.hpp>
 
+#include "../../cudacommon/LaunchBounds.h"
 #include "SequenceRunner.h"
 #include "RuntimeChooser.h"
 
@@ -14,7 +15,7 @@ typedef mpl::vector_c< int, 0, 1 > useTextureSequence;
 
 template<typename UseTexture> struct Printer
 {
-	void operator()()
+	template<typename T> static void exec( T object )
 	{
 		cout << UseTexture::value << endl;
 	}

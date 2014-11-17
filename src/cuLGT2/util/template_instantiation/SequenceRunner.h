@@ -16,10 +16,12 @@
 #include <boost/mpl/push_back.hpp>
 #include <boost/mpl/unpack_args.hpp>
 #include <boost/mpl/apply.hpp>
+#include <boost/mpl/placeholders.hpp>
 #include <boost/mpl/lambda.hpp>
 
 namespace mpl = boost::mpl;
 using namespace std;
+using namespace mpl::placeholders;
 
 struct NIL
 {
@@ -83,7 +85,16 @@ public:
 	}
 
 
-	void run( size_t id = 0 )
+	void run( size_t id )
+	{
+		if( Chooser::id != id )
+		{
+			set( id );
+		}
+		Chooser::run( Chooser::object );
+	}
+
+	void set( size_t id )
 	{
 		Chooser::id = id;
 		exec();
