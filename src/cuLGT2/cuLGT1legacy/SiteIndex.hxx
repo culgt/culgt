@@ -41,6 +41,7 @@ public:
 	CUDA_HOST_DEVICE inline SiteIndex( const lat_index_t latticeSize, lat_index_t* nn );
 	CUDA_HOST_DEVICE inline virtual ~SiteIndex();
 	CUDA_HOST_DEVICE inline lat_coord_t operator[](const lat_dim_t i) const;
+	CUDA_HOST_DEVICE inline lat_coord_t getCoord(const lat_dim_t i) const; // TODO use of this is bad (incompatible with SiteIndex)
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
 	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();}; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline lat_index_t getIndexNonSplit() const; // for compatibility with cuLGT2
@@ -136,6 +137,39 @@ template <lat_dim_t Nd, ParityType par> SiteIndex<Nd, par>::~SiteIndex()
  * Returns the i-coordinate of the current site.
  */
 template<lat_dim_t Nd, ParityType par> lat_coord_t SiteIndex<Nd,par>::operator[](const lat_dim_t i) const
+{
+	lat_index_t temp = index;
+
+	if( par == FULL_SPLIT )
+	{
+		assert(false); // TODO
+		return -1;
+	}
+	else if ( par == TIMESLICE_SPLIT )
+	{
+		if( i == 0 )
+		{
+			return temp / (latticeSize/size[0]);
+		}
+		else
+		{
+			assert(false); // TODO exercise for the reader
+			return -1;
+		}
+	}
+	else // NO_SPLIT
+	{
+		for( lat_dim_t j = Nd-1; j >= 0; j-- )
+		{
+			if( i == j ) return temp % size[j];
+			else temp /= size[j];
+		}
+	}
+	assert(false); // if we are here, something is wrong...
+	return -1;
+}
+
+template<lat_dim_t Nd, ParityType par> lat_coord_t SiteIndex<Nd,par>::getCoord(const lat_dim_t i) const
 {
 	lat_index_t temp = index;
 

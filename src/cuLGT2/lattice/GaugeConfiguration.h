@@ -217,10 +217,17 @@ public:
 		return &Udevice[timeslice*configurationSizeTimeslice];
 	}
 
+	void setDevicePointer( T* U, bool assumeAllocated = false )
+	{
+		Udevice = U;
+		UdeviceIsAllocated = assumeAllocated;
+	}
+
 	T* getHostPointer() const
 	{
 		return Uhost;
 	}
+
 
 	void takeCopyDeviceToDevice( GaugeConfiguration<PatternType>& src )
 	{

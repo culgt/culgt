@@ -306,6 +306,13 @@ template<typename ParamType> CUDA_HOST_DEVICE inline bool operator!=(LocalLink<P
 	return !(lhs == rhs);
 }
 
+template<typename LocalLinkType> CUDA_HOST_DEVICE inline LocalLinkType operator*( LocalLinkType const& lhs, LocalLinkType const& rhs )
+{
+	LocalLinkType result;
+	result = lhs;
+	result *= rhs;
+	return result;
+}
 
 
 template<typename ParamType> inline std::ostream& operator<<(std::ostream& out, LocalLink<ParamType> t)

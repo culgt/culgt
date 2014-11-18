@@ -6,6 +6,7 @@
 
 #include "lattice/parameterization_types/ParameterizationMediatorSU2_Vector4_Real8.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector4_Real18.h"
+#include "lattice/parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 #include "application/GaugeConfigurationIteratingApplication.h"
 #include "cuLGT1legacy/SiteIndex.hxx"
 #include "lattice/configuration_patterns/GPUPatternTimesliceParityPriority.h"
@@ -18,6 +19,7 @@
 #include "util/rng/PhiloxWrapper.h"
 #include "lattice/parameterization_types/SU3Vector4.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
+#include "lattice/parameterization_types/SU3Real12.h"
 
 namespace culgt
 {
@@ -32,10 +34,16 @@ typedef float REAL;
 //typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
 
 typedef SU3Vector4<REAL> PARAMTYPE;
+//typedef SU3Real12<REAL> PARAMTYPE;
+
 typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 
-typedef SiteIndex<4,FULL_SPLIT> SITE;
-typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
+typedef SiteIndex<4,TIMESLICE_SPLIT> SITE;
+typedef GPUPatternTimesliceParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
+
+//typedef SiteIndex<4,FULL_SPLIT> SITE;
+//typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
+
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
 typedef PhiloxWrapper<REAL> RNG;
 
@@ -55,7 +63,7 @@ public:
 				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)");
 
 		programOptions->addOption( gaugeOptions );
-		landau = new LandauGaugefixing<GLOBALLINK,LOCALLINK>( configuration.getDevicePointer(), dimension, programOptions->getSeed() );
+		landau = new LandauGaugefixing<PATTERNTYPE,LOCALLINK>( configuration.getDevicePointer(), dimension, programOptions->getSeed() );
 	}
 private:
 	GaugeSettings settings;
@@ -71,6 +79,7 @@ private:
 
 	void iterate()
 	{
+		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
 		if( sethot )
 		{
 			configuration.setHotOnDevice<RNG>( programOptions->getSeed(), RNG::getNextCounter());
@@ -80,29 +89,15 @@ private:
 		{
 			loadToDevice();
 		}
-//		configuration.copyToDevice();
 
+		std::cout << "Plaquette before: " << plaquette.getPlaquette() << std::endl;
 		landau->fix( settings );
-
-//		GaugeStats stats = landau->getGaugeStats();
-//		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-//
-////		RandomGaugeTrafo<GLOBALLINK,LOCALLINK> random( configuration.getDevicePointer(), dimension );
-////		random.randomTrafo( programOptions->getSeed() );
-//
-//		RunInfo info = landau->orstepsTuned( 1.7, 100 );
-//		std::cout << "Overrelaxtion: " << info.getGflops() << " GFlops at " <<  info.getThroughput() << " GByte/s memory throughput." << std::endl;
-//
-//		stats = landau->getGaugeStats();
-//		std::cout << 1 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-
-		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
-		std::cout << "Plaquette: " << plaquette.getPlaquette() << std::endl;
+		std::cout << "Plaquette after: " << plaquette.getPlaquette() << std::endl;
 
 		saveFromDevice( fileAppendix );
 	};
 
-	LandauGaugefixing<GLOBALLINK,LOCALLINK>* landau;
+	LandauGaugefixing<PATTERNTYPE,LOCALLINK>* landau;
 	string fileAppendix;
 	bool sethot;
 };

@@ -41,11 +41,16 @@ public:
 	{
 		return sizeTimeslice;
 	}
+
 	/**
 	 * always return index of timeslice
 	 * @param mu
 	 * @return
 	 */
+	int getCoord( const int mu) const
+	{
+		return index/sizeTimeslice;
+	}
 	int operator[]( const int mu ) const
 	{
 		return index/sizeTimeslice;

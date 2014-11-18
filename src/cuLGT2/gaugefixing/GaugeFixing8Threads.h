@@ -49,7 +49,7 @@ public:
 		globalLink = localLink;
 	}
 
-	__device__ inline void applyAlgorithmTimeslice( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Uup, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Udown , lat_index_t* nn, lat_index_t latticeSize, bool parity )
+	template<typename GlobalLinkType2> __device__ inline void applyAlgorithmTimeslice( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Uup, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Udown , lat_index_t* nn, lat_index_t latticeSize, bool parity )
 	{
 		typename GlobalLinkType::PATTERNTYPE::SITETYPE site( latticeSize, nn );
 
@@ -67,7 +67,7 @@ public:
 		// load Link
 		if((mu==0)&&(updown==1))
 		{
-			COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
+//			COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 			GlobalLinkType2 globalLink(Udown, site, mu );
 			localLink = globalLink;
 

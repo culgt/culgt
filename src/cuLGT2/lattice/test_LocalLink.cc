@@ -227,6 +227,14 @@ TEST_F( ASpecialLocalLinkWithSU3Real18, OperatorMultAssignWorks )
 	ASSERT_FLOAT_EQ( B.get(0), AtimesA_0_SP );
 }
 
+TEST_F( ASpecialLocalLinkWithSU3Real18, OperatorMultWorks )
+{
+	LocalLink<SUNRealFull<3,float> > B;
+	B = A*A;
+
+	ASSERT_FLOAT_EQ( B.get(0), AtimesA_0_SP );
+}
+
 TEST_F( ASpecialLocalLinkWithSU3Real18, HermitianWorks )
 {
 	A.hermitian();

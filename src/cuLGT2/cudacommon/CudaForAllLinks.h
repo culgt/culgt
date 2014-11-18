@@ -90,7 +90,7 @@ namespace CudaForAllLinksKernel
 		typename PatternType::SITETYPE site( dim, nn );
 		site.setLatticeIndex( index );
 
-		for( int mu = 0; mu < PatternType::SITETYPE::Ndim; mu++ )
+		for( int mu = 1; mu < PatternType::SITETYPE::Ndim; mu++ )
 		{
 			GlobalLink<PatternType> glob1( U1, site, mu );
 			LocalLinkType link1;

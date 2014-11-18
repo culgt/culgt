@@ -7,4 +7,5 @@ if( NOT DEFINED commonsettings )
 	find_package(CUDA)
 	include(FindCUDA)
 	set(CUDA_NVCC_FLAGS "-arch=sm_20 -Xptxas -v")
+#    -std=c++11 #available starting with cuda 6.5
 endif()

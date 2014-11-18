@@ -5,6 +5,7 @@
 #define COMPLEX_HXX_
 
 #include "../cudacommon/cuda_host_device.h"
+#include "../common/culgt_typedefs.h"
 #include "../common/mathfunction_overload.h"
 #include <math.h>
 #include <fstream>
@@ -14,8 +15,16 @@ namespace culgt
 template <typename T> class Complex
 {
 public:
-	T x; // we use the naming convention of cuComplex.h
-	T y;
+	union{
+		typename Real2<T>::VECTORTYPE e;
+		struct{
+			T x;
+			T y;
+		};
+	};
+
+//	T x; // we use the naming convention of cuComplex.h
+//	T y;
 	CUDA_HOST_DEVICE inline Complex( const T x, const T y );
 	CUDA_HOST_DEVICE inline Complex( const float x );
 	CUDA_HOST_DEVICE inline Complex( const double x );

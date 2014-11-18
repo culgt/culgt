@@ -138,6 +138,8 @@ namespace GaugeConfigurationCudaHelperKernel
 	{
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 
+		VERIFY_LATTICE_SIZE( dim, index );
+
 		RNG rng( index, rngSeed, rngCounter );
 
 		typename ConfigurationPattern::SITETYPE site( dim, DO_NOT_USE_NEIGHBOURS );
@@ -189,11 +191,15 @@ namespace GaugeConfigurationCudaHelperKernel
 		}
 	}
 
+	/**
+	 * TODO this is only Z(2)
+	 */
 	template<typename T, typename ConfigurationPattern, typename RNG> __global__ void setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter, float percentage )
 	{
 		typedef culgt::LocalLink<culgt::SUNRealFull<ConfigurationPattern::PARAMTYPE::NC, typename ConfigurationPattern::PARAMTYPE::REALTYPE> > LocalLinkType;
 
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
+		VERIFY_LATTICE_SIZE( dim, index );
 
 		RNG rng( index, rngSeed, rngCounter );
 
@@ -216,6 +222,7 @@ namespace GaugeConfigurationCudaHelperKernel
 		typedef culgt::LocalLink<culgt::SUNRealFull<ConfigurationPattern::PARAMTYPE::NC, typename ConfigurationPattern::PARAMTYPE::REALTYPE> > LocalLinkType;
 
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
+		VERIFY_LATTICE_SIZE( dim, index );
 
 		typename ConfigurationPattern::SITETYPE site( dim, DO_NOT_USE_NEIGHBOURS );
 		site.setIndex( index );
@@ -232,6 +239,7 @@ namespace GaugeConfigurationCudaHelperKernel
 
 template<typename T> template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> void GaugeConfigurationCudaHelper<T>::reproject( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
 {
+	CUDA_LAST_ERROR( "before reproject" );
 	KernelSetup<ConfigurationPattern::SITETYPE::Ndim> setup(dim);
 	GaugeConfigurationCudaHelperKernel::reproject<ConfigurationPattern,LocalLinkType,RNG><<<setup.getGridSize(),setup.getBlockSize()>>>( pointer, dim, rngSeed, rngCounter );
 	CUDA_LAST_ERROR( "kernel reproject" );

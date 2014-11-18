@@ -21,7 +21,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 
-	WilsonLoopAverage( T* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim ) : dim(dim), U(U)
+	WilsonLoopAverage( T* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim ) : dim(dim), U(U), reducer( dim.getSize() )
 	{
 		cudaMalloc( (void**)&devPtr, sizeof( REALT )*dim.getSize() );
 	};
@@ -34,8 +34,6 @@ public:
 	REALT getWilsonLoop( int dir1, int length1, int dir2, int length2 )
 	{
 		calculateWilsonLoops( dir1, length1, dir2, length2 );
-		Reduction<REALT> reducer(dim.getSize());
-
 		return reducer.reduceAll( devPtr )/(REALT)dim.getSize();
 	}
 
@@ -47,8 +45,6 @@ public:
 	REALT getPolyakovLoopCorrelator( int separationDir, int separation, int timeDir = 0 )
 	{
 		calculatePolyakovLoopCorrelators( separationDir, separation, timeDir );
-		Reduction<REALT> reducer(dim.getSize());
-
 		return reducer.reduceAll( devPtr )/(REALT)dim.getSize();
 	}
 
@@ -60,8 +56,6 @@ public:
 	REALT getPolyakovLoop( int timeDir = 0 )
 	{
 		calculatePolyakovLoops( timeDir );
-		Reduction<REALT> reducer(dim.getSize());
-
 		return reducer.reduceAll( devPtr )/(REALT)dim.getSize();
 	}
 
@@ -77,11 +71,15 @@ public:
 		cudaFree( devPtr );
 	}
 
+	void setU( T* u ) {
+		U = u;
+	}
 
 private:
 	LatticeDimension<PatternType::SITETYPE::Ndim> dim;
 	T* U;
 	REALT* devPtr;
+	Reduction<REALT> reducer;
 };
 
 }

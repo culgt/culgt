@@ -27,13 +27,22 @@ public:
 	{
 	}
 
-	CUDA_HOST_DEVICE inline LocalLinkType getStaple( typename PatternType::SITETYPE site, lat_dim_t mu, lat_dim_t nu )
+	CUDA_HOST_DEVICE inline LocalLinkType getStaple( typename PatternType::SITETYPE site, lat_dim_t mu, lat_dim_t nu, bool positiveNuDirection = true )
 	{
 		LocalLinkType staple;
 
-		staple = getLink( site.getNeighbour( mu, true ), nu );
-		staple *= getLinkHermitian( site.getNeighbour( nu, true), mu );
-		staple *= getLinkHermitian( site, nu );
+		if( positiveNuDirection )
+		{
+			staple = getLink( site.getNeighbour( mu, true ), nu );
+			staple *= getLinkHermitian( site.getNeighbour( nu, true), mu );
+			staple *= getLinkHermitian( site, nu );
+		}
+		else
+		{
+			staple = getLinkHermitian( site.getNeighbour( mu, true ).getNeighbour( nu, false), nu );
+			staple *= getLinkHermitian( site.getNeighbour( nu, false), mu );
+			staple *= getLink( site.getNeighbour( nu, false), nu );
+		}
 
 		return staple;
 	}

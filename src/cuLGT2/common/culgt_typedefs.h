@@ -24,6 +24,14 @@
 		double z;
 		double w;
 	};
+	struct float2 {
+		float x;
+		float y;
+	};
+	struct double2 {
+		double x;
+		double y;
+	};
 #endif
 
 template<typename T> struct Real4
@@ -39,6 +47,23 @@ template<> struct Real4<double>
 {
 	typedef double4 VECTORTYPE;
 };
+
+template<typename T> struct Real2
+{
+};
+
+template<> struct Real2<float>
+{
+	typedef float2 VECTORTYPE;
+};
+
+template<> struct Real2<double>
+{
+	typedef double2 VECTORTYPE;
+};
+
+
+
 
 inline bool operator==(float4 const& lhs, float4 const& rhs)
 {

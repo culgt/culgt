@@ -35,6 +35,12 @@
 		fprintf(stderr,"ERROR: %s: %s\n", msg, cudaGetErrorString(error) );\
 		exit(-1);\
 	}}
+
+#define CUDA_ERROR( error, msg )\
+	{if(error!=cudaSuccess) {\
+		fprintf(stderr,"ERROR: %s: %s (%d)\n", msg, cudaGetErrorString(error), error );\
+		exit(-1);\
+	}}
 #endif
 
 #endif /* CUDA_ERROR_H_ */

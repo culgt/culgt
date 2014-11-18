@@ -97,12 +97,12 @@ public:
 				bestGff = stats.getGff();
 
 				// this might be an infinite loop
-				while( !(stats.getPrecision() < settings.getPrecision() ) )
-				{
-					// we have the best GFF but the precision is not reached
-					fixOverrelaxation();
-					stats = getGaugeStats();
-				}
+//				while( !(stats.getPrecision() < settings.getPrecision() ) )
+//				{
+//					// we have the best GFF but the precision is not reached
+//					fixOverrelaxation();
+//					stats = getGaugeStats();
+//				}
 
 				if( useCopyMemory ) saveCopy();
 			}
@@ -208,6 +208,8 @@ protected:
 			for( int i = 0; i < settings.getOrMaxIter(); i++ )
 			{
 				runOverrelaxation( settings.getOrParameter() );
+				CUDA_LAST_ERROR( "fixOverrelaxation()runOverrelaxtion()" );
+
 				iterOr++;
 
 				if( check( i+1 ) ) break;

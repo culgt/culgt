@@ -17,34 +17,10 @@
 #include "GaugeFixing8Threads.h"
 #include "GaugeFixing4Threads.h"
 #include "../util/rng/PhiloxWrapper.h"
+#include "TimesliceGaugeFixingOverrelaxationKernel.h"
 
 namespace culgt
 {
-
-namespace TimesliceGaugeFixingOverrelaxationKernel
-{
-	template<typename GlobalLinkType, typename LocalLinkType, typename GaugeType, int ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(ThreadsPerSite*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter)
-	{
-		typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
-		Algorithm orupdate( orParameter );
-
-		if( ThreadsPerSite == 8 )
-		{
-			GaugeFixing8Threads<Algorithm, GaugeType, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
-			gaugefixing.applyAlgorithmTimeslice( Ut, UtDown, nn, latticeSize, parity );
-		}
-		else if( ThreadsPerSite == 4 )
-		{
-			GaugeFixing4Threads<Algorithm, GaugeType, GlobalLinkType, LocalLinkType, SitesPerBlock> gaugefixing( orupdate );
-			gaugefixing.applyAlgorithmTimeslice( Ut, UtDown, nn, latticeSize, parity );
-		}
-		else
-		{
-			assert( false );
-		}
-	}
-}
-
 
 template<typename GlobalLinkType, typename LocalLinkType, typename GaugeType> class TimesliceGaugeFixingOverrelaxation: public CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType>
 {

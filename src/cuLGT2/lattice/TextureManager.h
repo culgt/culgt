@@ -31,6 +31,7 @@ template<typename T> class TextureManager
 template<> class TextureManager<float4>
 {
 public:
+	static const int MAX_TEXTURES = 2;
 	typedef texture<float4> TextureType;
 	typedef float4 Type;
 	static inline CUDA_HOST_DEVICE TextureType getTexture(int textureID = 0)
@@ -60,6 +61,7 @@ public:
 template<> class TextureManager<double4>
 {
 public:
+	static const int MAX_TEXTURES = 2;
 	typedef texture<int4> TextureType;
 	typedef int4 Type;
 	static inline CUDA_HOST_DEVICE TextureType getTexture(int textureID = 0)
@@ -89,6 +91,7 @@ public:
 template<> class TextureManager<float>
 {
 public:
+	static const int MAX_TEXTURES = 2;
 	typedef texture<float> TextureType;
 	typedef float Type;
 	static inline CUDA_HOST_DEVICE TextureType getTexture(int textureID = 0)
@@ -118,6 +121,7 @@ public:
 template<> class TextureManager<double>
 {
 public:
+	static const int MAX_TEXTURES = 2;
 	typedef texture<int2> TextureType;
 	typedef int2 Type;
 	static inline CUDA_HOST_DEVICE TextureType getTexture(int textureID = 0)

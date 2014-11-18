@@ -36,7 +36,8 @@ public:
 	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd>& dim, lat_index_t* nn=NULL );
 	CUDA_HOST_DEVICE inline SiteCoord( const culgt::LatticeDimension<Nd> dim, NeigbourTableType type ); // init without neighbour table not allowed (this is a new interface)
 //	CUDA_HOST_DEVICE inline virtual ~SiteCoord();
-	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
+	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i); // TODO use of this is bad (incompatible with SiteIndex)
+	CUDA_HOST_DEVICE inline lat_coord_t getCoord(const lat_dim_t i) const; // TODO use of this is bad (incompatible with SiteIndex)
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex() const;
 	CUDA_HOST_DEVICE inline lat_index_t getIndex() const {return getLatticeIndex();} ; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline lat_index_t getIndexNonSplit() const; // for compatibility with cuLGT2
@@ -46,8 +47,10 @@ public:
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline lat_index_t getSize() const {return getLatticeSize();}; // for compatibility with cuLGT2
+	CUDA_HOST_DEVICE inline lat_index_t getSizeTimeslice() const {return getLatticeSizeTimeslice();}; // for compatibility with cuLGT2
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSize() const;
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndexTimeslice() const;
+	CUDA_HOST_DEVICE inline lat_index_t getIndexTimeslice() const {return getLatticeIndexTimeslice();};
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice() const;
 //	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, lat_coord_t steps );
 	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, bool up );
@@ -99,6 +102,11 @@ template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const Sit
 }
 
 template<lat_dim_t Nd, ParityType par> lat_coord_t& SiteCoord<Nd,par>::operator[](lat_dim_t i)
+{
+	return site[i];
+}
+
+template<lat_dim_t Nd, ParityType par> lat_coord_t SiteCoord<Nd,par>::getCoord( const lat_dim_t i) const
 {
 	return site[i];
 }

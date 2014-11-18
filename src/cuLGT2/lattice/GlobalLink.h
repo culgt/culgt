@@ -12,6 +12,7 @@
 #include "ParameterizationMediator.h"
 #include "Link.h"
 #include "LatticeDimension.h"
+#include <boost/static_assert.hpp>
 
 #ifdef __CUDACC__
 #include "TextureManager.h"
@@ -26,6 +27,7 @@ namespace culgt
 template<typename ConfigurationPattern, bool UseTexture=false, int TextureID = 0> class GlobalLink//: Link<typename ConfigurationPattern::PARAMTYPE>
 {
 public:
+
 	/**
 	 * Layout of the Link (for example 18 real parameters, 9 complex parameters, or 12 real, ...)
 	 */
@@ -33,6 +35,8 @@ public:
 	typedef ConfigurationPattern PATTERNTYPE;
 	typedef ConfigurationPattern CONFIGURATIONPATTERN;
 	static const bool USETEXTURE=UseTexture;
+
+	BOOST_STATIC_ASSERT_MSG( TextureID < TextureManager<typename PARAMTYPE::TYPE>::MAX_TEXTURES, "Max. texture number exceeded, please add more textures in TextureManager.h");
 
 #ifdef __CUDACC__
 	static cudaError_t bindTexture( typename PARAMTYPE::TYPE* pointerToStore, lat_array_index_t arraySize )
