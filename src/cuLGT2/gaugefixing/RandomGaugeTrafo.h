@@ -12,6 +12,7 @@
 #include "gaugetypes/RandomTrafoType.h"
 #include "GaugeFixing4Threads.h"
 #include "../cudacommon/cuda_error.h"
+#include "../lattice/configuration_patterns/GPUPatternTimesliceParityPriority.h"
 
 namespace culgt
 {

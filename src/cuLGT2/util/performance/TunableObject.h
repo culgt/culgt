@@ -10,7 +10,14 @@
 #include <boost/config.hpp>
 #ifndef BOOST_NO_CXX11_VARIADIC_TEMPLATES
 #define CULGT_USE_CXX11_AUTOTUNE
-#warning USING NEW AUTOTUNE
+#endif
+
+#if __cplusplus < 201103L
+#undef CULGT_USE_CXX11_AUTOTUNE
+#endif
+
+#ifdef CULGT_USE_CXX11_AUTOTUNE
+#warning USING CX11 AUTOTUNE
 #else
 #warning USING OLD AUTOTUNE
 #endif
