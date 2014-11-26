@@ -29,7 +29,6 @@
 #include "../lattice/datatype/lattice_typedefs.h"
 #include "../lattice/rng/PhiloxWrapper.hxx"
 #include "GaugeFixingSubgroupStep.hxx"
-#include "GaugeFixingSubgroupStepSingleThread.hxx"
 #include "algorithms/SaUpdate.hxx"
 #include "algorithms/OrUpdate.hxx"
 #include "algorithms/MicroUpdate.hxx"
@@ -65,7 +64,6 @@ public:
 		cudaFuncSetCacheConfig( LKSU3::restoreThirdLine, cudaFuncCachePreferL1 );
 		cudaFuncSetCacheConfig( LKSU3::randomTrafo, cudaFuncCachePreferL1 );
 		cudaFuncSetCacheConfig( LKSU3::orStep, cudaFuncCachePreferL1 );
-		cudaFuncSetCacheConfig( LKSU3::orStepSingleThread, cudaFuncCachePreferL1 );
 		cudaFuncSetCacheConfig( LKSU3::microStep, cudaFuncCachePreferL1 );
 		cudaFuncSetCacheConfig( LKSU3::saStep, cudaFuncCachePreferL1 );
 	}
@@ -94,10 +92,6 @@ public:
 	static void orStep( int a, int b,  Real* U, lat_index_t* nnt, bool parity, float orParameter )
 	{
 		LKSU3::orStep<<<a,b>>>( U, nnt, parity, orParameter );
-	};
-	static void orStepSingleThread( int a, int b,  Real* U, lat_index_t* nnt, bool parity, float orParameter )
-	{
-		LKSU3::orStepSingleThread<<<a,b>>>( U, nnt, parity, orParameter );
 	};
 	static void microStep( int a, int b, Real* U, lat_index_t* nnt, bool parity )
 	{
@@ -261,130 +255,10 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 	globU.assignWithoutThirdLine(locU);
 }
 
-template<class Algorithm> inline __device__ void applySingleThread( Real* U, lat_index_t* nn, bool parity, Algorithm algorithm  )
-{
-	typedef GpuPattern< SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> GpuIndex;
-	typedef Link<GpuIndex,SiteIndex<Ndim,FULL_SPLIT>,Ndim,Nc> TLinkIndex;
-
-	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
-	SiteIndex<4,FULL_SPLIT> s(size);
-	s.nn = nn;
-
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
-	if( parity == 1 ) site += s.getLatticeSize()/2;
-
-	// make local all involved links
-
-	s.setLatticeIndex( site );
-
-	// up links
-	Matrix<Complex<Real>,Nc> locMatUp0;
-	SU3<Matrix<Complex<Real>,Nc> > locUp0( locMatUp0 );
-	TLinkIndex linkUp0( U, s, 0 );
-	SU3<TLinkIndex> globUp0( linkUp0 );
-
-	Matrix<Complex<Real>,Nc> locMatUp1;
-	SU3<Matrix<Complex<Real>,Nc> > locUp1( locMatUp1 );
-	TLinkIndex linkUp1( U, s, 1 );
-	SU3<TLinkIndex> globUp1( linkUp1 );
-
-	Matrix<Complex<Real>,Nc> locMatUp2;
-	SU3<Matrix<Complex<Real>,Nc> > locUp2( locMatUp2 );
-	TLinkIndex linkUp2( U, s, 2 );
-	SU3<TLinkIndex> globUp2( linkUp2 );
-
-	Matrix<Complex<Real>,Nc> locMatUp3;
-	SU3<Matrix<Complex<Real>,Nc> > locUp3( locMatUp3 );
-	TLinkIndex linkUp3( U, s, 3 );
-	SU3<TLinkIndex> globUp3( linkUp3 );
-
-
-	// dw links
-	s.setNeighbour(0,false);
-	Matrix<Complex<Real>,Nc> locMatDw0;
-	SU3<Matrix<Complex<Real>,Nc> > locDw0( locMatDw0 );
-	TLinkIndex linkDw0( U, s, 0 );
-	SU3<TLinkIndex> globDw0( linkDw0 );
-
-	s.setLatticeIndex( site );
-	s.setNeighbour(1,false);
-	Matrix<Complex<Real>,Nc> locMatDw1;
-	SU3<Matrix<Complex<Real>,Nc> > locDw1( locMatDw1 );
-	TLinkIndex linkDw1( U, s, 1 );
-	SU3<TLinkIndex> globDw1( linkDw1 );
-
-	s.setLatticeIndex( site );
-	s.setNeighbour(2,false);
-	Matrix<Complex<Real>,Nc> locMatDw2;
-	SU3<Matrix<Complex<Real>,Nc> > locDw2( locMatDw2 );
-	TLinkIndex linkDw2( U, s, 2 );
-	SU3<TLinkIndex> globDw2( linkDw2 );
-
-	s.setLatticeIndex( site );
-	s.setNeighbour(3,false);
-	Matrix<Complex<Real>,Nc> locMatDw3;
-	SU3<Matrix<Complex<Real>,Nc> > locDw3( locMatDw3 );
-	TLinkIndex linkDw3( U, s, 3 );
-	SU3<TLinkIndex> globDw3( linkDw3 );
-
-
-//	SU3<Matrix<Complex<Real>,Nc> > locUp[4] = {SU3<Matrix<Complex<Real>,Nc> >(locMatUp[0]),SU3<Matrix<Complex<Real>,Nc> >(locMatUp[1]),SU3<Matrix<Complex<Real>,Nc> >(locMatUp[2]),SU3<Matrix<Complex<Real>,Nc> >(locMatUp[3])};
-//
-//	SU3<TLinkIndex> globUp[4] = { SU3<TLinkIndex>(linkUp[0]),SU3<TLinkIndex>(linkUp[1]),SU3<TLinkIndex>(linkUp[2]),SU3<TLinkIndex>(linkUp[3]) };
-
-	// dw links
-//	Matrix<Complex<Real>,Nc> locMatDw[4];
-//	SU3<Matrix<Complex<Real>,Nc> > locDw[4] = {SU3<Matrix<Complex<Real>,Nc> >(locMatDw[0]),SU3<Matrix<Complex<Real>,Nc> >(locMatDw[1]),SU3<Matrix<Complex<Real>,Nc> >(locMatDw[2]),SU3<Matrix<Complex<Real>,Nc> >(locMatDw[3])};
-//
-//	TLinkIndex linkDw[4] = {TLinkIndex( U, sn[0], 0 ),TLinkIndex( U, sn[1], 1 ),TLinkIndex( U, sn[2], 2 ),TLinkIndex( U, sn[3], 3 )} ;
-//	SU3<TLinkIndex> globDw[4] ={ SU3<TLinkIndex>(linkDw[0]),SU3<TLinkIndex>(linkDw[1]),SU3<TLinkIndex>(linkDw[2]),SU3<TLinkIndex>(linkDw[3]) };
-
-	// make link local
-	locUp0.assignWithoutThirdLine(globUp0);
-	locUp1.assignWithoutThirdLine(globUp1);
-	locUp2.assignWithoutThirdLine(globUp2);
-	locUp3.assignWithoutThirdLine(globUp3);
-	locUp0.reconstructThirdLine();
-
-	locDw0.assignWithoutThirdLine(globDw0);
-	locUp1.reconstructThirdLine();
-	locDw1.assignWithoutThirdLine(globDw1);
-	locUp2.reconstructThirdLine();
-	locDw2.assignWithoutThirdLine(globDw2);
-	locUp3.reconstructThirdLine();
-	locDw3.assignWithoutThirdLine(globDw3);
-	locDw0.reconstructThirdLine();
-	locDw1.reconstructThirdLine();
-	locDw2.reconstructThirdLine();
-	locDw3.reconstructThirdLine();
-
-	GaugeFixingSubgroupStepSingleThread<SU3<Matrix<Complex<Real>,Nc> >, Algorithm, LANDAU> subgroupStep( &locUp0,&locUp1,&locUp2,&locUp3, &locDw0,&locDw1,&locDw2,&locDw3, algorithm );
-//
-//	// do the subgroup iteration
-	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
-
-	// copy link back
-
-	globUp0.assignWithoutThirdLine(locUp0);
-	globUp1.assignWithoutThirdLine(locUp1);
-	globUp2.assignWithoutThirdLine(locUp2);
-	globUp3.assignWithoutThirdLine(locUp3);
-	globDw0.assignWithoutThirdLine(locDw0);
-	globDw1.assignWithoutThirdLine(locDw1);
-	globDw2.assignWithoutThirdLine(locDw2);
-	globDw3.assignWithoutThirdLine(locDw3);
-}
-
 __global__ void __launch_bounds__(8*NSB,OR_MINBLOCKS) orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter )
 {
 	OrUpdate overrelax( orParameter );
 	apply( U, nnt, parity, overrelax );
-}
-
-__global__ void orStepSingleThread( Real* U, lat_index_t* nnt, bool parity, float orParameter )
-{
-	OrUpdate overrelax( orParameter );
-	applySingleThread( U, nnt, parity, overrelax );
 }
 
 __global__ void __launch_bounds__(8*NSB,MS_MINBLOCKS) microStep( Real* U, lat_index_t* nnt, bool parity )
