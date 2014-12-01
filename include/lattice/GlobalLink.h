@@ -36,9 +36,9 @@ public:
 	typedef ConfigurationPattern CONFIGURATIONPATTERN;
 	static const bool USETEXTURE=UseTexture;
 
-	BOOST_STATIC_ASSERT_MSG( TextureID < TextureManager<typename PARAMTYPE::TYPE>::MAX_TEXTURES, "Max. texture number exceeded, please add more textures in TextureManager.h");
 
 #ifdef __CUDACC__
+	BOOST_STATIC_ASSERT_MSG( TextureID < TextureManager<typename PARAMTYPE::TYPE>::MAX_TEXTURES, "Max. texture number exceeded, please add more textures in TextureManager.h");
 	static cudaError_t bindTexture( typename PARAMTYPE::TYPE* pointerToStore, lat_array_index_t arraySize )
 	{
 		cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<typename TextureManager<typename PARAMTYPE::TYPE>::Type>();
