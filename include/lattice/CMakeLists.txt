@@ -25,7 +25,6 @@ set(sources
 	test_LinkFileVogtWithPattern.cc
 	test_LinkFile.cc
 	test_KernelSetup.cc
-	field_structures/test_DiracColorFieldStructure.cc
 	test_LinkToGaugefieldConverter.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})
@@ -43,14 +42,11 @@ set(sources_cuda
 	test_LocalLink.cu
 	test_LocalLinkWithSU2Vector4.cu
 	test_GlobalLinkWithPatterns.cu
-	../../lattice/cuda/CudaError.cu
 	test_GaugeConfiguration.cc
 	test_GaugeConfigurationWithPattern.cu
 	test_LatticeDimension.cu
 	../cudacommon/test_DeviceCommunicator.cu
 	parameterization_types/test_SU2Vector4.cu
-	test_Field.cu
-	test_FieldElement.cu
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )
