@@ -13,6 +13,7 @@ add_subdirectory( cudacommon )
 add_subdirectory( cuLGT1legacy )
 add_subdirectory( gaugefixing )
 add_subdirectory( lattice )
+add_subdirectory( eigensolver )
 
 message( "allsources = ${allsources}" )
 

@@ -1,0 +1,111 @@
+mdp_matrix A(3,3);
+					A = U(x,mu);
+//					mpi << A << endl;
+					mdp_complex p = A(1,2)*A(1,2) + A(1,3)*A(1,3) + A(2,3)*A(2,3);
+//					mpi << p << endl;
+					if( p == 0 )
+					{
+						mpi << "we are already diagonal:" << endl;
+						mpi << A(1,1) << "\n" << A(2,2) << "\n" << A(3,3) << endl;
+					}
+					else
+					{
+						mdp_complex q = trace( A )/3.;
+						mdp_matrix Tmp(3,3);
+						Tmp = A-q;
+						Tmp*=Tmp;
+						Tmp /= 6.;
+						p = trace(Tmp);
+						p = sqrt( p );
+						mdp_matrix B(3,3);
+						B = mdp_identity(3);
+//						mpi << B << endl;
+						B *= q;
+						B = A-B;
+						B *= (1./p);
+						mdp_complex r = det(B) /2.;
+
+
+						std::complex<double> rstd(real(r),imag(r));
+
+						rstd = boost::math::acos(rstd);
+
+						mdp_complex acosr( rstd.real(), rstd.imag() );
+
+						mdp_complex beta1 = 2*cos( 1./3.*acosr );
+//						mpi << beta1 << endl;
+//						mpi << "eig " << p*beta1+q << endl;
+						mdp_complex beta2 = 2*cos( 1./3.*acosr + 2*acos(-1)/3.);
+//						mpi << beta2 << endl;
+//						mpi << "eig " << p*beta2+q << endl;
+						mdp_complex beta3 = 2*cos( 1./3.*acosr + 4*acos(-1)/3. );
+//						mpi << beta3 << endl;
+//						mpi << "eig " << p*beta3+q << endl;
+
+						mdp_matrix omega(3,3);
+						mdp_real norm;
+
+						Tmp = (B-beta1)*(B-beta2);
+//						mpi << "[" << real(Tmp(0,0)) << "+i*"<<imag(Tmp(0,0)) << " " << real(Tmp(0,1)) << "+i*"<<imag(Tmp(0,1)) << " " << real(Tmp(0,2)) << "+i*"<<imag(Tmp(0,2)) << "]" << endl;
+						norm = 0;
+						for( int i = 0; i < 3; i++ )
+						{
+							norm += real(Tmp(0,i))*real(Tmp(0,i))+ imag(Tmp(0,i))* imag(Tmp(0,i));
+						}
+						norm = 1./sqrt(norm);
+
+						omega(0,0) = Tmp(0,0)*norm;
+						omega(0,1) = Tmp(0,1)*norm;
+						omega(0,2) = Tmp(0,2)*norm;
+
+						Tmp = (B-beta1)*(B-beta3);
+//						mpi << "[" << real(Tmp(0,0)) << "+i*"<<imag(Tmp(0,0)) << " " << real(Tmp(0,1)) << "+i*"<<imag(Tmp(0,1)) << " " << real(Tmp(0,2)) << "+i*"<<imag(Tmp(0,2)) << "]" << endl;
+						norm = 0;
+												for( int i = 0; i < 3; i++ )
+												{
+													norm += real(Tmp(0,i))*real(Tmp(0,i))+ imag(Tmp(0,i))* imag(Tmp(0,i));
+												}
+												norm = 1./sqrt(norm);
+
+						omega(1,0) = Tmp(0,0)*norm;
+						omega(1,1) = Tmp(0,1)*norm;
+						omega(1,2) = Tmp(0,2)*norm;
+
+						Tmp = (B-beta2)*(B-beta3);
+//						mpi << "[" << real(Tmp(0,0)) << "+i*"<<imag(Tmp(0,0)) << " " << real(Tmp(0,1)) << "+i*"<<imag(Tmp(0,1)) << " " << real(Tmp(0,2)) << "+i*"<<imag(Tmp(0,2)) << "]" << endl;
+						norm = 0;
+												for( int i = 0; i < 3; i++ )
+												{
+													norm += real(Tmp(0,i))*real(Tmp(0,i))+ imag(Tmp(0,i))* imag(Tmp(0,i));
+												}
+												norm = 1./sqrt(norm);
+						omega(2,0) = Tmp(0,0)*norm;
+						omega(2,1) = Tmp(0,1)*norm;
+						omega(2,2) = Tmp(0,2)*norm;
+
+//						mpi << omega*A*hermitian(omega) << endl;
+
+//						mpi << omega*hermitian(omega) << endl;
+
+						Tmp = omega*A*hermitian(omega);
+
+						mdp_matrix logAdiag( 3,3 );
+						logAdiag = mdp_zero( 3 );
+						for( int i = 0; i < 3; i++ )
+						{
+							logAdiag(i,i) = phase( Tmp(i,i) );
+						}
+
+//						mpi << logAdiag << endl;
+
+						mdp_matrix final(3,3);
+						final = hermitian(omega)*logAdiag*omega;
+
+//						mpi << final << endl;
+//
+//						mpi << A << endl;
+//						mpi << exp(I*final) << endl;
+//
+//						exit(1);
+
+						return real(trace(final*Lambda[a]));
