@@ -26,7 +26,6 @@ INCLUDE(FindCUDA)
 set(sources 
 	main.cpp
 	test_example_gtest_plugin.cu
-	../../lattice/cuda/CudaError.cu
 	)
 
 
