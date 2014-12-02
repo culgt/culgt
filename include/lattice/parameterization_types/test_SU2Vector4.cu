@@ -17,7 +17,7 @@ class ASU2Vector4: public Test
 public:
 	float4 store[1];
 	float4 store2[1];
-	float someValue = 1.42;
+	const static float someValue = 1.42;
 };
 
 TEST_F( ASU2Vector4, Identity )
@@ -129,7 +129,7 @@ public:
 	float4 AB;
 	float4 BA;
 
-	float someValue = 1.42;
+	const static float someValue = 1.42;
 
 	ASpecialSU2Vector4()
 	{
