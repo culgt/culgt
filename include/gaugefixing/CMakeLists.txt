@@ -7,7 +7,6 @@ include( ../commonsettings.cmake )
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
 set(sources 
-	test_CenterProjection.cc
 	)
 add_executable(test_gaugefixing_host ../test_main.cpp ${sources})
 target_link_libraries(test_gaugefixing_host pthread)
