@@ -15,41 +15,15 @@
 #include "parameterization_types/SUNComplexFull.h"
 #include "LocalLink.h"
 #include "../util/math/GellMannMatrices.h"
-#include "../eigensolver/Matrix.h"
-#include "../eigensolver/Cardano3x3.h"
+#include "eigensolver/Matrix.h"
+#include "eigensolver/Cardano3x3.h"
 #include <boost/algorithm/string.hpp>
+#include "gaugefieldtypes.h"
 
 using boost::algorithm::iequals;
 
 namespace culgt
 {
-
-namespace gaugefieldtype
-{
-	enum GaugefieldType {LINEAR, LOGARITHMIC};
-
-	inline std::istream& operator>>(std::istream& in, gaugefieldtype::GaugefieldType& t)
-	{
-	    std::string token;
-	    in >> token;
-	    if ( boost::iequals(token, "LINEAR" ) )
-	        t = LINEAR;
-	    else if (boost::iequals(token, "LOGARITHMIC" ))
-	        t = LOGARITHMIC;
-	    return in;
-	}
-
-	inline std::ostream& operator<<(std::ostream& out, gaugefieldtype::GaugefieldType t)
-	{
-	    std::string token;
-	    if (t == LINEAR)
-	        token = "LINEAR";
-	    else if (t == LOGARITHMIC)
-	    	token = "LOGARITHMIC";
-	    out << token;
-	    return out;
-	}
-}
 
 template<int Nc, gaugefieldtype::GaugefieldType GFType> class LinkToGaugefieldConverter
 {
