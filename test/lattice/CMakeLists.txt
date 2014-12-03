@@ -25,7 +25,7 @@ set(sources
 	test_LinkFileVogtWithPattern.cc
 	test_LinkFile.cc
 	test_KernelSetup.cc
-#	test_LinkToGaugefieldConverter.cc
+	test_LinkToGaugefieldConverter.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})
 target_link_libraries(test_lattice_host pthread)
