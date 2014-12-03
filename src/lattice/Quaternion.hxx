@@ -56,9 +56,13 @@ public:
 	CUDA_HOST_DEVICE inline Complex<T> trace();
 	CUDA_HOST_DEVICE inline void projectSU2();
 	CUDA_HOST_DEVICE inline void zero();
+	CUDA_HOST_DEVICE inline void identity();
 
-	CUDA_HOST_DEVICE inline Quaternion<T>& operator*=( Quaternion<Real> );
-	CUDA_HOST_DEVICE inline Quaternion<T>& operator+=( Quaternion<Real> );
+	CUDA_HOST_DEVICE inline Quaternion<T>& operator*=( Quaternion<T> );
+	CUDA_HOST_DEVICE inline Quaternion<T>& operator*=( T );
+	CUDA_HOST_DEVICE inline Quaternion<T>& operator+=( Quaternion<T> );
+	CUDA_HOST_DEVICE inline Quaternion<T>& operator-=( Quaternion<T> );
+	CUDA_HOST_DEVICE inline Quaternion<T>& operator=( Quaternion<T> );
 
 
 	CUDA_HOST_DEVICE inline void leftMult( Quaternion<T> q );
@@ -107,6 +111,7 @@ template<class T> Complex<T> Quaternion<T>::get( int i, int j )
 		default:
 			break;
 		}
+		break;
 	case 1:
 		switch( j )
 		{
@@ -117,10 +122,12 @@ template<class T> Complex<T> Quaternion<T>::get( int i, int j )
 		default:
 			break;
 		}
+		break;
 	default:
-		assert(false);
-		return Complex<T>(0,0);
+		break;
 	}
+	assert(false);
+	return Complex<T>(0,0);
 
 }
 
@@ -144,6 +151,7 @@ template<class T> void Quaternion<T>::set( int i, int j, Complex<T> c )
 			quat[1] = c.y;
 			break;
 		}
+		break;
 	case 1:
 		switch( j )
 		{
@@ -156,6 +164,7 @@ template<class T> void Quaternion<T>::set( int i, int j, Complex<T> c )
 			quat[3] = -c.y;
 			break;
 		}
+		break;
 	}
 }
 
@@ -226,7 +235,15 @@ template<class T> void Quaternion<T>::zero()
 	quat[3] = 0;
 }
 
-template<class T> Quaternion<T>& Quaternion<T>::operator*=( Quaternion<Real> q )
+template<class T> void Quaternion<T>::identity()
+{
+	quat[0] = 1;
+	quat[1] = 0;
+	quat[2] = 0;
+	quat[3] = 0;
+}
+
+template<class T> Quaternion<T>& Quaternion<T>::operator*=( Quaternion<T> q )
 {
 	T a0 = quat[0]*q[0]-quat[3]*q[3]-quat[1]*q[1]-quat[2]*q[2];
 	T a3 = quat[0]*q[3]+quat[3]*q[0]+quat[2]*q[1]-quat[1]*q[2];
@@ -239,7 +256,34 @@ template<class T> Quaternion<T>& Quaternion<T>::operator*=( Quaternion<Real> q )
 	return *this;
 }
 
-template<class T> Quaternion<T>& Quaternion<T>::operator+=( Quaternion<Real> q )
+template<class T> Quaternion<T>& Quaternion<T>::operator*=( T a )
+{
+	quat[0] *= a;
+	quat[3] *= a;
+	quat[2] *= a;
+	quat[1] *= a;
+	return *this;
+}
+
+template<class T> Quaternion<T>& Quaternion<T>::operator+=( Quaternion<T> q )
+{
+	quat[0] += q[0];
+	quat[1] += q[1];
+	quat[2] += q[2];
+	quat[3] += q[3];
+	return *this;
+}
+
+template<class T> Quaternion<T>& Quaternion<T>::operator-=( Quaternion<T> q )
+{
+	quat[0] -= q[0];
+	quat[1] -= q[1];
+	quat[2] -= q[2];
+	quat[3] -= q[3];
+	return *this;
+}
+
+template<class T> Quaternion<T>& Quaternion<T>::operator=( Quaternion<T> q )
 {
 	quat[0] = q[0];
 	quat[1] = q[1];

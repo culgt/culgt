@@ -52,13 +52,16 @@ public:
 //	CUDA_HOST_DEVICE inline virtual ~SiteCoord();
 	CUDA_HOST_DEVICE inline lat_coord_t& operator[](lat_dim_t i);
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndex();
+	CUDA_HOST_DEVICE inline lat_coord_t getLatticeSizeDirection( lat_dim_t i );
 	CUDA_HOST_DEVICE inline void setLatticeIndex( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline void setLatticeIndexFromNonParitySplitOrder( lat_index_t latticeIndex );
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSize();
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeIndexTimeslice();
 	CUDA_HOST_DEVICE inline lat_index_t getLatticeSizeTimeslice();
-	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, lat_coord_t steps );
+//	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, lat_coord_t steps );
+	CUDA_HOST_DEVICE inline void setNeighbour( lat_dim_t direction, bool up );
+	CUDA_HOST_DEVICE inline void setNeighbour( lat_coord_t* direction );
 
 	lat_coord_t size[Nd];
 	static const lat_dim_t Ndim = Nd;
@@ -87,6 +90,15 @@ template <lat_dim_t Nd, ParityType par> SiteCoord<Nd, par>::SiteCoord( const Sit
 template<lat_dim_t Nd, ParityType par> lat_coord_t& SiteCoord<Nd,par>::operator[](lat_dim_t i)
 {
 	return site[i];
+}
+
+/**
+ * Returns the size of the lattice in direction i
+ * @return size of timeslice
+ */
+template<lat_dim_t Nd, ParityType par> lat_coord_t SiteCoord<Nd, par>::getLatticeSizeDirection( lat_dim_t i )
+{
+	return size[i];
 }
 
 template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLatticeIndex() // TODO parity ordering
@@ -279,7 +291,10 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLattic
 	if( par == FULL_SPLIT )
 	{
 		// TODO this looks wrong for FULL_SPLIT. Looks more like what TIMESLICE_SPLIT wants to do (therefore I copy it)...
-//		assert(false);
+		// maybe this is good for backward compatibility.
+		// as I see it atm CoulombGauge should use TIMESLICE_SPLIT but uses this
+		// OR BETTER: REMOVE THIS and check that all apps use the intuitive TIMESLICE_SPLIT!!!
+		//		assert(false);
 
 		lat_index_t parity = 0;
 		for(  lat_dim_t i = 1; i < Nd; i++ )
@@ -349,16 +364,71 @@ template<lat_dim_t Nd, ParityType par> lat_index_t SiteCoord<Nd, par>::getLattic
 	return tmp;
 }
 
+///**
+// * If you think this for-loop looks strange: This is a way the compiler can already index the array! -> The site[Ndim] array is not placed in (CUDA) memory
+// */
+//template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setNeighbour( lat_dim_t direction, lat_coord_t steps )
+//{
+//	for( lat_dim_t i = 0; i < Nd; i++ )
+//	{
+//		if( direction == i )
+//		{
+//			site[i] += steps;
+//
+//			if( site[i] >= size[i] )
+//			{
+//				site[i] -= size[i];
+//			}
+//			else
+//			{
+//				if( site[i] < 0 )
+//				{
+//					site[i] += size[i];
+//				}
+//			}
+//		}
+//	}
+//}
+
 /**
  * If you think this for-loop looks strange: This is a way the compiler can already index the array! -> The site[Ndim] array is not placed in (CUDA) memory
  */
-template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setNeighbour( lat_dim_t direction, lat_coord_t steps )
+template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setNeighbour( lat_dim_t direction, bool up )
 {
 	for( lat_dim_t i = 0; i < Nd; i++ )
 	{
 		if( direction == i )
 		{
-			site[i] += steps;
+			if( up )
+				site[i]++;
+			else
+				site[i]--;
+
+			if( site[i] >= size[i] )
+			{
+				site[i] -= size[i];
+			}
+			else
+			{
+				if( site[i] < 0 )
+				{
+					site[i] += size[i];
+				}
+			}
+		}
+	}
+}
+/**
+ * calculates neighbour (t,x,y,z) + (direction[0],direction[1],...), i.e. moves with vector direction on the lattice
+ *
+ * If you think this for-loop looks strange: This is a way the compiler can already index the array! -> The site[Ndim] array is not placed in (CUDA) memory
+ */
+template<lat_dim_t Nd, ParityType par> void SiteCoord<Nd, par>::setNeighbour( lat_coord_t* direction )
+{
+	for( lat_dim_t i = 0; i < Nd; i++ )
+	{
+		{
+			site[i] += direction[i];
 
 			if( site[i] >= size[i] )
 			{

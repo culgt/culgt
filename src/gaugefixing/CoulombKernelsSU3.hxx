@@ -136,7 +136,7 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 		temp.reconstructThirdLine();
 		Sum += temp;
 
-		s.setNeighbour(mu,-1);
+		s.setNeighbour(mu,false);
 		TLink linkDw( U, s, mu );
 		SU3<TLink> globDw( linkDw );
 		temp.assignWithoutThirdLine( globDw );

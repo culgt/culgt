@@ -30,6 +30,10 @@ template <class datatype> class Complex
 public:
 	CUDA_HOST_DEVICE inline Complex( const datatype x, const datatype y );
 	CUDA_HOST_DEVICE inline Complex( const datatype x );
+//	CUDA_HOST_DEVICE inline Complex( const int x );
+//	CUDA_HOST_DEVICE inline Complex( const float x );
+//	CUDA_HOST_DEVICE inline Complex( const double x );
+	CUDA_HOST_DEVICE inline Complex( const Complex<datatype>* a);
 	CUDA_HOST_DEVICE inline Complex();
 	CUDA_HOST_DEVICE inline virtual ~Complex();
 	CUDA_HOST_DEVICE inline datatype abs();
@@ -59,6 +63,30 @@ template<class datatype> Complex<datatype>::Complex(const datatype x )
 {
 	this->x = x;
 	this->y = 0;
+}
+
+//template<class datatype> Complex<datatype>::Complex(const int x )
+//{
+//	this->x = (datatype)x;
+//	this->y = 0;
+//}
+//
+//template<class datatype> Complex<datatype>::Complex(const float x )
+//{
+//	this->x = (datatype)x;
+//	this->y = 0;
+//}
+//
+//template<class datatype> Complex<datatype>::Complex(const double x )
+//{
+//	this->x = (datatype)x;
+//	this->y = 0;
+//}
+
+template<class datatype> Complex<datatype>::Complex(const Complex<datatype>* a )
+{
+	this->x = a->x;
+	this->y = a->y;
 }
 
 template<class datatype> Complex<datatype>::Complex()

@@ -45,6 +45,7 @@ public:
 	CUDA_HOST_DEVICE inline T get(int i, int j);
 	CUDA_HOST_DEVICE inline void set(int i, int j, T c);
 	CUDA_HOST_DEVICE inline T trace();
+	CUDA_HOST_DEVICE inline void identity();
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator+=( Matrix<T,N> );
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator-=( Matrix<T,N> );
 	CUDA_HOST_DEVICE inline Matrix<T, N>& operator-=( T );
@@ -99,6 +100,18 @@ template<class T, int N> T Matrix<T,N>::trace()
 		c += get(i,i);
 	}
 	return c;
+}
+
+/**
+ * Set to identity.
+ */
+template<class T, int N> void Matrix<T,N>::identity()
+{
+	T c = 1; // All types need to support this, especially the complex type!
+	for( int i = 0; i < N; i++ )
+	{
+		set(i,i,c);
+	}
 }
 
 /**
@@ -164,7 +177,7 @@ template<class T, int N> Matrix<T,N>& Matrix<T,N>::operator*=( Matrix<T,N> a )
 	{
 		for( int j = 0; j < N; j++ )
 		{
-			mat[i*N+j] = 0;
+			mat[i*N+j] = (T)0.;
 			for( int k = 0; k < N; k++ )
 			{
 				mat[i*N+j] += temp.mat[i*N+k] * a.mat[k*N+j];

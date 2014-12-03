@@ -186,7 +186,7 @@ __device__ double average_or_max( double a, double b, StoppingCrit ma);
 template<int Ndim, int Nc, class GType, StoppingCrit ma> void GaugeFixingStats<Ndim,Nc,GType,ma>::generateGaugeQuality()
 {
 
-	GType::generateGaugeQualityPerSite(site.getLatticeSize()/32, 32, U, dGff, dA );
+	GType::generateGaugeQualityPerSite(site.getLatticeSize()/NSB, NSB, U, dGff, dA );
 //	generateGaugeQualityPerSite<Ndim,Nc,lc,ma><<<site.getLatticeSize()/32,32>>>(U, dGff, dA, dSize);
 
 	reduce1GaugeQuality<<<site.getLatticeSize()/redBlockSize,redBlockSize>>>(dGff, dA, ma);

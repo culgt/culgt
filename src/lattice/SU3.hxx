@@ -44,6 +44,7 @@
 #include "datatype/datatypes.h"
 #include "datatype/lattice_typedefs.h"
 #include "Matrix.hxx"
+#include "Complex.hxx"
 #include "Link.hxx"
 #include "Quaternion.hxx"
 #include <math.h>
@@ -60,6 +61,8 @@ public:
 	CUDA_HOST_DEVICE inline Complex<Real> get( lat_group_dim_t i, lat_group_dim_t j );
 	CUDA_HOST_DEVICE inline Complex<Real> get(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j);
 	CUDA_HOST_DEVICE inline Quaternion<Real> getSubgroupQuaternion( lat_group_dim_t iSub, lat_group_dim_t jSub ); // TODO binding this class to class Quaternion is not good style -> make this a static function elsewhere
+	CUDA_HOST_DEVICE inline Matrix<Complex<Real>, 2> getSubgroupMatrix( lat_group_dim_t iSub, lat_group_dim_t jSub );
+	CUDA_HOST_DEVICE inline Matrix<Complex<Real>, 2> getSubgroupMatrixHermitian( lat_group_dim_t iSub, lat_group_dim_t jSub );
 	CUDA_HOST_DEVICE inline void set( lat_group_dim_t i, lat_group_dim_t j, Complex<Real> c);
 	CUDA_HOST_DEVICE inline void set(lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j, Complex<Real> c);
 	CUDA_HOST_DEVICE inline SU3<Type>& operator+=( SU3<Type> ); // TODO overload for types like SU3<Link>::operator+=( SU3<Matrix> )
@@ -101,9 +104,9 @@ public:
 
 
 	//TODO what if we compile on g++? We can't have a __device__ function!!!
-//#ifdef CUDA
+#ifdef __CUDACC__
 	template<class SubgroupOperationClass> __device__ static inline void perSubgroup(SubgroupOperationClass t);
-//#endif
+#endif
 };
 
 /**
@@ -159,7 +162,7 @@ template<class Type> void SU3<Type>::set( lat_group_dim_t i, lat_group_dim_t j, 
  */
 template<class Type> Complex<Real> SU3<Type>::get( lat_group_dim_t iSub, lat_group_dim_t jSub, lat_group_dim_t i, lat_group_dim_t j )
 {
-	return mat.get( (i==0)?(iSub):(jSub), (j==1)?(iSub):(jSub) );	//Subgroup access TODO write about how this works
+	return mat.get( (i==0)?(iSub):(jSub), (j==1)?(iSub):(jSub) );
 }
 
 /**
@@ -204,7 +207,37 @@ template<class Type> Quaternion<Real> SU3<Type>::getSubgroupQuaternion( lat_grou
 	q[2] -= temp.x;
 	q[1] += temp.y;
 
+
+//	q[0] *= .5;
+//	q[1] *= .5;
+//	q[2] *= .5;
+//	q[3] *= .5;
+
 	return q;
+}
+
+template<class Type> Matrix<Complex<Real>, 2 > SU3<Type>::getSubgroupMatrix( lat_group_dim_t iSub, lat_group_dim_t jSub )
+{
+	Matrix<Complex<Real>, 2 > subMatrix;
+
+	subMatrix.set( 0, 0, mat.get(iSub, iSub) );
+	subMatrix.set( 0, 1, mat.get(iSub, jSub) );
+	subMatrix.set( 1, 0, mat.get(jSub, iSub) );
+	subMatrix.set( 1, 1, mat.get(jSub, jSub) );
+
+	return subMatrix;
+}
+
+template<class Type> Matrix<Complex<Real>, 2 > SU3<Type>::getSubgroupMatrixHermitian( lat_group_dim_t iSub, lat_group_dim_t jSub )
+{
+	Matrix<Complex<Real>, 2 > subMatrix;
+
+	subMatrix.set( 0, 0, mat.get(iSub, iSub).conj() );
+	subMatrix.set( 0, 1, mat.get(jSub, iSub).conj() );
+	subMatrix.set( 1, 0, mat.get(iSub, jSub).conj() );
+	subMatrix.set( 1, 1, mat.get(jSub, jSub).conj() );
+
+	return subMatrix;
 }
 
 /**
@@ -721,7 +754,7 @@ template<class Type> void SU3<Type>::print()
 
 
 
-//#ifdef CUDA
+#ifdef __CUDACC__
 /**
  * Performs an operation defined in the SubgroupOperationClass by calling its subgroup() function for 3 SU3 subgroups.
  * Check an example application, like the Coulomb-gaugefixing routine.
@@ -736,7 +769,7 @@ template<class Type> template<class SubgroupOperationClass> __device__ void SU3<
 	t.subgroup(1,2);
 	t.subgroup(0,1);
 }
-//#endif
+#endif
 
 
 #endif /* SU3_HXX_ */

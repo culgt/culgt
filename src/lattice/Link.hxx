@@ -53,6 +53,7 @@ public:
 	CUDA_HOST_DEVICE inline TheSite& getSite();
 	CUDA_HOST_DEVICE inline void setMu( int mu );
 	CUDA_HOST_DEVICE inline void setPointer( Real* pointer );
+	CUDA_HOST_DEVICE inline Real* getPointer();
 
 private:
 	Real* data; // pointer to the link array
@@ -81,6 +82,11 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, 
 template<class Pattern, class TheSite, int T_Ndim, int T_Nc> void Link<Pattern, TheSite, T_Ndim, T_Nc>::setPointer( Real* pointer )
 {
 	this->data = pointer;
+}
+
+template<class Pattern, class TheSite, int T_Ndim, int T_Nc> Real* Link<Pattern, TheSite, T_Ndim, T_Nc>::getPointer()
+{
+	return this->data;
 }
 
 //template<class Pattern, class TheSite, int T_Ndim, int T_Nc> float4 Link<Pattern, TheSite, T_Ndim, T_Nc>::getFloat4( int i, int j )
@@ -139,9 +145,9 @@ template<class Pattern, class TheSite, int T_Ndim, int T_Nc> Complex<Real> Link<
  */
 template<class Pattern, class TheSite, int T_Ndim, int T_Nc> Link<Pattern, TheSite, T_Ndim, T_Nc>& Link<Pattern, TheSite, T_Ndim, T_Nc>::operator+=( Link<Pattern, TheSite, T_Ndim, T_Nc> a )
 {
-	for(int i = 0; i < 3; i++ )
+	for(int i = 0; i < T_Nc; i++ )
 	{
-		for( int j = 0; j < 3; j++ )
+		for( int j = 0; j < T_Nc; j++ )
 		{
 			data[Pattern::getIndex( site, mu, i, j, 0 )] += a.get(i,j).x;
 			data[Pattern::getIndex( site, mu, i, j, 1 )] += a.get(i,j).y;

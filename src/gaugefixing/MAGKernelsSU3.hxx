@@ -121,8 +121,11 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 	typedef GpuPattern< SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> Gpu;
 	typedef Link<Gpu,SiteCoord<Ndim,FULL_SPLIT>,Ndim,Nc> TLink;
 
-	SiteCoord<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
-	int site = blockIdx.x * blockDim.x + threadIdx.x;
+	const lat_coord_t size[Ndim] = {Nt,Nx,Ny,Nz};
+
+//	SiteCoord<Ndim,FULL_SPLIT> s(DEVICE_CONSTANTS::SIZE);
+	SiteCoord<Ndim,FULL_SPLIT> s(size);
+	lat_index_t site = blockIdx.x * blockDim.x + threadIdx.x;
 	Quaternion<Real> u,v;
 	Complex<double> X[3];
 
@@ -134,13 +137,25 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 		TLink linkUp( U, s, mu );
 		SU3<TLink> globUp( linkUp );
 
-		s.setNeighbour(mu,-1);
+		Matrix<Complex<Real>, Nc > matUp;
+		SU3< Matrix<Complex<Real>, Nc > > locUp;
+
+		locUp.assignWithoutThirdLine( globUp );
+		locUp.reconstructThirdLine();
+
+		s.setNeighbour(mu,false);
 		TLink linkDw( U, s, mu );
 		SU3<TLink> globDw( linkDw );
 
+		Matrix<Complex<Real>, Nc > matDw;
+		SU3< Matrix<Complex<Real>, Nc > > locDw;
+
+		locDw.assignWithoutThirdLine( globDw );
+		locDw.reconstructThirdLine();
+
 		// action:
 		for( int j=0; j<3; j++ )
-			dGff[site] += linkUp.get(j,j).abs_squared();
+			dGff[site] += locUp.get(j,j).abs_squared();
 
 //		// precision:
 //		for( int i=0; i<2; i++ )
@@ -155,21 +170,47 @@ __global__ void generateGaugeQualityPerSite( Real *U, double *dGff, double *dA )
 //				X[i+j-1].x += -u[0]*u[2] + u[1]*u[3] + v[0]*v[2] + v[1]*v[3];
 //				X[i+j-1].y += -u[0]*u[1] - u[2]*u[3] + v[0]*v[1] - v[2]*v[3];
 //			}
+
+
+
+//		for( int i=0; i<2; i++ )
+//			for( int j=i+1; j<3; j++ )
+//			{
+//				u = locUp.getSubgroupQuaternion( i, j );
+//				u.projectSU2();
+//
+//				v = locDw.getSubgroupQuaternion( i, j );
+//				v.projectSU2();
+//
+//				X[i+j-1].x += -u[0]*u[2] + u[1]*u[3] + v[0]*v[2] + v[1]*v[3];
+//				X[i+j-1].y += -u[0]*u[1] - u[2]*u[3] + v[0]*v[1] - v[2]*v[3];
+//			}
+
+		Matrix<Complex<Real>, 2 > mat;
+
+		Complex<Real> c;
+
 		for( int i=0; i<2; i++ )
 			for( int j=i+1; j<3; j++ )
 			{
-				u = globUp.getSubgroupQuaternion( i, j );
-//				u.projectSU2();
+				mat = locUp.getSubgroupMatrix(i,j);
 
-				v = globDw.getSubgroupQuaternion( i, j );
-//				v.projectSU2();
+				c = mat.get(0,0)*mat.get(1,0).conj()-mat.get(0,1)*mat.get(1,1).conj();
 
-				X[i+j-1].x += -u[0]*u[2] + u[1]*u[3] + v[0]*v[2] + v[1]*v[3];
-				X[i+j-1].y += -u[0]*u[1] - u[2]*u[3] + v[0]*v[1] - v[2]*v[3];
+				X[i+j-1].x += (double) c.x;
+				X[i+j-1].y += (double) c.y;
+
+
+				mat = locDw.getSubgroupMatrixHermitian(i,j);
+
+				c = mat.get(0,0)*mat.get(1,0).conj()-mat.get(0,1)*mat.get(1,1).conj();
+
+				X[i+j-1].x += (double) c.x;
+				X[i+j-1].y += (double) c.y;
 			}
 
 	}
-	dA[site] = X[0].abs_squared()+X[1].abs_squared()+X[2].abs_squared();
+	dA[site] = X[0].abs()+X[1].abs()+X[2].abs();
 }
 
 __global__ void restoreThirdLine( Real* U, lat_index_t* nnt )
@@ -208,7 +249,7 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 	const short mu = (threadIdx.x % (4*NSB)) / NSB;
 	const short id = (threadIdx.x % (4*NSB)) % NSB;
 
-	int site = blockIdx.x * blockDim.x/8 + id;
+	lat_index_t site = blockIdx.x * blockDim.x/8 + id;
 	if( parity == 1 ) site += s.getLatticeSize()/2;
 
 	s.setLatticeIndex( site );
@@ -227,18 +268,24 @@ template<class Algorithm> inline __device__ void apply( Real* U, lat_index_t* nn
 	// make link local
 	locU.assignWithoutThirdLine(globU);
 	locU.reconstructThirdLine();
+//	locU = globU;
+
 
 	GaugeFixingSubgroupStep<SU3<Matrix<Complex<Real>,Nc> >, Algorithm, MAG> subgroupStep( &locU, algorithm, id, mu, updown );
+
+
 
 	// do the subgroup iteration
 	SU3<Matrix<Complex<Real>,Nc> >::perSubgroup( subgroupStep );
 
 	// copy link back
 	globU.assignWithoutThirdLine(locU);
+//	globU = locU;
 }
 
 __global__ void __launch_bounds__(8*NSB,OR_MINBLOCKS) orStep( Real* U, lat_index_t* nnt, bool parity, float orParameter )
 {
+//	OrUpdateExact overrelax( orParameter );
 	OrUpdate overrelax( orParameter );
 	apply( U, nnt, parity, overrelax );
 }
