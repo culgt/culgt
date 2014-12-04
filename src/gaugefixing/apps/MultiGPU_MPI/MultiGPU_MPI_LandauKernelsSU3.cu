@@ -77,7 +77,7 @@ template<class Algorithm> inline __device__ void applyOneTimeslice( Real* UtUp, 
 	{
 		if( mu!=0 )
 		{
-			s.setNeighbour(mu,0);
+			s.setNeighbour(mu,false);
 			U=UtUp;
 		}
 		else
