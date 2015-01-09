@@ -28,17 +28,17 @@ typedef double REAL;
 typedef float REAL;
 #endif
 
-//typedef SU3Vector4<REAL> PARAMTYPE;
-//typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
+typedef SU3Vector4<REAL> PARAMTYPE;
+typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 
-typedef SU2Vector4<REAL> PARAMTYPE;
-typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
+//typedef SU2Vector4<REAL> PARAMTYPE;
+//typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
 
 
 typedef SiteIndex<4,TIMESLICE_SPLIT> SITE;
 typedef GPUPatternTimesliceParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
-typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,true> GLOBALLINKTIMESLICE;
+//typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,true> GLOBALLINKTIMESLICE;
 typedef PhiloxWrapper<REAL> RNG;
 
 /*
@@ -53,12 +53,13 @@ public:
 
 		boost::program_options::options_description gaugeOptions;
 		gaugeOptions.add_options()
+				("sethot", boost::program_options::value<bool>(&sethot)->default_value(false), "start from a random gauge field")
 				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)");
 
 		programOptions->addOption( gaugeOptions );
 
 
-		coulomb = new CoulombGaugefixing<GLOBALLINKTIMESLICE,LOCALLINK>( configuration.getDevicePointer( 0 ), configuration.getDevicePointer( dim.getDimension(0)-1 ), dim.getDimensionTimeslice(), programOptions->getSeed() );
+		coulomb = new CoulombGaugefixing<PATTERNTYPE::TIMESLICE_PATTERNTYPE,LOCALLINK>( configuration.getDevicePointer( 0 ), configuration.getDevicePointer( dim.getDimension(0)-1 ), dim.getDimensionTimeslice(), programOptions->getSeed() );
 	}
 private:
 	GaugeSettings settings;
@@ -66,7 +67,7 @@ private:
 	void setup()
 	{
 		coulomb->orstepsAutoTune<RNG>(1.5, 200);
-		coulomb->cornellAutoTune<RNG>(.5, 200);
+//		coulomb->cornellAutoTune<RNG>(.5, 200);
 		coulomb->sastepsAutoTune<RNG>(.5, 200);
 		coulomb->microcanonicalAutoTune<RNG>( 200 );
 	}
@@ -77,65 +78,74 @@ private:
 
 	void iterate()
 	{
-		loadToDevice();
+		if( sethot )
+		{
+			configuration.setHotOnDevice<RNG>( programOptions->getSeed(), RNG::getNextCounter());
+			CUDA_LAST_ERROR( "setHotOnDevice ");
+		}
+		else
+		{
+			loadToDevice();
+		}
 
 //		configuration.setColdOnDevice();
 
 		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
 		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
-
-		int t = 0;
-		int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
-		std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
-		coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
-
-		GaugeStats stats = coulomb->getGaugeStats();
-		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-//		stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
+//
+//		int t = 0;
+//		int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
+//		std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
+//		coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
+//
+//		GaugeStats stats = coulomb->getGaugeStats();
 //		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-
-		coulomb->randomTrafo();
-
-		coulomb->fix( settings );
-//		for( int j = 0; j < 10000; j++ )
-//		{
-//			int iter = 100;
-//			for( int i = 0; i < iter; i++ )
-//			{
-//				coulomb->runCornell( .1, 5 );
-////				coulomb->runOverrelaxation( 1.5 );
-//				CUDA_LAST_ERROR( "Cornell ");
-//			}
-//				coulomb->reproject();
+////		stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
+////		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
 //
+//		coulomb->randomTrafo();
 //
-//			stats = coulomb->getGaugeStats();
-//			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-//			if( stats.getPrecision() < settings.getPrecision() ) break;
-//			stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
-//			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-//		}
-		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
+//		coulomb->fix( settings );
+////		for( int j = 0; j < 10000; j++ )
+////		{
+////			int iter = 100;
+////			for( int i = 0; i < iter; i++ )
+////			{
+////				coulomb->runCornell( .1, 5 );
+//////				coulomb->runOverrelaxation( 1.5 );
+////				CUDA_LAST_ERROR( "Cornell ");
+////			}
+////				coulomb->reproject();
+////
+////
+////			stats = coulomb->getGaugeStats();
+////			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+////			if( stats.getPrecision() < settings.getPrecision() ) break;
+////			stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
+////			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
+////		}
+//		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
 //		exit( 1 );
 
 		RunInfo info;
 
-//		for( int t = 0; t < dimension.getDimension(0); t++ )
-//		{
-//			int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
-//			std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
-//			coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
-////			coulomb->randomTrafo();
-//			coulomb->fix( settings );
-//		}
+		for( int t = 0; t < dimension.getDimension(0); t++ )
+		{
+			int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
+			std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
+			coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
+//			coulomb->randomTrafo();
+			coulomb->fix( settings );
+		}
 
 		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
 
 		saveFromDevice( fileAppendix );
 	};
 
-	CoulombGaugefixing<GLOBALLINKTIMESLICE,LOCALLINK>* coulomb;
+	CoulombGaugefixing<PATTERNTYPE::TIMESLICE_PATTERNTYPE,LOCALLINK>* coulomb;
 	string fileAppendix;
+	bool sethot;
 };
 
 } /* namespace culgt */

@@ -29,7 +29,7 @@
 
 #include "CoulombGaugeFixingSimulatedAnnealing.h"
 #include "CoulombGaugeFixingMicrocanonical.h"
-#include "CoulombGaugeFixingCornell.h"
+//#include "CoulombGaugeFixingCornell.h"
 #include "RandomGaugeTrafo.h"
 
 #include "GaugeFixingSaOr.h"
@@ -131,14 +131,16 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 }
 
 
-template<typename GlobalLinkType, typename LocalLinkType> class CoulombGaugefixing: public GaugeFixingSaOr
+template<typename PatternType, typename LocalLinkType> class CoulombGaugefixing: public GaugeFixingSaOr
 {
 public:
-	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
-	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
+	typedef GlobalLink<PatternType,true> GlobalLinkType;
+	typedef typename PatternType::PARAMTYPE::TYPE T;
+	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 	COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 
-	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), cornell( &this->Ut, &this->UtDown, dim, seed, 0.1 ), seed(seed)
+	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), seed(seed)
+//	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), seed(seed)
 	{
 		setTimeslice( Ut, UtDown );
 	}
@@ -183,7 +185,10 @@ public:
 	void runOverrelaxation( float orParameter, int id = -1 )
 	{
 		overrelaxation.setOrParameter( orParameter );
-		overrelaxation.run( id );
+		if( id == -1 )
+			overrelaxation.run();
+		else
+			overrelaxation.run( id );
 	}
 
 	RunInfo getRunInfoOverrelaxation( double time, long iter )
@@ -191,21 +196,21 @@ public:
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
-	void runCornell( float alpha, int id = -1 )
-	{
-		cornell.setAlpha( alpha );
-		cornell.run( id );
-	}
+//	void runCornell( float alpha, int id = -1 )
+//	{
+//		cornell.setAlpha( alpha );
+//		cornell.run( id );
+//	}
 
 	void runMicrocanonical( int id = -1 )
 	{
-		microcanonical.run( id );
+//		microcanonical.run( id );
 	}
 
 	void runSimulatedAnnealing( float temperature, int id = -1 )
 	{
-		simulatedAnnealing.setTemperature( temperature );
-		simulatedAnnealing.run( id );
+//		simulatedAnnealing.setTemperature( temperature );
+//		simulatedAnnealing.run( id );
 	}
 
 	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
@@ -219,26 +224,26 @@ public:
 		overrelaxation.tune( iter );
 	}
 
-	template<typename RNG> void cornellAutoTune( float alpha = .5, int iter = 1000 )
-	{
-		cornell.setAlpha( alpha );
-		cornell.tune( iter );
-	}
+//	template<typename RNG> void cornellAutoTune( float alpha = .5, int iter = 1000 )
+//	{
+//		cornell.setAlpha( alpha );
+//		cornell.tune( iter );
+//	}
 
 	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int iter = 1000 )
 	{
-		simulatedAnnealing.setTemperature( temperature );
-		simulatedAnnealing.tune( iter );
+//		simulatedAnnealing.setTemperature( temperature );
+//		simulatedAnnealing.tune( iter );
 	}
 
 	template<typename RNG> void microcanonicalAutoTune( int iter = 1000 )
 	{
-		microcanonical.tune( iter );
+//		microcanonical.tune( iter );
 	}
 
 	void randomTrafo()
 	{
-		RandomGaugeTrafo<GlobalLinkType,LocalLinkType>::randomTrafo( Ut, UtDown, dimTimeslice, seed );
+		RandomGaugeTrafo<PatternType,LocalLinkType>::randomTrafo( Ut, UtDown, dimTimeslice, seed );
 	}
 
 	void reproject()
@@ -297,10 +302,10 @@ private:
 	T* UtClean;
 	T* UtDownClean;
 
-	TimesliceGaugeFixingOverrelaxation<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> > overrelaxation;
-	CoulombGaugeFixingSimulatedAnnealing<GlobalLinkType,LocalLinkType> simulatedAnnealing;
-	CoulombGaugeFixingMicrocanonical<GlobalLinkType,LocalLinkType> microcanonical;
-	CoulombGaugeFixingCornell<GlobalLinkType,LocalLinkType> cornell;
+	TimesliceGaugeFixingOverrelaxation<PatternType,LocalLinkType,LandauCoulombGaugeType<COULOMB> > overrelaxation;
+//	CoulombGaugeFixingSimulatedAnnealing<GlobalLinkType,LocalLinkType> simulatedAnnealing;
+//	CoulombGaugeFixingMicrocanonical<GlobalLinkType,LocalLinkType> microcanonical;
+//	CoulombGaugeFixingCornell<GlobalLinkType,LocalLinkType> cornell;
 
 	long seed;
 };
