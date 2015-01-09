@@ -30,19 +30,22 @@ typedef double REAL;
 typedef float REAL;
 #endif
 
-//typedef SU2Vector4<REAL> PARAMTYPE;
-//typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
-
+#ifdef CULGT_SU2
+typedef SU2Vector4<REAL> PARAMTYPE;
+typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
+#else
 typedef SU3Vector4<REAL> PARAMTYPE;
 //typedef SU3Real12<REAL> PARAMTYPE;
-
 typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
+#endif
 
+#ifdef CULGT_USE_TIMESLICE_PATTERN
 typedef SiteIndex<4,TIMESLICE_SPLIT> SITE;
 typedef GPUPatternTimesliceParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
-
-//typedef SiteIndex<4,FULL_SPLIT> SITE;
-//typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
+#else
+typedef SiteIndex<4,FULL_SPLIT> SITE;
+typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
+#endif
 
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
 typedef PhiloxWrapper<REAL> RNG;
