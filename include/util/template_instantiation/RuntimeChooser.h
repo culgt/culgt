@@ -9,6 +9,7 @@
 #define RUNTIMECHOOSER_H_
 #include <vector>
 #include <boost/functional/hash.hpp>
+#include <typeinfo>
 
 using std::vector;
 

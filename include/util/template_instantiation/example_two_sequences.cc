@@ -32,7 +32,7 @@ int main()
 
 	SequenceRunnerFrontend<MyChooser,useTextureSequence,threadsPerSiteSequence> test;
 
-	for( auto it = MyChooser::begin(); it != MyChooser::end(); ++it )
+	for( vector<size_t>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
 	{
 		test.run( *it );
 	}

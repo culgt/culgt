@@ -93,7 +93,7 @@ int main()
 	SequenceRunnerFrontend<MyChooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> test;
 
 	// 6) get an iterator and loop over all possible choices.
-	for( auto it = MyChooser::begin(); it != MyChooser::end(); ++it )
+	for( vector<size_t>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
 	{
 		test.run( *it );
 	}

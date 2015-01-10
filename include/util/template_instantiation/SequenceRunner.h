@@ -23,23 +23,20 @@ namespace mpl = boost::mpl;
 using namespace std;
 using namespace mpl::placeholders;
 
+#if __cplusplus >= 201103L
+#define CULGT_USE_VARIADIC_TEMPLATES
+#else
+#warning cannot use variadic templates: RuntimeChooser limited to 4 arguments
+#endif
+
+
 struct NIL
 {
 public:
 	static const int value = 0;
 };
 
-
-//struct printseq
-//{
-//	template<typename T> void operator()(T)
-//	{
-//		cout << typeid(T).name() << "/";
-//	}
-//};
-
-
-
+#ifdef CULGT_USE_VARIADIC_TEMPLATES
 template<typename Chooser, typename Seq, typename T, typename... Ts> class SequenceRunner
 {
 public:
@@ -49,7 +46,6 @@ public:
 		mpl::for_each<T>( VSub() );
 	}
 };
-
 template<typename Chooser, typename Seq, typename T> class SequenceRunner<Chooser, Seq, T, NIL>
 {
 public:
@@ -73,7 +69,33 @@ public:
 		c( f );
 	}
 };
+#else
+template<typename Chooser, typename Seq, typename T, typename T1=NIL, typename T2=NIL> class SequenceRunner
+{
+public:
+	template<typename S> void operator()(S)
+	{
+		typedef SequenceRunner<Chooser, typename mpl::push_back<Seq,S>::type,T1,T2,NIL> VSub;
+		mpl::for_each<T>( VSub() );
+	}
+};
 
+template<typename Chooser, typename Seq> class SequenceRunner<Chooser, Seq, NIL, NIL, NIL>
+{
+public:
+	template<typename S> void operator()(S)
+	{
+		typedef typename mpl::push_back<Seq,S>::type finalSeq;
+
+		finalSeq f;
+
+		Chooser c;
+		c( f );
+	}
+};
+#endif
+
+#ifdef CULGT_USE_VARIADIC_TEMPLATES
 template<typename Chooser, typename T, typename... Ts> class SequenceRunnerFrontend
 {
 public:
@@ -115,5 +137,48 @@ private:
 		mpl::for_each<T>( VSub() );
 	}
 };
+#else
+template<typename Chooser, typename T0, typename T1=NIL, typename T2=NIL, typename T3=NIL> class SequenceRunnerFrontend
+{
+public:
+	typedef mpl::vector<> Seq;
+
+	SequenceRunnerFrontend()
+	{
+		init();
+	}
+
+
+	void run( size_t id )
+	{
+		if( Chooser::id != id )
+		{
+			set( id );
+		}
+		Chooser::run( Chooser::object );
+	}
+
+	void set( size_t id )
+	{
+		Chooser::id = id;
+		exec();
+	}
+
+private:
+	void init()
+	{
+		Chooser::ids.clear();
+		Chooser::init = true;
+		exec();
+		Chooser::init = false;
+	}
+
+	void exec()
+	{
+		typedef SequenceRunner<Chooser, Seq,T1,T2,T3> VSub;
+		mpl::for_each<T0>( VSub() );
+	}
+};
+#endif
 
 #endif /* SEQUENCERRUNNER_H_ */
