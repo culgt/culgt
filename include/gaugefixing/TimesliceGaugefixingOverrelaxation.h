@@ -20,10 +20,8 @@
 #include "TimesliceGaugeFixingOverrelaxationKernel.h"
 #include "GaugefixingLaunchBounds.h"
 
-#ifdef CULGT_USE_CXX11_AUTOTUNE
 #include "../util/template_instantiation/SequenceRunner.h"
 #include "../util/template_instantiation/RuntimeChooser.h"
-#endif
 
 namespace culgt
 {
@@ -66,8 +64,6 @@ public:
 	};
 
 
-#ifdef CULGT_USE_CXX11_AUTOTUNE
-
 	typedef TimesliceGaugeFixingOverrelaxation<PatternType, LocalLinkType, GaugeType> thisClass;
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 //	typedef mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<128,1>> launchBoundsSequence;
@@ -75,13 +71,10 @@ public:
 	typedef mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef mpl::vector_c< int, 0, 1 > useTextureSequence;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
-#endif
 
 	TimesliceGaugeFixingOverrelaxation( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, float orParameter, long seed ) : CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType>( Ut, UtDown, dimTimeslice, seed ), orParameter(orParameter)
 	{
-#ifdef CULGT_USE_CXX11_AUTOTUNE
 		Chooser::object = this;
-#endif
 	}
 
 	template<int ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor, bool UseTexture> inline void step()
@@ -90,7 +83,6 @@ public:
 	}
 
 
-#ifdef CULGT_USE_CXX11_AUTOTUNE
 	std::vector<size_t>* getOptions()
 	{
 		return &Chooser::ids;
@@ -100,7 +92,6 @@ public:
 	{
 		runner.run( id );
 	}
-#endif
 
 	void run()
 	{
@@ -109,136 +100,7 @@ public:
 
 	void run( size_t id )
 	{
-#ifdef CULGT_USE_CXX11_AUTOTUNE
 		runNew( id );
-#else
-		switch( id )
-		{
-			case 0:
-				step<8,32,1,false>();
-				break;
-			case 1:
-				step<8,32,2,false>();
-				break;
-			case 2:
-				step<8,32,3,false>();
-				break;
-			case 3:
-				step<8,32,4,false>();
-				break;
-			case 4:
-				step<8,32,5,false>();
-				break;
-			case 5:
-				step<8,32,6,false>();
-				break;
-			case 6:
-				step<8,64,1,false>();
-				break;
-			case 7:
-				step<8,64,2,false>();
-				break;
-			case 8:
-				step<8,64,3,false>();
-				break;
-			case 9:
-				step<8,128,1,false>();
-				break;
-			case 10:
-				step<4,32,1,false>();
-				break;
-			case 11:
-				step<4,32,2,false>();
-				break;
-			case 12:
-				step<4,32,3,false>();
-				break;
-			case 13:
-				step<4,32,4,false>();
-				break;
-			case 14:
-				step<4,32,5,false>();
-				break;
-			case 15:
-				step<4,32,6,false>();
-				break;
-			case 16:
-				step<4,64,1,false>();
-				break;
-			case 17:
-				step<4,64,2,false>();
-				break;
-			case 18:
-				step<4,64,3,false>();
-				break;
-			case 19:
-				step<4,128,1,false>();
-				break;
-
-			case 20:
-				step<8,32,1,true>();
-				break;
-			case 21:
-				step<8,32,2,true>();
-				break;
-			case 22:
-				step<8,32,3,true>();
-				break;
-			case 23:
-				step<8,32,4,true>();
-				break;
-			case 24:
-				step<8,32,5,true>();
-				break;
-			case 25:
-				step<8,32,6,true>();
-				break;
-			case 26:
-				step<8,64,1,true>();
-				break;
-			case 27:
-				step<8,64,2,true>();
-				break;
-			case 28:
-				step<8,64,3,true>();
-				break;
-			case 29:
-				step<8,128,1,true>();
-				break;
-			case 30:
-				step<4,32,1,true>();
-				break;
-			case 31:
-				step<4,32,2,true>();
-				break;
-			case 32:
-				step<4,32,3,true>();
-				break;
-			case 33:
-				step<4,32,4,true>();
-				break;
-			case 34:
-				step<4,32,5,true>();
-				break;
-			case 35:
-				step<4,32,6,true>();
-				break;
-			case 36:
-				step<4,64,1,true>();
-				break;
-			case 37:
-				step<4,64,2,true>();
-				break;
-			case 38:
-				step<4,64,3,true>();
-				break;
-			case 39:
-				step<4,128,1,true>();
-				break;
-			default:
-				throw LastElementReachedException();
-		}
-#endif
 	}
 
 	void setOrParameter(float orParameter)
