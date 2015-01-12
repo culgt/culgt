@@ -13,10 +13,10 @@ find_package(CUDA)
 include(FindCUDA)
 
 if( ${CUDA_VERSION} VERSION_LESS 6.5 )
-    set(CUDA_NVCC_FLAGS "-arch=sm_20 -Xptxas -v -Xptxas -dlcm=cg --use_fast_math")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_20 -Xptxas -v -Xptxas -dlcm=cg --use_fast_math")
     message(STATUS "Cannot use -std=c++11 (CUDA version ${CUDA_VERSION})")
 else()
-    set(CUDA_NVCC_FLAGS "-std=c++11 -arch=sm_20 -Xptxas -v -Xptxas -dlcm=cg --use_fast_math")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -arch=sm_20 -Xptxas -v -Xptxas -dlcm=cg --use_fast_math")
     message(STATUS "Using -std=c++11 (CUDA version ${CUDA_VERSION})")
 endif()
 
