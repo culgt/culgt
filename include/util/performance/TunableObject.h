@@ -139,6 +139,7 @@ public:
 		{
 			preTuneAction();
 
+			std::cout << "Tuning option " << *it << ": ";
 			double performance;
 			try
 			{
@@ -146,13 +147,12 @@ public:
 			}
 			catch(InvalidKernelSetupException& e)
 			{
-				std::cout << "Tuning option " << *it << ": invalid configuration" << std::endl;
-//				id++;
+				std::cout << "invalid configuration" << std::endl;
 				continue;
 			}
 			CUDA_LAST_ERROR("TunableObject::measure()" );
 
-			std::cout << "Tuning option " << *it << ": " << performance << std::endl;
+			std::cout << performance << std::endl;
 
 
 			if( performance > bestPerformance )
