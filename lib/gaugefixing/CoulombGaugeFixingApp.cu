@@ -153,7 +153,11 @@ private:
 
 using namespace culgt;
 
-int main( const int argc, const char* argv[] )
+#if BOOST_VERSION < 105300
+	int main( int argc, char* argv[] )
+#else
+	int main( const int argc, const char* argv[] )
+#endif
 {
 	CoulombGaugeFixingApp::main<CoulombGaugeFixingApp>( argc, argv );
 }
