@@ -112,9 +112,9 @@ public:
 		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&myNc, sizeof(short) );
 		writeSize();
 		short mySizeOfReal;
-		if( super::reinterpretReal == STANDARD) mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
-		else if( super::reinterpretReal == FLOAT ) mySizeOfReal = sizeof( float );
+		if( super::reinterpretReal == FLOAT ) mySizeOfReal = sizeof( float );
 		else if( super::reinterpretReal == DOUBLE ) mySizeOfReal = sizeof( double );
+		else mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
 		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&mySizeOfReal, sizeof(short) );
 	}
 
@@ -226,9 +226,9 @@ public:
 
 
 		short mySizeOfReal;
-		if( super::reinterpretReal == STANDARD) mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
-		else if( super::reinterpretReal == FLOAT ) mySizeOfReal = sizeof( float );
+		if( super::reinterpretReal == FLOAT ) mySizeOfReal = sizeof( float );
 		else if( super::reinterpretReal == DOUBLE ) mySizeOfReal = sizeof( double );
+		else mySizeOfReal = sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
 
 		if( mySizeOfReal != sizeOfReal )
 		{
