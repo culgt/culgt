@@ -31,8 +31,9 @@ int main()
 
 	SequenceRunnerFrontend<MyChooser,useTextureSequence> test;
 
-	for( vector<size_t>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
+	for( vector<RuntimeChooserOption>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
 	{
-		test.run( *it );
+		cout << it->name << ": ";
+		test.run( it->id );
 	}
 }

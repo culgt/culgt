@@ -93,9 +93,10 @@ int main()
 	SequenceRunnerFrontend<MyChooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> test;
 
 	// 6) get an iterator and loop over all possible choices.
-	for( vector<size_t>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
+	for( vector<RuntimeChooserOption>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
 	{
-		test.run( *it );
+		cout << it->name << ": ";
+		test.run( it->id );
 	}
 
 	int hostPtr[1];

@@ -8,6 +8,8 @@
 #define TUNABLEOBJECT_H_
 
 #include "../../cuLGT1legacy/Chronotimer.h"
+#include "../template_instantiation/SequenceRunner.h"
+#include "../template_instantiation/RuntimeChooser.h"
 #include "AutotuneManager.h"
 
 #include "cuda.h"
@@ -41,7 +43,7 @@ public:
 	virtual void run( size_t id ) = 0;
 	virtual void run() = 0;
 	virtual void preTuneAction() = 0;
-	virtual std::vector<size_t>* getOptions() = 0;
+	virtual std::vector<RuntimeChooserOption>* getOptions() = 0;
 
 	virtual string getClassName()
 	{
@@ -109,23 +111,23 @@ public:
 			forceTune( iter );
 			autotuneManager.writeOptimalId( optimalId );
 		}
-		std::cout << "Using option: " << optimalId << std::endl;
+		std::cout << "Using option: " << optimalId.name << std::endl;
 	}
 
 	void forceTune( int iter )
 	{
 		double bestPerformance = 0;
 
-		std::vector<size_t>* ptrToOptions = getOptions();
+		std::vector<RuntimeChooserOption>* ptrToOptions = getOptions();
 
 		std::cout << ptrToOptions->size() << std::endl;
 
-		for( vector<size_t>::iterator it = ptrToOptions->begin(); it != ptrToOptions->end(); ++it )
+		for( vector<RuntimeChooserOption>::iterator it = ptrToOptions->begin(); it != ptrToOptions->end(); ++it )
 		{
 			try
 			{
-				std::cout << "warmup option " << *it << std::endl;
-				measure( *it, iter );
+				std::cout << "warmup option " << it->name << std::endl;
+				measure( it->id, iter );
 			}
 			catch(InvalidKernelSetupException& e)
 			{
@@ -135,15 +137,15 @@ public:
 			break;
 		}
 
-		for( vector<size_t>::iterator it = ptrToOptions->begin(); it != ptrToOptions->end(); ++it )
+		for( vector<RuntimeChooserOption>::iterator it = ptrToOptions->begin(); it != ptrToOptions->end(); ++it )
 		{
 			preTuneAction();
 
-			std::cout << "Tuning option " << *it << ": ";
+			std::cout << "Tuning option " << it->name << ": ";
 			double performance;
 			try
 			{
-				performance = 1./measure( *it, iter );
+				performance = 1./measure( it->id, iter );
 			}
 			catch(InvalidKernelSetupException& e)
 			{
@@ -164,7 +166,7 @@ public:
 	}
 
 protected:
-	size_t optimalId;
+	RuntimeChooserOption optimalId;
 
 private:
 	Chronotimer timer;

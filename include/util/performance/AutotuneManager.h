@@ -54,13 +54,14 @@ public:
 		return identifier.str();
 	}
 
-	size_t getOptimalId()
+	RuntimeChooserOption getOptimalId()
 	{
 		std::ifstream file( getIdentifier().c_str() );
-		size_t optimalId;
+		RuntimeChooserOption optimalId;
 		if( file.good() )
 		{
-			file >> optimalId;
+			file >> optimalId.name;
+			file >> optimalId.id;
 		}
 		else
 		{
@@ -70,10 +71,11 @@ public:
 		return optimalId;
 	}
 
-	void writeOptimalId( size_t optimalId )
+	void writeOptimalId( RuntimeChooserOption optimalId )
 	{
 		std::ofstream file( getIdentifier().c_str() );
-		file << optimalId;
+		file << optimalId.name << endl;
+		file << optimalId.id;
 		file.close();
 	}
 

@@ -125,7 +125,7 @@ public:
 private:
 	void init()
 	{
-		Chooser::ids.clear();
+		Chooser::options.clear();
 		Chooser::init = true;
 		exec();
 		Chooser::init = false;
@@ -167,7 +167,7 @@ public:
 private:
 	void init()
 	{
-		Chooser::ids.clear();
+		Chooser::options.clear();
 		Chooser::init = true;
 		exec();
 		Chooser::init = false;

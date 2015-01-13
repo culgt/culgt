@@ -23,14 +23,14 @@
 #include <boost/mpl/vector_c.hpp>
 #include <boost/mpl/placeholders.hpp>
 
-#include "../../cudacommon/LaunchBounds.h"
 #include "SequenceRunner.h"
 #include "RuntimeChooser.h"
+#include "../../gaugefixing/GaugefixingLaunchBounds.h"
 
 /*
  * 1) make the lists
  */
-typedef mpl::vector< LaunchBounds<1,2>, LaunchBounds<3,4> > launchBoundsSequence;
+typedef mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<32,5>, GaugefixingLaunchBounds<32,6>, GaugefixingLaunchBounds<32,7>, GaugefixingLaunchBounds<32,8>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<64,5>, GaugefixingLaunchBounds<64,6>, GaugefixingLaunchBounds<128,1>, GaugefixingLaunchBounds<128,2>, GaugefixingLaunchBounds<128,3> > launchBoundsSequence;
 typedef mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 typedef mpl::vector_c< int, 0, 1 > useTextureSequence;
 
@@ -41,7 +41,7 @@ template<typename LaunchBounds, typename ThreadsPerSite, typename UseTexture> st
 {
 	template<typename T> static void exec( T object )
 	{
-		cout << "(" << LaunchBounds::maxThreadsPerBlock << "," << LaunchBounds::minBlocksPerMultiprocessor << "), " << ThreadsPerSite::value << ", " << UseTexture::value << ", the information: " << object->needSomeInformationFromHere << endl;
+		cout << "(" << LaunchBounds::SitesPerBlock << "," << LaunchBounds::MinBlocksPerMultiprocessor << "), " << ThreadsPerSite::value << ", " << UseTexture::value << ", the information: " << object->needSomeInformationFromHere << endl;
 	}
 };
 
@@ -67,9 +67,10 @@ int main()
 	SequenceRunnerFrontend<MyChooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> test;
 
 	// 6) get an iterator and loop over all possible choices.
-	for( vector<size_t>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
+	for( vector<RuntimeChooserOption>::iterator it = MyChooser::begin(); it != MyChooser::end(); ++it )
 	{
-		test.set( *it );
+		test.set( it->id );
+		cout << it->name << ": ";
 		MyChooser::run( &containsNeededInformation );
 	}
 
