@@ -41,13 +41,21 @@ public:
 	BOOST_STATIC_ASSERT_MSG( TextureID < TextureManager<typename PARAMTYPE::TYPE>::MAX_TEXTURES, "Max. texture number exceeded, please add more textures in TextureManager.h");
 	static cudaError_t bindTexture( typename PARAMTYPE::TYPE* pointerToStore, lat_array_index_t arraySize )
 	{
+#if __CUDA_ARCH__ < 350
 		cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<typename TextureManager<typename PARAMTYPE::TYPE>::Type>();
 		size_t offset;
 		return cudaBindTexture(&offset, TextureManager<typename PARAMTYPE::TYPE>::getTextureReference( TextureID ), pointerToStore, channelDesc, arraySize*sizeof(typename PARAMTYPE::TYPE) );
+#else
+		return cudaSuccess;
+#endif
 	}
 	static void unbindTexture()
 	{
+#if __CUDA_ARCH__ < 350
 		cudaUnbindTexture( TextureManager<typename PARAMTYPE::TYPE>::getTextureReference( TextureID ) );
+#else
+		return cudaSuccess;
+#endif
 	}
 #endif
 
