@@ -71,26 +71,19 @@ public:
 
 			GlobalLinkTypeInStep::bindTexture( *object->super::U, GlobalLinkTypeInStep::getArraySize( object->super::dim ) );
 
+			int numBlocks;
+			size_t sharedMemorySize = 0; // TODO
+			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
+			if( numBlocks == 0 || err != cudaSuccess ) throw InvalidKernelSetupException();
+
 			FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), false, object->orParameter );
 			FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), true, object->orParameter );
-
-			cudaDeviceSynchronize();
-			cudaError_t error = cudaGetLastError();
-			if( error == cudaErrorInvalidConfiguration || error == cudaErrorInvalidValue || error == cudaErrorLaunchOutOfResources ) // ugly...
-			{
-				// we encountered a wrong kernel setup (this is possible in autotune) exclude from auotune...
-				throw InvalidKernelSetupException();
-			}
-			else
-			{
-				CUDA_ERROR( error, "FullGaugeFixingOverrelaxation" );
-			}
+			CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation" );
 		}
 	};
 
 	typedef FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
-//	typedef mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<128,1>> launchBoundsSequence;
 	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<32,5>, GaugefixingLaunchBounds<32,6>, GaugefixingLaunchBounds<32,7>, GaugefixingLaunchBounds<32,8>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<64,5>, GaugefixingLaunchBounds<64,6>, GaugefixingLaunchBounds<128,1>, GaugefixingLaunchBounds<128,2>, GaugefixingLaunchBounds<128,3> > launchBoundsSequence;
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
@@ -158,14 +151,17 @@ public:
 
 			cudaFuncSetCacheConfig( TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
 
+			int numBlocks;
+			size_t sharedMemorySize = 0; // TODO
+			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
+			if( numBlocks == 0 || err != cudaSuccess ) throw InvalidKernelSetupException();
+
 			int timesliceArraySize = GlobalLinkType::getArraySize( object->super::dim.getDimensionTimeslice() );
-//			int t = 0;
 			for( int t = 0; t < object->super::dim.getDimension(0); t++ )
 			{
 				int tdown = (t==0)?(object->super::dim.getDimension(0)-1):(t-1);
 
 				// TODO this binding is most probably not a good idea... Better to use one bound and write a new kernel that deals with a full array by passing the timeslice...
-
 				GlobalLinkTypeTimeslice::unbindTexture();
 				GlobalLinkTypeTimeslice::bindTexture( &((*object->super::U)[t*timesliceArraySize]), timesliceArraySize );
 				GlobalLinkTypeTimeslice2::unbindTexture();
@@ -175,26 +171,13 @@ public:
 				TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true, object->orParameter );
 			}
 
-
-			cudaDeviceSynchronize();
-			cudaError_t error = cudaGetLastError();
-			if( error != cudaSuccess )
-			if( error == cudaErrorInvalidConfiguration || error == cudaErrorInvalidValue || error == cudaErrorLaunchOutOfResources )
-			{
-				// we encountered a wrong kernel setup (this is possible in autotune) exclude from auotune...
-				throw InvalidKernelSetupException();
-			}
-			else
-			{
-				CUDA_ERROR( error, "FullGaugeFixingOverrelaxation" );
-			}
+			CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation-TimeslicePattern" );
 		}
 	};
 
 
 	typedef FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
-//	typedef mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<128,1>> launchBoundsSequence;
 	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<32,5>, GaugefixingLaunchBounds<32,6>, GaugefixingLaunchBounds<32,7>, GaugefixingLaunchBounds<32,8>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<64,5>, GaugefixingLaunchBounds<64,6>, GaugefixingLaunchBounds<128,1>, GaugefixingLaunchBounds<128,2>, GaugefixingLaunchBounds<128,3> > launchBoundsSequence;
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
@@ -222,7 +205,7 @@ public:
 
 	void run()
 	{
-		run( super::optimalId );
+		run( super::optimalId.id );
 	}
 
 	void run( size_t id  )
