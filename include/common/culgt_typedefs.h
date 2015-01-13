@@ -34,6 +34,18 @@
 	};
 #endif
 
+#if __CUDA_ARCH__ >= 350
+#if (defined(_MSC_VER) && defined(_WIN64)) || defined(__LP64__)
+#define __LDG_PTR   "l"
+#else
+#define __LDG_PTR   "r"
+#endif
+
+static __device__ __inline__ double4 __ldg(const double4 *ptr) { const double2* ptr2 = reinterpret_cast<const double2*>(ptr); double4 ret; asm volatile ("ld.global.nc.v2.f64 {%0,%1}, [%2];"  : "=d"(ret.x), "=d"(ret.y) : __LDG_PTR (ptr2)); ptr2++; asm volatile ("ld.global.nc.v2.f64 {%0,%1}, [%2];"  : "=d"(ret.z), "=d"(ret.w) : __LDG_PTR (ptr2)); return ret; }
+
+#undef __LDG_PTR
+#endif
+
 template<typename T> struct Real4
 {
 };
