@@ -121,6 +121,7 @@ public:
 	void runOverrelaxation( float orParameter, int id = -1 )
 	{
 		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
+		CUDA_LAST_ERROR( "bindTexture" );
 
 		overrelaxation.setOrParameter( orParameter );
 		if( id == -1 )
