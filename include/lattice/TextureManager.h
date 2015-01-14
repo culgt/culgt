@@ -19,6 +19,8 @@ texture<float4> float4texture_0;
 texture<float4> float4texture_1;
 texture<int4> double4texture_0;
 texture<int4> double4texture_1;
+texture<int4> double2texture_0;
+texture<int4> double2texture_1;
 texture<float> floattexture_0;
 texture<float> floattexture_1;
 texture<int2> doubletexture_0;
@@ -54,6 +56,36 @@ public:
 		else
 		{
 			return float4texture_1;
+		}
+	}
+};
+
+template<> class TextureManager<double2>
+{
+public:
+	static const int MAX_TEXTURES = 2;
+	typedef texture<int4> TextureType;
+	typedef int4 Type;
+	static inline CUDA_HOST_DEVICE TextureType getTexture(int textureID = 0)
+	{
+		if( textureID == 0)
+		{
+			return double2texture_0;
+		}
+		else
+		{
+			return double2texture_1;
+		}
+	}
+	static inline __host__ TextureType& getTextureReference(int textureID = 0)
+	{
+		if( textureID == 0)
+		{
+			return double2texture_0;
+		}
+		else
+		{
+			return double2texture_1;
 		}
 	}
 };
@@ -184,6 +216,20 @@ public:
 		int2 temp;
 		temp = tex1Dfetch( tex, index );
 		result = __hiloint2double(temp.y, temp.x);
+		return result;
+	}
+};
+
+template<> class Tex1DFetcher<double2>
+{
+public:
+	static inline __device__ double2 fetch( texture<int4> tex, lat_array_index_t index )
+	{
+		double2 result;
+		int4 temp;
+		temp = tex1Dfetch( tex, index*2 );
+		result.x = __hiloint2double(temp.y, temp.x);
+		result.y = __hiloint2double(temp.w, temp.z);
 		return result;
 	}
 };
