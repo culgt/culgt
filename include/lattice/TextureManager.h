@@ -227,7 +227,7 @@ public:
 	{
 		double2 result;
 		int4 temp;
-		temp = tex1Dfetch( tex, index*2 );
+		temp = tex1Dfetch( tex, index );
 		result.x = __hiloint2double(temp.y, temp.x);
 		result.y = __hiloint2double(temp.w, temp.z);
 		return result;
