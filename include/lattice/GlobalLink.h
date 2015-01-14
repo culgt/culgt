@@ -53,8 +53,6 @@ public:
 	{
 #if __CUDA_ARCH__ < 350
 		cudaUnbindTexture( TextureManager<typename PARAMTYPE::TYPE>::getTextureReference( TextureID ) );
-#else
-		return cudaSuccess;
 #endif
 	}
 #endif
