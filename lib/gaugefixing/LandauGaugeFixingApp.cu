@@ -6,6 +6,7 @@
 
 #include "lattice/parameterization_types/ParameterizationMediatorSU2_Vector4_Real8.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector4_Real18.h"
+#include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector2_Real18.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 #include "application/GaugeConfigurationIteratingApplication.h"
 #include "cuLGT1legacy/SiteIndex.hxx"
@@ -17,9 +18,6 @@
 #include "lattice/GlobalLink.h"
 #include "gaugefixing/LandauGaugeFixing.h"
 #include "util/rng/PhiloxWrapper.h"
-#include "lattice/parameterization_types/SU3Vector4.h"
-#include "lattice/parameterization_types/SUNRealFull.h"
-#include "lattice/parameterization_types/SU3Real12.h"
 
 namespace culgt
 {
@@ -34,8 +32,11 @@ typedef float REAL;
 typedef SU2Vector4<REAL> PARAMTYPE;
 typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
 #else
+#ifdef DOUBLEPRECISION
+typedef SU3Vector2<REAL> PARAMTYPE;
+#else
 typedef SU3Vector4<REAL> PARAMTYPE;
-//typedef SU3Real12<REAL> PARAMTYPE;
+#endif
 typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 #endif
 

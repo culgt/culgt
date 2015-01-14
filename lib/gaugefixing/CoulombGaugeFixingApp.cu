@@ -6,6 +6,7 @@
 
 #include "lattice/parameterization_types/ParameterizationMediatorSU2_Vector4_Real8.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector4_Real18.h"
+#include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector2_Real18.h"
 #include "application/GaugeConfigurationIteratingApplication.h"
 #include "cuLGT1legacy/SiteIndex.hxx"
 #include "lattice/configuration_patterns/GPUPatternTimesliceParityPriority.h"
@@ -28,7 +29,11 @@ typedef double REAL;
 typedef float REAL;
 #endif
 
+#ifdef DOUBLEPRECISION
+typedef SU3Vector2<REAL> PARAMTYPE;
+#else
 typedef SU3Vector4<REAL> PARAMTYPE;
+#endif
 typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 
 //typedef SU2Vector4<REAL> PARAMTYPE;
