@@ -46,7 +46,7 @@ private:
 		cudaGetDevice( &selectedDeviceNumber );
 		cudaGetDeviceProperties(&deviceProp, selectedDeviceNumber );
 
-		computeCapability = deviceProp.major*100+deviceProp.minor+10;
+		computeCapability = deviceProp.major*100+deviceProp.minor*10;
 		maxGridSize = deviceProp.maxGridSize[0];
 		maxBlockSize = deviceProp.maxThreadsPerBlock;
 
