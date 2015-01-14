@@ -46,13 +46,19 @@ typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
 //typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,true> GLOBALLINKTIMESLICE;
 typedef PhiloxWrapper<REAL> RNG;
 
+#ifdef CULGT_FILETYPE_VOGT
+typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPE;
+#else
+typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
+#endif
+
 /*
  *
  */
-class CoulombGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >
+class CoulombGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE>
 {
 public:
-	CoulombGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >(  dim, fileiterator, programOptions )
+	CoulombGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE>(  dim, fileiterator, programOptions )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
 

@@ -14,6 +14,7 @@
 #include "lattice/LinkFile.h"
 #include "lattice/LatticeDimension.h"
 #include "lattice/LinkFileVogt.h"
+#include "lattice/LinkFileHeaderOnly.h"
 #include "observables/PlaquetteAverage.h"
 #include "lattice/GlobalLink.h"
 #include "gaugefixing/LandauGaugeFixing.h"
@@ -51,13 +52,18 @@ typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
 typedef PhiloxWrapper<REAL> RNG;
 
+#ifdef CULGT_FILETYPE_VOGT
+typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPE;
+#else
+typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
+#endif
 /*
  *
  */
-class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >
+class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE >
 {
 public:
-	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,LinkFileVogt<PATTERNTYPE,REAL> >(  dim, fileiterator, programOptions )
+	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE >(  dim, fileiterator, programOptions )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
 
