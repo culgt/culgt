@@ -35,6 +35,8 @@ public:
 
 		("config-file", boost::program_options::value<string>(&configFile), "config file (command line arguments overwrite config file settings)")
 
+		("device,D", boost::program_options::value<int>(&devicenumber)->default_value(-1), "choose CUDA device")
+
 		("nt", boost::program_options::value<int>(&nt)->default_value(32), "size in t direction" )
 		("nx", boost::program_options::value<int>(&nx)->default_value(32), "size in x direction" )
 		("ny", boost::program_options::value<int>(&ny)->default_value(-1), "size in y direction (-1 = same as x direction)" )
@@ -210,11 +212,18 @@ public:
 			return nz;
 	}
 
+	int getDevicenumber() const
+	{
+		return devicenumber;
+	}
+
 private:
 	boost::program_options::variables_map options_vm;
 	boost::program_options::options_description options_desc;
 
 	string configFile;
+
+	int devicenumber;
 
 	string fileBasename;
 	string fileEnding;

@@ -99,6 +99,14 @@ public:
 //		ConcreteApplicationType::addProgramOptions( po );
 		po->parseOptions( argc, argv, true );
 
+		if( po->getDevicenumber() >= 0 )
+		{
+			cudaSetDevice( po->getDevicenumber() );
+			CUDA_LAST_ERROR( "Set device" );
+		}
+
+		std::cout << "Using device: " << DeviceProperties::getName() << "(" << DeviceProperties::getDeviceNumber() << ")" << std::endl;
+
 		int fileNumberEnd = po->getFileNumberStart()+(po->getNConf()-1)*po->getFileNumberStep();
 		FileIterator fileiterator( po->getFileBasename(), po->getFileEnding(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd );
 

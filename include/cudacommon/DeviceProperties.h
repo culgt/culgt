@@ -7,6 +7,7 @@
 
 #ifndef DEVICEPROPERTIES_H_
 #define DEVICEPROPERTIES_H_
+#include <string>
 
 namespace culgt
 {
@@ -38,17 +39,33 @@ public:
 		}
 		return maxBlockSize;
 	}
+	static std::string getName()
+	{
+		if( !isAvailable )
+		{
+			update();
+		}
+		return name;
+	}
+	static int getDeviceNumber()
+	{
+		if( !isAvailable )
+		{
+			update();
+		}
+		return deviceNumber;
+	}
 private:
 	static void update()
 	{
 		cudaDeviceProp deviceProp;
-		int selectedDeviceNumber;
-		cudaGetDevice( &selectedDeviceNumber );
-		cudaGetDeviceProperties(&deviceProp, selectedDeviceNumber );
+		cudaGetDevice( &deviceNumber );
+		cudaGetDeviceProperties(&deviceProp, deviceNumber );
 
 		computeCapability = deviceProp.major*100+deviceProp.minor*10;
 		maxGridSize = deviceProp.maxGridSize[0];
 		maxBlockSize = deviceProp.maxThreadsPerBlock;
+		name = deviceProp.name;
 
 		isAvailable = true;
 	}
@@ -56,11 +73,15 @@ private:
 	static int computeCapability;
 	static int maxGridSize;
 	static int maxBlockSize;
+	static std::string name;
+	static int deviceNumber;
 };
 bool DeviceProperties::isAvailable = false;
 int DeviceProperties::computeCapability;
 int DeviceProperties::maxGridSize;
 int DeviceProperties::maxBlockSize;
+std::string DeviceProperties::name;
+int DeviceProperties::deviceNumber;
 
 }
 
