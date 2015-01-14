@@ -193,6 +193,7 @@ protected:
 
 			fullTimeSa += timerSa.getTime();
 
+			if( settings.isPrintStats() ) std::cout << std::fixed << std::setprecision( 2 ) << "Time for Simulated Annealing: " << timerSa.getTime() << " s" << std::endl;
 			if( settings.isPrintStats() ) getRunInfoSimulatedAnnealing( fullTimeSa, iterSa, iterMicro ).print();
 		}
 	}
@@ -219,6 +220,7 @@ protected:
 
 			fullTimeOr += timerOr.getTime();
 
+			if( settings.isPrintStats() ) std::cout << std::fixed << std::setprecision( 2 ) << "Time for Overrelaxation: " << timerOr.getTime() << " s" << std::endl;
 			if( settings.isPrintStats() ) getRunInfoOverrelaxation( fullTimeOr, iterOr ).print();
 		}
 	}
