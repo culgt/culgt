@@ -15,14 +15,15 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include "../cudacommon/DeviceProperties.h"
 
 using std::stringstream;
 
 namespace culgt
 {
 // TODO This are the FERMI settings... Should deal somewhere with deviceProperties...
-const int MAX_GRIDSIZE = 65535;
-const int MAX_BLOCKSIZE = 1024;
+int MAX_GRIDSIZE = DeviceProperties::getMaxGridSize();
+int MAX_BLOCKSIZE = DeviceProperties::getMaxBlockSize();
 
 //class KernelSetupException: public std::exception
 //{
