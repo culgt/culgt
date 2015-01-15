@@ -63,7 +63,7 @@ typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
 class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE >
 {
 public:
-	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE >(  dim, fileiterator, programOptions )
+	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE >(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
 
@@ -89,24 +89,31 @@ private:
 
 	void iterate()
 	{
-		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
 		if( sethot )
 		{
+			std::cout << "Using a hot (random) lattice" << std::endl;
 			configuration.setHotOnDevice<RNG>( programOptions->getSeed(), RNG::getNextCounter());
 			CUDA_LAST_ERROR( "setHotOnDevice ");
+			fix();
 		}
 		else
 		{
-			loadToDevice();
+			if( loadToDevice() )
+			{
+				fix();
+				saveFromDevice( fileAppendix );
+			}
 		}
-
-		std::cout << "Plaquette before: " << plaquette.getPlaquette() << std::endl;
-		landau->fix( settings );
-		std::cout << "Plaquette after: " << plaquette.getPlaquette() << std::endl;
-
-		saveFromDevice( fileAppendix );
 	};
 
+	void fix()
+	{
+		std::cout << "Plaquette before: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
+		landau->fix( settings );
+		std::cout << "Plaquette after: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
+	}
+
+	PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette;
 	LandauGaugefixing<PATTERNTYPE,LOCALLINK>* landau;
 	string fileAppendix;
 	bool sethot;

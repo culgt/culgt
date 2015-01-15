@@ -19,6 +19,7 @@
 #include "util/rng/PhiloxWrapper.h"
 #include "gaugefixing/RandomGaugeTrafo.h"
 #include "gaugefixing/GaugeSettings.h"
+#include "../../include/lattice/LinkFileHeaderOnly.h"
 //#include "lattice/parameterization_types/SUNRealFull.h"
 
 namespace culgt
@@ -58,7 +59,7 @@ typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
 class CoulombGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE>
 {
 public:
-	CoulombGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE>(  dim, fileiterator, programOptions )
+	CoulombGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE>(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
 
@@ -91,18 +92,24 @@ private:
 	{
 		if( sethot )
 		{
+			std::cout << "Using a hot (random) lattice" << std::endl;
 			configuration.setHotOnDevice<RNG>( programOptions->getSeed(), RNG::getNextCounter());
 			CUDA_LAST_ERROR( "setHotOnDevice ");
+			fix();
 		}
 		else
 		{
-			loadToDevice();
+			if( loadToDevice() )
+			{
+				fix();
+				saveFromDevice( fileAppendix );
+			}
 		}
+	};
 
-//		configuration.setColdOnDevice();
-
-		PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette( configuration.getDevicePointer(), dimension );
-		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
+	void fix()
+	{
+		std::cout << "Plaquette before: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
 //
 //		int t = 0;
 //		int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
@@ -149,12 +156,11 @@ private:
 			coulomb->fix( settings );
 		}
 
-		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
-
-		saveFromDevice( fileAppendix );
-	};
+		std::cout << "Plaquette after: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
+	}
 
 	CoulombGaugefixing<PATTERNTYPE::TIMESLICE_PATTERNTYPE,LOCALLINK>* coulomb;
+	PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette;
 	string fileAppendix;
 	bool sethot;
 };

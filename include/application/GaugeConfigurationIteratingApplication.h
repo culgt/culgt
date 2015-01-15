@@ -78,7 +78,7 @@ public:
 	void save( string appendix )
 	{
 		linkFile->setFilename( fileiterator.getFilename( appendix ) );
-		std::cout << fileiterator.getFilename( appendix ) << std::endl;
+		std::cout << fileiterator.getFilename( appendix )  << " saved!" << std::endl;
 		linkFile->save( configuration.getHostPointer() );
 	}
 
