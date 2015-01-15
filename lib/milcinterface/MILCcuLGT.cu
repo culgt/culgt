@@ -5,8 +5,6 @@
  *      Author: vogt
  */
 
-
-
 #include "MILCcuLGT.h"
 #include "lattice/GaugeConfiguration.h"
 #include <iostream>
@@ -20,10 +18,10 @@
 #include  "lattice/parameterization_types/ParameterizationMediatorSU3_Vector4_Real18.h"
 #include "gaugefixing/LandauGaugeFixing.h"
 #include "gaugefixing/GaugeSettings.h"
+#include "util/rng/PhiloxWrapper.h"
 
 #include "su3.h" // milc
 #include "lattice.h"
-#include "util/rng/PhiloxWrapper.h"
 
 using culgt::GaugeConfiguration;
 using culgt::SU3Vector4;
@@ -36,7 +34,6 @@ using culgt::LandauGaugefixing;
 using culgt::GaugeSettings;
 using culgt::PhiloxWrapper;
 
-
 typedef SU3Vector4<REAL> PARAMTYPE;
 typedef SiteIndex<4,FULL_SPLIT> SITE;
 typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
@@ -44,7 +41,7 @@ typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
 typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 typedef PhiloxWrapper<REAL> RNG;
 
-LandauGaugefixing<GLOBALLINK,LOCALLINK>* landau;
+LandauGaugefixing<PATTERNTYPE,LOCALLINK>* landau;
 GaugeConfiguration<PATTERNTYPE>* config;
 
 void cuLGTinitLandau( int nx, int ny, int nz, int nt  )
@@ -52,7 +49,7 @@ void cuLGTinitLandau( int nx, int ny, int nz, int nt  )
 	LatticeDimension<4> dim( nt, nx, ny, nz );
 	config = new GaugeConfiguration<PATTERNTYPE>(dim);
 	config->allocateMemory();
-	landau = new LandauGaugefixing<GLOBALLINK,LOCALLINK>( config->getDevicePointer(), dim, 1235 );
+	landau = new LandauGaugefixing<PATTERNTYPE,LOCALLINK>( config->getDevicePointer(), dim, 1235 );
 	landau->orstepsAutoTune<RNG>(1.5, 200);
 }
 
@@ -61,21 +58,6 @@ void cuLGTfixLandau( int nx, int ny, int nz, int nt )
 	MILCConverter<PATTERNTYPE, REAL>::convertFromMILC( config->getHostPointer(), nx, ny, nz, nt );
 
 	config->copyToDevice();
-
-//	culgt::WilsonLoopAverage<PATTERNTYPE,LOCALLINK> wilsonloop( config->getDevicePointer(), dim );
-//
-//	double spatial = wilsonloop.getWilsonLoop( 1, 1, 2, 1 );
-//	spatial += wilsonloop.getWilsonLoop( 1, 1, 3, 1 );
-//	spatial += wilsonloop.getWilsonLoop( 2, 1, 3, 1 );
-//	double temporal = wilsonloop.getWilsonLoop( 0, 1, 1, 1 );
-//	temporal += wilsonloop.getWilsonLoop( 0, 1, 2, 1 );
-//	temporal += wilsonloop.getWilsonLoop( 0, 1, 3, 1 );
-//
-//	std::cout << spatial << "\t ";
-//	std::cout << temporal << std::endl;
-
-
-
 
 	GaugeSettings settings;
 	settings.setOrMaxIter( 6000 );
