@@ -108,15 +108,21 @@ public:
 
 		if( force )
 		{
-			forceTune( iter );
-			autotuneManager.writeOptimalId( optimalId );
+			if( forceTune( iter ) )
+				autotuneManager.writeOptimalId( optimalId );
+			else
+			{
+				std::cout << "Autotune failed! Exiting..." << std::endl;
+				exit(-1);
+			}
 		}
 		std::cout << "Using option: " << optimalId.name << std::endl;
 	}
 
-	void forceTune( int iter )
+	bool forceTune( int iter )
 	{
 		double bestPerformance = 0;
+		bool tuneSuccessful = false;
 
 		std::vector<RuntimeChooserOption>* ptrToOptions = getOptions();
 
@@ -146,6 +152,7 @@ public:
 			try
 			{
 				performance = 1./measure( it->id, iter );
+				tuneSuccessful = true;
 			}
 			catch(InvalidKernelSetupException& e)
 			{
@@ -163,6 +170,8 @@ public:
 				optimalId = *it;
 			}
 		}
+
+		return tuneSuccessful;
 	}
 
 protected:
