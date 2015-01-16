@@ -41,6 +41,7 @@ public:
 
 	void addAttribute( std::string attribute )
 	{
+		attribute.erase(remove_if(attribute.begin(), attribute.end(), ::isspace), attribute.end());
 		identifier << "_" << attribute;
 	}
 
