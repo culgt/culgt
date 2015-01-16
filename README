@@ -1,0 +1,23 @@
+Copyright 2012-2015 Mario Schröck, Hannes Vogt
+
+In pre-release version 2015-01-16 only Overrelaxation is included.
+
+cuLGT comes with stand-alone lattice gaugefixing applications in lib/gaugefixing and
+an interface to the MILC framework in lib/milcinterface.
+
+Build lib/gaugefixing:
+- Set an environment variable CULGT_HOME to the root directory of cuLGT.
+- In lib/gaugefixing/CMakeLists.txt adjust parameters (like arch=sm_xx to your architecture).
+- Run cmake and make (mkdir -p build;cd build;cmake ..;make)
+- Currently the filetype is set to .mdp filetype
+  (or more precisly it can read any files that consist of a header and the gauge field stored in the same order as in mdp files)
+  With QCDUTILS by Massimo Di Pierro mdp can be converted to and from many known formats (NERSC, MILC, LIME, ILDG, 
+  SciDAC).
+  For the manual see http://arxiv.org/abs/1202.4813 and the Python source code can be downloaded 
+  at http://code.google.com/p/qcdutils/
+- Run the application! For example test on a random lattice with ./LandauGaugeSP --sethot 1 
+
+The MILC interface is experimental.
+
+Known issues:
+- Large lattices are not supported at this stage for compute capability < 3.5 (disable texture use as workaround)
