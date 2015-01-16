@@ -37,10 +37,6 @@ using std::string;
 namespace culgt
 {
 
-
-
-
-
 namespace LandauGaugefixingKernel
 {
 
@@ -70,7 +66,6 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 		Sum -= temp;
 	}
 
-	// TODO: verify that the following statement indeed drops out, then remove it
 	Sum -= Sum.trace()/(LocalLinkType::PARAMTYPE::REALTYPE)(GlobalLinkType::PARAMTYPE::NC);
 
 	LocalLinkType SumHerm;
@@ -94,7 +89,6 @@ public:
 
 	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, seed, 1.5 ), seed(seed)
 	{
-//		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
 		// TODO we should assert here that we use GPUPatternParitySplit!
 	}
 
@@ -118,16 +112,10 @@ public:
 	}
 
 
-	void runOverrelaxation( float orParameter, int id = -1 )
+	void runOverrelaxation( float orParameter  )
 	{
-		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
-		CUDA_LAST_ERROR( "bindTexture" );
-
 		overrelaxation.setOrParameter( orParameter );
-		if( id == -1 )
-			overrelaxation.run();
-		else
-			overrelaxation.run( id );
+		overrelaxation.run();
 	}
 
 	RunInfo getRunInfoOverrelaxation( double time, long iter )

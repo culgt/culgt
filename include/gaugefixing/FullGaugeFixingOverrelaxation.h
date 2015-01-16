@@ -1,13 +1,11 @@
 /**
- * We use partial template specialization for the use GPUPatternParityPriority or GPUPatternTimesliceParityPriority.
+ * We use partial template specialization for choosing between GPUPatternParityPriority or GPUPatternTimesliceParityPriority.
  * The first choice is the natural one for Landau-like gauges, i.e. gauges that include all links. But the second choice
  * might be useful if you also deal with Coulomb-like gauges that operate only in timeslices. Then there is no need to transform
  * the configurations. Performance should only degrade in the latter case if we cannot fully utilize the GPU with timeslice operations.
- * TODO in the current implemtation of the timeslice case we bind/unbind textures in every iteration. That might be a performance obstacle.
  *
- *
- *  Created on: Apr 29, 2014
- *      Author: vogt
+ * Created on: Apr 29, 2014
+ * Author: vogt
  */
 
 #ifndef FULLGAUGEFIXINGOVERRELAXATION_H_
@@ -35,6 +33,9 @@ using boost::mpl::placeholders::_;
 namespace culgt
 {
 
+/**
+ * General class, needs specialization for different Patterns
+ */
 template<typename PatternType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingOverrelaxation: public LandauGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
 {
 public:
@@ -49,7 +50,9 @@ public:
 	};
 };
 
-// disassemble the GlobalLink to specialize for the PatternType: here specialized for the GPUPatternParityPriority
+/**
+ * Specialization for PatternType == GPUPatternParityPriority (i.e. the natural choice for Landau-like gauges)
+ */
 template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public LandauGaugeTunableObject<GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
@@ -59,7 +62,9 @@ public:
 	typedef typename ParamType::TYPE T;
 	typedef typename ParamType::REALTYPE REALT;
 
-
+	/**
+	 * Perform a gaugefixing step with the given kernel settings.
+	 */
 	template<typename GFLaunchBounds, typename ThreadsPerSite, typename UseTexture> struct Step
 	{
 		template<typename T> static void exec( T* object )
@@ -99,11 +104,13 @@ public:
 		}
 	};
 
-	typedef FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
-	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
+	// setup options for the autotuner
 	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<32,5>, GaugefixingLaunchBounds<32,6>, GaugefixingLaunchBounds<32,7>, GaugefixingLaunchBounds<32,8>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<64,5>, GaugefixingLaunchBounds<64,6>, GaugefixingLaunchBounds<128,1>, GaugefixingLaunchBounds<128,2>, GaugefixingLaunchBounds<128,3> > launchBoundsSequence;
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
+
+	typedef FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
+	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
 	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, float orParameter, long seed ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
@@ -121,11 +128,6 @@ public:
 		return &Chooser::options;
 	}
 
-	void runNew( size_t id )
-	{
-		runner.run( id );
-	}
-
 	void run()
 	{
 		run( super::optimalId.id );
@@ -133,7 +135,7 @@ public:
 
 	void run( size_t id  )
 	{
-		runNew( id );
+		runner.run( id );
 	}
 
 	void setOrParameter(float orParameter)
@@ -145,18 +147,22 @@ private:
 	float orParameter;
 };
 
+/**
+ * Specialization for PatternType == GPUPatternTimesliceParityPriority (i.e. the natural choice for Coulomb-like gauges)
+ */
 template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public LandauGaugeTunableObject<GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true> GlobalLinkType;
-
 	typedef SiteIndex<SiteType::Ndim, FULL_SPLIT> SiteTypeTimeslice;
-
 	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename ParamType::TYPE T;
 	typedef typename ParamType::REALTYPE REALT;
 
+	/**
+	 * Perform a gaugefixing step with the given kernel settings.
+	 */
 	template<typename GFLaunchBounds, typename ThreadsPerSite, typename UseTexture> struct Step
 	{
 		template<typename T> static void exec( T* object )
@@ -179,7 +185,8 @@ public:
 			{
 				int tdown = (t==0)?(object->super::dim.getDimension(0)-1):(t-1);
 
-				// TODO this binding is most probably not a good idea... Better to use one bound and write a new kernel that deals with a full array by passing the timeslice...
+				// This binding in every step is most probably not a good idea... Better to use one bind to the full array and write a new kernel that deals with a full array by passing the timeslice...
+				// Probably we won't use this choice very much. Until then we don't care...
 				GlobalLinkTypeTimeslice::unbindTexture();
 				GlobalLinkTypeTimeslice::bindTexture( &((*object->super::U)[t*timesliceArraySize]), timesliceArraySize );
 				GlobalLinkTypeTimeslice2::unbindTexture();
@@ -188,7 +195,6 @@ public:
 				TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false, object->orParameter );
 				TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true, object->orParameter );
 			}
-
 			CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation-TimeslicePattern" );
 #else
 			int timesliceArraySize = GlobalLinkType::getArraySize( object->super::dim.getDimensionTimeslice() );
@@ -196,8 +202,8 @@ public:
 			{
 				int tdown = (t==0)?(object->super::dim.getDimension(0)-1):(t-1);
 
-				// TODO this binding is most probably not a good idea... Better to use one bound and write a new kernel that deals with a full array by passing the timeslice...
-
+				// This binding in every step is most probably not a good idea... Better to use one bind to the full array and write a new kernel that deals with a full array by passing the timeslice...
+				// Probably we won't use this choice very much. Until then we don't care...
 				GlobalLinkTypeTimeslice::unbindTexture();
 				GlobalLinkTypeTimeslice::bindTexture( &((*object->super::U)[t*timesliceArraySize]), timesliceArraySize );
 				GlobalLinkTypeTimeslice2::unbindTexture();
@@ -223,12 +229,13 @@ public:
 		}
 	};
 
-
-	typedef FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
-	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
+	// setup options for the autotuner
 	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<32,5>, GaugefixingLaunchBounds<32,6>, GaugefixingLaunchBounds<32,7>, GaugefixingLaunchBounds<32,8>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<64,5>, GaugefixingLaunchBounds<64,6>, GaugefixingLaunchBounds<128,1>, GaugefixingLaunchBounds<128,2>, GaugefixingLaunchBounds<128,3> > launchBoundsSequence;
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
+
+	typedef FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
+	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
 	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, float orParameter, long seed ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
@@ -246,11 +253,6 @@ public:
 		return &Chooser::options;
 	}
 
-	void runNew( size_t id )
-	{
-		runner.run( id );
-	}
-
 	void run()
 	{
 		run( super::optimalId.id );
@@ -258,7 +260,7 @@ public:
 
 	void run( size_t id  )
 	{
-		runNew( id );
+		runner.run( id );
 	}
 
 	void setOrParameter(float orParameter)

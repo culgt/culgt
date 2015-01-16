@@ -27,8 +27,8 @@
 
 #include "GaugeSettings.h"
 
-#include "CoulombGaugeFixingSimulatedAnnealing.h"
-#include "CoulombGaugeFixingMicrocanonical.h"
+//#include "CoulombGaugeFixingSimulatedAnnealing.h"
+//#include "CoulombGaugeFixingMicrocanonical.h"
 //#include "CoulombGaugeFixingCornell.h"
 #include "RandomGaugeTrafo.h"
 
@@ -73,7 +73,6 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 		Sum -= temp;
 	}
 
-	// TODO: verify that the following statement indeed drops out, then remove it
 	Sum -= Sum.trace()/(LocalLinkType::PARAMTYPE::REALTYPE)(GlobalLinkType::PARAMTYPE::NC);
 
 	LocalLinkType SumHerm;
@@ -182,13 +181,10 @@ public:
 		return GaugeStats( dGffAvg, dAAvg );
 	}
 
-	void runOverrelaxation( float orParameter, int id = -1 )
+	void runOverrelaxation( float orParameter )
 	{
 		overrelaxation.setOrParameter( orParameter );
-		if( id == -1 )
-			overrelaxation.run();
-		else
-			overrelaxation.run( id );
+		overrelaxation.run();
 	}
 
 	RunInfo getRunInfoOverrelaxation( double time, long iter )
@@ -215,7 +211,8 @@ public:
 
 	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
 	{
-		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iterSa, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops, iterMicro, MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
+		return RunInfo( 0, 0 );
+//		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iterSa, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops, iterMicro, MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
 	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )

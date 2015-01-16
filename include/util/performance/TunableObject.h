@@ -7,25 +7,16 @@
 #ifndef TUNABLEOBJECT_H_
 #define TUNABLEOBJECT_H_
 
+#include <vector>
 #include "../../cuLGT1legacy/Chronotimer.h"
 #include "../template_instantiation/SequenceRunner.h"
 #include "../template_instantiation/RuntimeChooser.h"
 #include "AutotuneManager.h"
 
-#include "cuda.h"
-#include <vector>
-
-using std::vector;
+#include "../../cudacommon/DeviceProperties.h"
 
 namespace culgt
 {
-
-class LastElementReachedException: public std::exception
-{
-public:
-	~LastElementReachedException() throw() {};
-	LastElementReachedException(){};
-};
 
 class InvalidKernelSetupException: public std::exception
 {
@@ -91,11 +82,7 @@ public:
 	{
 		AutotuneManager autotuneManager;
 		autotuneManager.addHashedAttribute( getClassName() );
-		int selectedDeviceNumber;
-		cudaGetDevice( &selectedDeviceNumber );
-		cudaDeviceProp prop;
-		cudaGetDeviceProperties(&prop,selectedDeviceNumber);
-		autotuneManager.addAttribute( string(prop.name) );
+		autotuneManager.addAttribute( DeviceProperties::getName() );
 
 		try
 		{
@@ -126,20 +113,19 @@ public:
 
 		std::vector<RuntimeChooserOption>* ptrToOptions = getOptions();
 
-		std::cout << ptrToOptions->size() << std::endl;
-
 		for( vector<RuntimeChooserOption>::iterator it = ptrToOptions->begin(); it != ptrToOptions->end(); ++it )
 		{
 			try
 			{
-				std::cout << "warmup option " << it->name << std::endl;
+				std::cout << "warmup option " << it->name << ": ";
 				measure( it->id, iter );
 			}
 			catch(InvalidKernelSetupException& e)
 			{
+				std::cout << "invalid configuration" << std::endl;
 				continue;
 			}
-			std::cout << "warmup done..." << std::endl;
+			std::cout << "done." << std::endl;
 			break;
 		}
 
@@ -162,7 +148,6 @@ public:
 			CUDA_LAST_ERROR("TunableObject::measure()" );
 
 			std::cout << performance << std::endl;
-
 
 			if( performance > bestPerformance )
 			{

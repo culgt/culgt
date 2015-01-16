@@ -35,7 +35,7 @@ public:
 
 	virtual void randomTrafo() = 0;
 	virtual void reproject() = 0;
-	virtual void runOverrelaxation( float orParameter, int id = -1 ) = 0;
+	virtual void runOverrelaxation( float orParameter ) = 0;
 	virtual RunInfo getRunInfoOverrelaxation( double time, long iter ) = 0;
 	virtual void runSimulatedAnnealing( float temperature, int id = -1 ) = 0;
 	virtual RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro ) = 0;

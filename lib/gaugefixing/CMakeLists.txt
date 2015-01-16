@@ -2,9 +2,13 @@ project(propagator)
 
 cmake_minimum_required(VERSION 2.8)
 
+set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
+option( MIXED_PRECISION "switch on mixed precision (in the SP application)" OFF )
+option ( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
+option( PRINT_KERNEL_INFO "print kernel infos" OFF )
 
+#========================================================
 include_directories( $ENV{CULGT_HOME}/include )
-include_directories( ../../include )
 link_directories( /usr/local/cuda/lib64)
 add_definitions(-std=c++11)
 set(CMAKE_CXX_FLAGS "-Wall -O3")
@@ -12,35 +16,49 @@ set(CMAKE_CXX_FLAGS "-Wall -O3")
 find_package(CUDA)
 include(FindCUDA)
 
+if( ${PRINT_KERNEL_INFO} )
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xptxas -v" )
+endif()
+
+if( ${MIXED_PRECISION} )
+    set( CULGT_OPTIONS "${CULGT_OPTIONS} -DDPUPDATE" )
+endif()
+
+if( ${USE_TIMESLICEPATTERN} )
+    set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_USE_TIMESLICE_PATTERN" ) 
+endif()
+
+
+
 if( ${CUDA_VERSION} VERSION_LESS 6.5 )
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_20 -Xptxas -v -Xptxas -dlcm=cg --use_fast_math")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=${CUDA_ARCHITECTURE} -Xptxas -dlcm=cg --use_fast_math")
     message(STATUS "Cannot use -std=c++11 (CUDA version ${CUDA_VERSION})")
 else()
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -arch=sm_20 -Xptxas -v -Xptxas -dlcm=cg --use_fast_math")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -arch=${CUDA_ARCHITECTURE} -Xptxas -dlcm=cg --use_fast_math")
     message(STATUS "Using -std=c++11 (CUDA version ${CUDA_VERSION})")
 endif()
 
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
-cuda_add_executable(CoulombGaugeDP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION)
-target_link_libraries(CoulombGaugeDP pthread)
-target_link_libraries(CoulombGaugeDP cudart)
-target_link_libraries(CoulombGaugeDP cufft)
-target_link_libraries(CoulombGaugeDP boost_program_options)
-
-cuda_add_executable(CoulombGaugeSP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc)
+cuda_add_executable(CoulombGaugeSP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS ${CULGT_OPTIONS})
 target_link_libraries(CoulombGaugeSP pthread)
 target_link_libraries(CoulombGaugeSP cudart)
 target_link_libraries(CoulombGaugeSP cufft)
 target_link_libraries(CoulombGaugeSP boost_program_options)
 
-cuda_add_executable(LandauGaugeSP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc)
+cuda_add_executable(CoulombGaugeDP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
+target_link_libraries(CoulombGaugeDP pthread)
+target_link_libraries(CoulombGaugeDP cudart)
+target_link_libraries(CoulombGaugeDP cufft)
+target_link_libraries(CoulombGaugeDP boost_program_options)
+
+cuda_add_executable(LandauGaugeSP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS ${CULGT_OPTIONS} )
 target_link_libraries(LandauGaugeSP pthread)
 target_link_libraries(LandauGaugeSP cudart)
 target_link_libraries(LandauGaugeSP cufft)
 target_link_libraries(LandauGaugeSP boost_program_options)
 
-cuda_add_executable(LandauGaugeDP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION)
+cuda_add_executable(LandauGaugeDP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
 target_link_libraries(LandauGaugeDP pthread)
 target_link_libraries(LandauGaugeDP cudart)
 target_link_libraries(LandauGaugeDP cufft)
