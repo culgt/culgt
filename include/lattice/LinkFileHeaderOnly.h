@@ -51,17 +51,17 @@ public:
 	void init()
 	{
 		int realsize;
-		if( super::reinterpretReal == STANDARD )
-		{
-			realsize = sizeof(typename LocalLinkParamType::TYPE);
-		}
-		else if( super::reinterpretReal == FLOAT )
+		if( super::reinterpretReal == FLOAT )
 		{
 			realsize = sizeof(float);
 		}
 		else if( super::reinterpretReal == DOUBLE )
 		{
 			realsize = sizeof(double);
+		}
+		else // STANDARD
+		{
+			realsize = sizeof(typename LocalLinkParamType::TYPE);
 		}
 
 		arraySize = super::getLatticeDimension().getSize()*memoryNdim*LocalLinkParamType::SIZE*realsize;
