@@ -20,6 +20,15 @@
 #include "gaugefixing/LandauGaugeFixing.h"
 #include "util/rng/PhiloxWrapper.h"
 
+#if __cplusplus >= 201103L
+// this fixes a strange error in boost/lexical_cast.hpp where it needs std::pow( double, int )
+#include <cmath>
+double std::pow( double d, int i )
+{
+	return std::pow( d, (double)i );
+}
+#endif
+
 namespace culgt
 {
 

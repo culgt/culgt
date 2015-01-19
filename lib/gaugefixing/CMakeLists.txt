@@ -6,6 +6,7 @@ set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
 option( MIXED_PRECISION "switch on mixed precision (in the SP application)" OFF )
 option ( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
 option( PRINT_KERNEL_INFO "print kernel infos" OFF )
+option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
 
 #========================================================
 include_directories( $ENV{CULGT_HOME}/include )
@@ -30,7 +31,7 @@ endif()
 
 
 
-if( ${CUDA_VERSION} VERSION_LESS 6.5 )
+if( ${CUDA_VERSION} VERSION_LESS 6.5 OR NOT CULGT_ALLOW_C++11 )
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=${CUDA_ARCHITECTURE} -Xptxas -dlcm=cg --use_fast_math")
     message(STATUS "Cannot use -std=c++11 (CUDA version ${CUDA_VERSION})")
 else()
