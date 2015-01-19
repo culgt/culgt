@@ -19,6 +19,8 @@
 #include "GaugeFixing8Threads.h"
 #include "GaugeFixing4Threads.h"
 #include "algorithms/OrUpdate.h"
+#include "algorithms/SaUpdate.h"
+#include "algorithms/MicroUpdate.h"
 #include "gaugetypes/LandauCoulombGaugeType.h"
 #include "RunInfo.h"
 #include "GaugeStats.h"
@@ -137,7 +139,7 @@ public:
 
 	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
 	{
-		return RunInfo( 0, 0 );
+		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), time, iterSa, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops, iterMicro, MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
 	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )
