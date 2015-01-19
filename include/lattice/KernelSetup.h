@@ -3,7 +3,7 @@
  *
  *
  *	workSize is the number of threads that are needed per working block. KernelSetup tries to use the smallest multiple of workSize threads
- *	that are compatible with MAX_GRIDSIZE.
+ *	that are compatible with DeviceProperties::getMaxGridSize().
  *
  *  Created on: Mar 14, 2014
  *      Author: vogt
@@ -21,23 +21,6 @@ using std::stringstream;
 
 namespace culgt
 {
-// TODO This are the FERMI settings... Should deal somewhere with deviceProperties...
-int MAX_GRIDSIZE = DeviceProperties::getMaxGridSize();
-int MAX_BLOCKSIZE = DeviceProperties::getMaxBlockSize();
-
-//class KernelSetupException: public std::exception
-//{
-//public:
-//	~KernelSetupException() throw() {};
-//	KernelSetupException( std::string msg ) : msg(msg){};
-//	virtual const char* what() const throw()
-//	{
-//		return msg.c_str();
-//	}
-//private:
-//	std::string msg;
-//};
-
 
 #define VERIFY_LATTICE_SIZE( dim, index )\
 	if( index >= dim.getSize() ) return
@@ -116,7 +99,7 @@ private:
 		int mod = latSize%smallestSitesPerBlock;
 		gridSize = latSize/smallestSitesPerBlock;
 		if( mod > 0 ) gridSize++;
-		if( blockSize <= MAX_BLOCKSIZE && gridSize <= MAX_GRIDSIZE ) return true;
+		if( blockSize <= DeviceProperties::getMaxBlockSize() && gridSize <= DeviceProperties::getMaxGridSize() ) return true;
 		else return false;
 	}
 
@@ -128,7 +111,7 @@ private:
 		int sitesPerBlock = minSitesPerBlock;
 		while( true )
 		{
-			if( latSize/sitesPerBlock < MAX_GRIDSIZE - 1 )
+			if( latSize/sitesPerBlock < DeviceProperties::getMaxGridSize() - 1 )
 			{
 				break;
 			}
@@ -137,7 +120,7 @@ private:
 				sitesPerBlock += minSitesPerBlock;
 			}
 		}
-		if( sitesPerBlock*threadsPerBlock <= MAX_BLOCKSIZE ) return sitesPerBlock;
+		if( sitesPerBlock*threadsPerBlock <= DeviceProperties::getMaxBlockSize() ) return sitesPerBlock;
 		else return -1;
 	}
 
