@@ -179,13 +179,11 @@ protected:
 				iterSa++;
 				temperature -= tStep;
 
-				runMicrocanonical();
-				iterMicro++;
-				runMicrocanonical();
-				iterMicro++;
-				runMicrocanonical();
-				iterMicro++;
-
+				for( int j = 0; j < settings.getMicroiter(); j++ )
+				{
+					runMicrocanonical();
+					iterMicro++;
+				}
 				check( i+1 );
 			}
 			cudaDeviceSynchronize();
