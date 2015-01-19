@@ -28,6 +28,7 @@
 #include "../lattice/GaugeConfigurationCudaHelper.h"
 #include "../util/performance/TunableObject.h"
 #include "FullGaugeFixingOverrelaxation.h"
+#include "FullGaugeFixingSimulatedAnnealing.h"
 #include "GaugeFixingSaOr.h"
 #include "RandomGaugeTrafo.h"
 #include "../lattice/GlobalLink.h"
@@ -87,7 +88,7 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, seed, 1.5 ), seed(seed)
+	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, seed, 1.5 ), simulatedAnnealing( &this->U, dim, 1.0, seed ), seed(seed)
 	{
 		// TODO we should assert here that we use GPUPatternParitySplit!
 	}
@@ -128,9 +129,10 @@ public:
 		assert( false );
 	}
 
-	void runSimulatedAnnealing( float temperature, int id = -1 )
+	void runSimulatedAnnealing( float temperature )
 	{
-		assert( false );
+		simulatedAnnealing.setTemperature( temperature );
+		simulatedAnnealing.run();
 	}
 
 	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
@@ -146,7 +148,8 @@ public:
 
 	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int iter = 1000 )
 	{
-		assert( false );
+		simulatedAnnealing.setTemperature( temperature );
+		simulatedAnnealing.tune( iter );
 	}
 
 	template<typename RNG> void microcanonicalAutoTune( int iter = 1000 )
@@ -205,6 +208,7 @@ private:
 	T* UClean;
 
 	FullGaugeFixingOverrelaxation<PatternType,LocalLinkType,LandauCoulombGaugeType<LANDAU> > overrelaxation;
+	FullGaugeFixingSimulatedAnnealing<PatternType,LocalLinkType,LandauCoulombGaugeType<LANDAU> > simulatedAnnealing;
 
 	long seed;
 };
