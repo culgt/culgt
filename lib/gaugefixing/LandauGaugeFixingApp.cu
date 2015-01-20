@@ -90,6 +90,7 @@ private:
 	void setup()
 	{
 		landau->orstepsAutoTune<RNG>(1.5, 50);
+		landau->sastepsAutoTune<RNG>(1., 20);
 	}
 
 	void teardown()

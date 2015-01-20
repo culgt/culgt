@@ -43,6 +43,8 @@ namespace mpl
 	public:
 		static std::string getString()
 		{
+			StringContainer<List>::data.clear();
+			StringContainer<List>::data.str( "" );
 			boost::mpl::for_each<List>(to_string<List>());
 			std::string str = StringContainer<List>::data.str();
 			return str.substr(0,str.size()-1);

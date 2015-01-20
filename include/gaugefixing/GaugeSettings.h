@@ -126,6 +126,9 @@ public:
 		this->saSteps = saSteps;
 	}
 
+	int getMicroiter() const {
+		return microiter;
+	}
 //	long getSeed() const
 //	{
 //		return seed;
@@ -159,10 +162,13 @@ public:
 					("samin", boost::program_options::value<float>(&saMin)->default_value(0.1), "Simulated Annealing end temperature")
 					("sasteps", boost::program_options::value<int>(&saSteps)->default_value(0), "number of Simulated Annealing steps")
 
+					("microiter", boost::program_options::value<int>(&microiter)->default_value(3), "number of microcanonical updates per heatbath in Simulated Annealing")
+
 					("printstats", boost::program_options::value<bool>(&printStats)->default_value(true), "print progress on command line");
 
 		return gaugeOptions;
 	}
+
 
 private:
 
@@ -171,6 +177,8 @@ private:
 	int saSteps;
 	float saMax;
 	float saMin;
+
+	int microiter;
 
 	int orMaxIter;
 	float orParameter;

@@ -7,6 +7,9 @@
 #ifndef LANDAUCOULOMBGAUGETYPE_H_
 #define LANDAUCOULOMBGAUGETYPE_H_
 
+namespace culgt
+{
+
 enum GaugeTypeName{LANDAU,COULOMB};
 
 template<GaugeTypeName gaugetype> class LandauCoulombGaugeType
@@ -157,6 +160,7 @@ private:
 	}
 
 };
+}
 
 
 #endif /* LANDAUCOULOMBGAUGETYPE_H_ */
