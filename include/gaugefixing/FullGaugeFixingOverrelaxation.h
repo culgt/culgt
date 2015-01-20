@@ -36,24 +36,41 @@ namespace culgt
 /**
  * General class, needs specialization for different Patterns
  */
-template<typename PatternType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingOverrelaxation: public LandauGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
+template<typename PatternType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation: public LandauGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
 {
 public:
-	typedef GlobalLink<PatternType,true> GlobalLinkType;
-	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
+	typedef typename PatternType::PARAMTYPE::TYPE T;
+	typedef GlobalLink<PatternType, true > GlobalLinkType;
+	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<PatternType::SITETYPE::Ndim> dim, float orParameter, long seed ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed )
+	{
+	};
 
-	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
-	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	void run( int id = -1 )
+	void run()
 	{
 		assert(false);
-	};
+	}
+
+	void run( size_t id  )
+	{
+		assert(false);
+	}
+
+	void setOrParameter(float orParameter)
+	{
+		assert(false);
+	}
+	std::vector<RuntimeChooserOption>* getOptions()
+	{
+		std::vector<RuntimeChooserOption>* tmp = new std::vector<RuntimeChooserOption>;
+		return tmp;
+	}
 };
 
 /**
  * Specialization for PatternType == GPUPatternParityPriority (i.e. the natural choice for Landau-like gauges)
  */
-template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public LandauGaugeTunableObject<GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true>,LocalLinkType>
+template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType,DoMicro>: public LandauGaugeTunableObject<GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true > GlobalLinkType;
@@ -82,12 +99,29 @@ public:
 			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
 			if( numBlocks == 0 || err != cudaSuccess ) throw InvalidKernelSetupException();
 
-			FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), false, object->orParameter );
-			FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), true, object->orParameter );
-			CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation" );
+			if( DoMicro )
+			{
+				FullGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), false );
+				FullGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), true );
+				CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation::kernelMicroStep" );
+			}
+			else
+			{
+				FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), false, object->orParameter );
+				FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), true, object->orParameter );
+				CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation::kernelOrStep" );
+			}
 #else
-			FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), false, object->orParameter );
-			FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), true, object->orParameter );
+			if( DoMicro )
+			{
+				FullGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), false );
+				FullGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), true );
+			}
+			else
+			{
+				FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), false, object->orParameter );
+				FullGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( *object->super::U, object->super::dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE>::getDevicePointer( object->super::dim ), true, object->orParameter );
+			}
 
 			cudaDeviceSynchronize();
 			cudaError_t error = cudaGetLastError();
@@ -109,7 +143,7 @@ public:
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
 
-	typedef FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
+	typedef FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro> thisClass;
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
@@ -150,7 +184,7 @@ private:
 /**
  * Specialization for PatternType == GPUPatternTimesliceParityPriority (i.e. the natural choice for Coulomb-like gauges)
  */
-template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public LandauGaugeTunableObject<GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true>,LocalLinkType>
+template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro>: public LandauGaugeTunableObject<GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true> GlobalLinkType;
@@ -192,8 +226,17 @@ public:
 				GlobalLinkTypeTimeslice2::unbindTexture();
 				GlobalLinkTypeTimeslice2::bindTexture( &((*object->super::U)[tdown*timesliceArraySize]), timesliceArraySize);
 
-				TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false, object->orParameter );
-				TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true, object->orParameter );
+				if( DoMicro )
+				{
+					TimesliceGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false );
+					TimesliceGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true );
+				}
+				else
+				{
+					TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false, object->orParameter );
+					TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true, object->orParameter );
+
+				}
 			}
 			CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation-TimeslicePattern" );
 #else
@@ -209,8 +252,17 @@ public:
 				GlobalLinkTypeTimeslice2::unbindTexture();
 				GlobalLinkTypeTimeslice2::bindTexture( &((*object->super::U)[tdown*timesliceArraySize]), timesliceArraySize);
 
-				TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false, object->orParameter );
-				TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true, object->orParameter );
+				if( DoMicro )
+				{
+					TimesliceGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false );
+					TimesliceGaugeFixingOverrelaxationKernel::kernelMicroStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true );
+				}
+				else
+				{
+					TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false, object->orParameter );
+					TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true, object->orParameter );
+
+				}
 			}
 
 			cudaDeviceSynchronize();
@@ -234,7 +286,7 @@ public:
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
 
-	typedef FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType> thisClass;
+	typedef FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro> thisClass;
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 

@@ -90,7 +90,7 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, seed, 1.5 ), simulatedAnnealing( &this->U, dim, 1.0, seed ), seed(seed)
+	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, seed, 1.5 ), simulatedAnnealing( &this->U, dim, 1.0, seed ), microcanonical( &this->U, dim, seed, 1.5 ), seed(seed)
 	{
 		// TODO we should assert here that we use GPUPatternParitySplit!
 	}
@@ -126,9 +126,9 @@ public:
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<LANDAU> >( dim.getSize(), time, iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
-	void runMicrocanonical( int id = -1 )
+	void runMicrocanonical()
 	{
-		assert( false );
+		microcanonical.run();
 	}
 
 	void runSimulatedAnnealing( float temperature )
@@ -156,7 +156,7 @@ public:
 
 	template<typename RNG> void microcanonicalAutoTune( int iter = 1000 )
 	{
-		assert( false );
+		microcanonical.tune( iter );
 	}
 
 	void randomTrafo()
@@ -209,7 +209,8 @@ private:
 	T* UBest;
 	T* UClean;
 
-	FullGaugeFixingOverrelaxation<PatternType,LocalLinkType,LandauCoulombGaugeType<LANDAU> > overrelaxation;
+	FullGaugeFixingOverrelaxation<PatternType,LocalLinkType,LandauCoulombGaugeType<LANDAU>,false > overrelaxation;
+	FullGaugeFixingOverrelaxation<PatternType,LocalLinkType,LandauCoulombGaugeType<LANDAU>,true > microcanonical;
 	FullGaugeFixingSimulatedAnnealing<PatternType,LocalLinkType,LandauCoulombGaugeType<LANDAU> > simulatedAnnealing;
 
 	long seed;

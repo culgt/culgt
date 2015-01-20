@@ -39,7 +39,7 @@ public:
 	virtual RunInfo getRunInfoOverrelaxation( double time, long iter ) = 0;
 	virtual void runSimulatedAnnealing( float temperature ) = 0;
 	virtual RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro ) = 0;
-	virtual void runMicrocanonical( int id = -1 ) = 0;
+	virtual void runMicrocanonical() = 0;
 	virtual GaugeStats getGaugeStats( GaugeFieldDefinition definition = GAUGEFIELD_STANDARD ) = 0;
 
 	virtual void allocateCopyMemory() = 0;
