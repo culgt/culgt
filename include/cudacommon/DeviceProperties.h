@@ -15,60 +15,14 @@ namespace culgt
 class DeviceProperties
 {
 public:
-	static int getComputeCapability()
-	{
-		if( !isAvailable )
-		{
-			update();
-		}
-		return computeCapability;
-	}
-	static int getMaxGridSize()
-	{
-		if( !isAvailable )
-		{
-			update();
-		}
-		return maxGridSize;
-	}
-	static int getMaxBlockSize()
-	{
-		if( !isAvailable )
-		{
-			update();
-		}
-		return maxBlockSize;
-	}
-	static std::string getName()
-	{
-		if( !isAvailable )
-		{
-			update();
-		}
-		return name;
-	}
-	static int getDeviceNumber()
-	{
-		if( !isAvailable )
-		{
-			update();
-		}
-		return deviceNumber;
-	}
+	static int getComputeCapability();
+	static int getMaxGridSize();
+	static int getMaxBlockSize();
+	static std::string getName();
+	static int getDeviceNumber();
 private:
-	static void update()
-	{
-		cudaDeviceProp deviceProp;
-		cudaGetDevice( &deviceNumber );
-		cudaGetDeviceProperties(&deviceProp, deviceNumber );
+	static void update();
 
-		computeCapability = deviceProp.major*100+deviceProp.minor*10;
-		maxGridSize = deviceProp.maxGridSize[0];
-		maxBlockSize = deviceProp.maxThreadsPerBlock;
-		name = deviceProp.name;
-
-		isAvailable = true;
-	}
 	static bool isAvailable;
 	static int computeCapability;
 	static int maxGridSize;
@@ -76,12 +30,6 @@ private:
 	static std::string name;
 	static int deviceNumber;
 };
-bool DeviceProperties::isAvailable = false;
-int DeviceProperties::computeCapability;
-int DeviceProperties::maxGridSize;
-int DeviceProperties::maxBlockSize;
-std::string DeviceProperties::name;
-int DeviceProperties::deviceNumber;
 
 }
 

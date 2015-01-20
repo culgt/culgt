@@ -24,7 +24,6 @@ set(sources
 	test_LinkFileVogt.cc
 	test_LinkFileVogtWithPattern.cc
 	test_LinkFile.cc
-	test_KernelSetup.cc
 	test_LinkToGaugefieldConverter.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})
@@ -45,6 +44,8 @@ set(sources_cuda
 	test_GaugeConfiguration.cc
 	test_GaugeConfigurationWithPattern.cu
 	test_LatticeDimension.cu
+	test_KernelSetup.cu
+	$ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu
 	parameterization_types/test_SU2Vector4.cu
 	)
 
