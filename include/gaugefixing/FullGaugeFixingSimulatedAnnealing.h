@@ -234,7 +234,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::Ndim> dim, float orParameter, long seed ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
+	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::Ndim> dim, long seed, float temperature ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
 	{
 		Chooser::object = this;
 	}

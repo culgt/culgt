@@ -42,7 +42,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef GlobalLink<PatternType, true > GlobalLinkType;
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<PatternType::SITETYPE::Ndim> dim, float orParameter, long seed ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed )
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<PatternType::SITETYPE::Ndim> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed )
 	{
 	};
 
@@ -147,7 +147,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, float orParameter, long seed ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}
@@ -290,7 +290,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, float orParameter, long seed ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}
