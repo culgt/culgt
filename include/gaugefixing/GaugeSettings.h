@@ -126,9 +126,16 @@ public:
 		this->saSteps = saSteps;
 	}
 
-	int getMicroiter() const {
+	int getMicroiter() const
+	{
 		return microiter;
 	}
+
+	void setMicroiter( int microiter )
+	{
+		this->microiter = microiter;
+	}
+
 //	long getSeed() const
 //	{
 //		return seed;

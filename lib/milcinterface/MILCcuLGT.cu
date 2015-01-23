@@ -51,6 +51,7 @@ void cuLGTinitLandau( int nx, int ny, int nz, int nt  )
 	config->allocateMemory();
 	landau = new LandauGaugefixing<PATTERNTYPE,LOCALLINK>( config->getDevicePointer(), dim, 1235 );
 	landau->orstepsAutoTune<RNG>(1.5, 200);
+	landau->microcanonicalAutoTune( 200 );
 	landau->sastepsAutoTune<RNG>(1., 20);
 }
 
@@ -62,7 +63,10 @@ void cuLGTfixLandau( int nx, int ny, int nz, int nt )
 
 	GaugeSettings settings;
 	settings.setOrMaxIter( 6000 );
-	settings.setSaSteps( 0 );
+	settings.setSaSteps( 200 );
+	settings.setSaMin( 0.01 );
+	settings.setSaMax( 1.4 );
+	settings.setMicroiter( 3 );
 	settings.setReproject( 100 );
 	settings.setOrParameter( 1.5 );
 	settings.setGaugeCopies( 1 );
