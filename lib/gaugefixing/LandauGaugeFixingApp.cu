@@ -38,17 +38,23 @@ typedef double REAL;
 typedef float REAL;
 #endif
 
-#ifdef CULGT_SU2
+
+#if CULGT_SUN == 2
+
 typedef SU2Vector4<REAL> PARAMTYPE;
 typedef LocalLink<SU2Vector4<REAL> > LOCALLINK;
+
 #else
+
 #ifdef DOUBLEPRECISION
 typedef SU3Vector2<REAL> PARAMTYPE;
 #else
 typedef SU3Vector4<REAL> PARAMTYPE;
 #endif
 typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
+
 #endif
+
 
 #ifdef CULGT_USE_TIMESLICE_PATTERN
 typedef SiteIndex<4,TIMESLICE_SPLIT> SITE;

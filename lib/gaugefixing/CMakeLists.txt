@@ -3,6 +3,7 @@ project(propagator)
 cmake_minimum_required(VERSION 2.8)
 
 set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
+set( SUN "3" CACHE STRING "Gauge group, 2 = SU(2) or 3 = SU(3) (default)" )
 option( MIXED_PRECISION "switch on mixed precision (in the SP application)" OFF )
 option ( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
 option( PRINT_KERNEL_INFO "print kernel infos" OFF )
@@ -28,6 +29,8 @@ endif()
 if( ${USE_TIMESLICEPATTERN} )
     set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_USE_TIMESLICE_PATTERN" ) 
 endif()
+
+set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_SUN=${SUN}" ) 
 
 
 
