@@ -12,6 +12,7 @@
 #include <sstream>
 #include <fstream>
 #include <boost/functional/hash.hpp>
+#include "../template_instantiation/RuntimeChooserOption.h"
 
 namespace culgt
 {
@@ -75,8 +76,11 @@ public:
 	void writeOptimalId( RuntimeChooserOption optimalId )
 	{
 		std::ofstream file( getIdentifier().c_str() );
-		file << optimalId.name << endl;
-		file << optimalId.id;
+		if( optimalId.name.size() == 0 )
+			file << "N/A\n";
+		else
+			file << optimalId.name << "\n";
+		file << optimalId.id << std::endl;
 		file.close();
 	}
 

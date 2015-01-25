@@ -17,15 +17,9 @@
 #include <boost/mpl/if.hpp>
 #include <boost/type_traits/is_float.hpp>
 #include "ListToString.h"
+#include "RuntimeChooserOption.h"
 
 using std::vector;
-
-
-struct RuntimeChooserOption
-{
-	size_t id;
-	string name;
-};
 
 template<typename AutoTuneClass, typename Run> class RuntimeChooser
 {

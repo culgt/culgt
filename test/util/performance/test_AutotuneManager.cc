@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "AutotuneManager.h"
+#include "util/performance/AutotuneManager.h"
 
 using namespace testing;
 using namespace culgt;
@@ -38,17 +38,20 @@ TEST_F( AAutotuneManager, LoadsOptimalIdFromFile )
 
 	autotune.addAttribute( testAttribute );
 
-	ASSERT_EQ( 0, autotune.getOptimalId() );
+	ASSERT_EQ( 0, autotune.getOptimalId().id );
 }
 
 TEST_F( AAutotuneManager, WritesOptimalIdToFile )
 {
 	string testAttribute = "writtenOptimalid";
-	int optimalId = time( NULL );
+	int id = time( NULL );
 
 	autotune.addAttribute( testAttribute );
+
+	RuntimeChooserOption optimalId;
+	optimalId.id = id;
 	autotune.writeOptimalId( optimalId );
 
-	ASSERT_EQ( optimalId, autotune.getOptimalId() );
+	ASSERT_EQ( id, autotune.getOptimalId().id );
 }
 

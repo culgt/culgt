@@ -7,11 +7,11 @@
 
 
 #include "gmock/gmock.h"
-#include "../lattice/GaugeConfigurationHelper.h"
-#include "../lattice/configuration_patterns/StandardPattern.h"
-#include "../lattice/parameterization_types/SUNRealFull.h"
-#include "../cuLGT1legacy/SiteCoord.hxx"
-#include "Plaquette.h"
+#include "lattice/GaugeConfigurationHelper.h"
+#include "lattice/configuration_patterns/StandardPattern.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
+#include "cuLGT1legacy/SiteCoord.hxx"
+#include "observables/Plaquette.h"
 
 
 using namespace culgt;

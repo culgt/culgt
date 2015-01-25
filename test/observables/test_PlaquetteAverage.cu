@@ -1,14 +1,14 @@
 
 
 #include "gmock/gmock.h"
-#include "../lattice/configuration_patterns/StandardPattern.h"
-#include "../lattice/GaugeConfiguration.h"
-#include "../lattice/GaugeConfigurationHelper.h"
-#include "../cudacommon/DeviceCommunicator.h"
-#include "PlaquetteAverage.h"
+#include "lattice/configuration_patterns/StandardPattern.h"
+#include "lattice/GaugeConfiguration.h"
+#include "lattice/GaugeConfigurationHelper.h"
+#include "cudacommon/DeviceCommunicator.h"
+#include "observables/PlaquetteAverage.h"
 
-#include "../cuLGT1legacy/SiteCoord.hxx"
-#include "../cuLGT1legacy/SiteIndex.hxx"
+#include "cuLGT1legacy/SiteCoord.hxx"
+#include "cuLGT1legacy/SiteIndex.hxx"
 
 using namespace culgt;
 using namespace ::testing;
@@ -20,8 +20,6 @@ public:
 	typedef StandardPattern<SiteIndex<Ndim,NO_SPLIT>, SUNRealFull<3,float> > MyPattern;
 	LatticeDimension<Ndim> dim;
 	GaugeConfiguration<MyPattern> gc;
-
-//	PlaquetteAverage<MyPattern> plaquetteAverage;
 
 	APlaquetteAverage() : dim( 3,2,2,1 ), gc(dim)
 	{

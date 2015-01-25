@@ -1,7 +1,8 @@
-project(test_lattice)
+project(test_observables)
 
 cmake_minimum_required(VERSION 2.8)
 
+include_directories(../../include)
 include( ../commonsettings.cmake )
 
 #set( CMAKE_VERBOSE_MAKEFILE on )
@@ -20,7 +21,8 @@ endif()
 
 
 
-set(sources_cuda 
+set(sources_cuda
+	$ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu 
 	test_PlaquetteAverage.cu
 	)
 
