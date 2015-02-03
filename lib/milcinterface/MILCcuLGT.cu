@@ -20,9 +20,6 @@
 #include "gaugefixing/GaugeSettings.h"
 #include "util/rng/PhiloxWrapper.h"
 
-#include "su3.h" // milc
-#include "lattice.h"
-
 using culgt::GaugeConfiguration;
 using culgt::SU3Vector4;
 using culgt::SiteIndex;
@@ -51,7 +48,7 @@ void cuLGTinitLandau( int nx, int ny, int nz, int nt  )
 	config->allocateMemory();
 	landau = new LandauGaugefixing<PATTERNTYPE,LOCALLINK>( config->getDevicePointer(), dim, 1235 );
 	landau->orstepsAutoTune<RNG>(1.5, 200);
-	landau->microcanonicalAutoTune( 200 );
+	landau->microcanonicalAutoTune<RNG>( 200 );
 	landau->sastepsAutoTune<RNG>(1., 20);
 }
 

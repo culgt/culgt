@@ -13,14 +13,13 @@
 #include "../../cuLGT1legacy/SiteCoord.hxx"
 
 #include "su3.h" // milc
-#include "lattice.h"
-
 
 #ifdef __cplusplus
    extern "C" {
 #endif
 
-int node_index( int x, int y, int z, int t ); // external function defined in MILC code
+su3_matrix culgt_get_link( int x, int y, int z, int t, int mu ); // external function defined in MILC code
+void culgt_set_link( int x, int y, int z, int t, int mu, su3_matrix link ); // external function defined in MILC code
 
 #ifdef __cplusplus
    }
@@ -56,7 +55,6 @@ public:
 					{
 						sitecoord[1] = x;
 
-						int milcindex = node_index( x, y, z, t );
 						s.setIndex( sitecoord.getIndex() );
 						for( int mu = 0; mu < 4; mu++ )
 						{
@@ -72,13 +70,16 @@ public:
 								milcmu = mu -1;
 							}
 
+							su3_matrix milclink;
+
 							for( int i = 0; i < 3; i++ )
 							for( int j = 0; j < 3; j++ )
 							{
-								lattice[milcindex].link[milcmu].e[i][j].real = temp.get( (i*3+j)*2 );
-								lattice[milcindex].link[milcmu].e[i][j].imag = temp.get( (i*3+j)*2 +1 );
+								milclink.e[i][j].real = temp.get( (i*3+j)*2 );
+								milclink.e[i][j].imag = temp.get( (i*3+j)*2 +1 );
 							}
 
+							culgt_set_link( x, y, z, t, milcmu, milclink );
 						}
 					}
 				}
@@ -106,7 +107,6 @@ public:
 					{
 						sitecoord[1] = x;
 
-						int milcindex = node_index( x, y, z, t );
 						s.setIndex( sitecoord.getIndex() );
 						for( int mu = 0; mu < 4; mu++ )
 						{
@@ -119,11 +119,13 @@ public:
 								milcmu = mu -1;
 							}
 
+							su3_matrix milclink = culgt_get_link( x, y, z, t, milcmu );
+
 							for( int i = 0; i < 3; i++ )
 							for( int j = 0; j < 3; j++ )
 							{
-								temp.set( (i*3+j)*2, lattice[milcindex].link[milcmu].e[i][j].real );
-								temp.set( (i*3+j)*2+1, lattice[milcindex].link[milcmu].e[i][j].imag );
+								temp.set( (i*3+j)*2, milclink.e[i][j].real );
+								temp.set( (i*3+j)*2+1, milclink.e[i][j].imag );
 							}
 
 							GlobalLinkType link( dest, s, mu );

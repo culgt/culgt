@@ -22,7 +22,7 @@ include(FindCUDA)
 
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
-cuda_add_library(MILCcuLGT_SP MILCcuLGT.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc )
+cuda_add_library(MILCcuLGT_SP SHARED MILCcuLGT.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc )
 target_link_libraries(MILCcuLGT_SP pthread)
 target_link_libraries(MILCcuLGT_SP cudart)
 target_link_libraries(MILCcuLGT_SP cufft)
