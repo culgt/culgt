@@ -4,8 +4,9 @@ cmake_minimum_required(VERSION 2.8)
 
 set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
 set( SUN "3" CACHE STRING "Gauge group, 2 = SU(2) or 3 = SU(3) (default)" )
+set( FILETYPE "HEADERONLY" CACHE STRING "filetype for gauge fields" )
 option( MIXED_PRECISION "switch on mixed precision (in the SP application)" OFF )
-option ( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
+option( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
 option( PRINT_KERNEL_INFO "print kernel infos" OFF )
 option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
 
@@ -32,7 +33,14 @@ endif()
 
 set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_SUN=${SUN}" ) 
 
-
+if( ${FILETYPE} STREQUAL VOGT )
+    set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_FILETYPE_VOGT" ) 
+elseif( ${FILETYPE} STREQUAL "HIREP" )
+    set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_FILETYPE_HIREP" )
+elseif( ${FILETYPE} STREQUAL "HEADERONLY" )
+else()
+     message( FATAL_ERROR "FILETYPE " ${FILETYPE} " unknown!" )
+endif()
 
 if( ${CUDA_VERSION} VERSION_LESS 6.5 OR NOT CULGT_ALLOW_C++11 )
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=${CUDA_ARCHITECTURE} -Xptxas -dlcm=cg --use_fast_math")

@@ -13,13 +13,14 @@
 #include "lattice/LinkFile.h"
 #include "lattice/LatticeDimension.h"
 #include "lattice/LinkFileVogt.h"
+#include "lattice/LinkFileHirep.h"
+#include "lattice/LinkFileHeaderOnly.h"
 #include "observables/PlaquetteAverage.h"
 #include "lattice/GlobalLink.h"
 #include "gaugefixing/CoulombGaugeFixing.h"
 #include "util/rng/PhiloxWrapper.h"
 #include "gaugefixing/RandomGaugeTrafo.h"
 #include "gaugefixing/GaugeSettings.h"
-#include "../../include/lattice/LinkFileHeaderOnly.h"
 //#include "lattice/parameterization_types/SUNRealFull.h"
 
 #if __cplusplus >= 201103L
@@ -65,6 +66,8 @@ typedef PhiloxWrapper<REAL> RNG;
 
 #ifdef CULGT_FILETYPE_VOGT
 typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPE;
+#elif CULGT_FILETYPE_HIREP
+typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPE;
 #else
 typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
 #endif
