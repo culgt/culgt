@@ -75,13 +75,24 @@ typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPE;
 #else
 typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
 #endif
+
+#ifdef CULGT_FILETYPE_VOGT_OUT
+typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPEOUT;
+#elif CULGT_FILETYPE_HIREP_OUT
+typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPEOUT;
+#elif CULGT_FILETYPE_HEADERONLY_OUT
+typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPEOUT;
+#else
+typedef FILETYPE FILETYPEOUT;
+#endif
+
 /*
  *
  */
-class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE >
+class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE,FILETYPEOUT>
 {
 public:
-	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE >(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
+	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::Ndim> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE,FILETYPEOUT>(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
 

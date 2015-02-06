@@ -18,7 +18,7 @@ namespace culgt
 {
 
 
-template<typename PatternType, typename LinkFileType> class GaugeConfigurationIteratingApplication
+template<typename PatternType, typename LinkFileType, typename LinkFileTypeOut=LinkFileType> class GaugeConfigurationIteratingApplication
 {
 public:
 	GaugeConfigurationIteratingApplication( const LatticeDimension<PatternType::SITETYPE::Ndim> dimension, FileIterator fileiterator, ProgramOptions* programOptions ): dimension(dimension), configuration(dimension), fileiterator(fileiterator), programOptions(programOptions)
@@ -77,9 +77,9 @@ public:
 
 	void save( string appendix )
 	{
-		linkFile->setFilename( fileiterator.getFilename( appendix ) );
+		linkFileOut->setFilename( fileiterator.getFilename( appendix ) );
 		std::cout << fileiterator.getFilename( appendix )  << " saved!" << std::endl;
-		linkFile->save( configuration.getHostPointer() );
+		linkFileOut->save( configuration.getHostPointer() );
 	}
 
 	void saveFromDevice( string appendix )
@@ -116,9 +116,8 @@ public:
 		// TODO in principle we could read the sizes from the gaugeconfig file!
 		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::Ndim>(po->getNt(),po->getNx(),po->getNy(),po->getNz()), fileiterator, po );
 
-
 		APP->linkFile = new LinkFileType( APP->dimension, po->getReinterpretReal() );
-//		APP->linkFile.setReinterpretReal( po->getReinterpretReal() );
+		APP->linkFileOut = new LinkFileTypeOut( APP->dimension, po->getReinterpretReal() );
 
 		// parse again for options that where added in the constructor
 		po->parseOptions( argc, argv );
@@ -128,8 +127,6 @@ public:
 
 	static void destroy()
 	{
-//		delete APP->programOptions;
-//		delete APP->linkFile;
 		delete APP;
 	}
 
@@ -157,15 +154,16 @@ public:
 protected:
 	LatticeDimension<PatternType::SITETYPE::Ndim> dimension;
 	LinkFileType* linkFile;
+	LinkFileTypeOut* linkFileOut;
 	GaugeConfiguration<PatternType> configuration;
 	FileIterator fileiterator;
 	ProgramOptions* programOptions;
 
 private:
-	static GaugeConfigurationIteratingApplication<PatternType, LinkFileType>* APP;
+	static GaugeConfigurationIteratingApplication<PatternType, LinkFileType, LinkFileTypeOut>* APP;
 };
 
-template<typename PatternType, typename LinkFileType> GaugeConfigurationIteratingApplication<PatternType,LinkFileType>* GaugeConfigurationIteratingApplication<PatternType,LinkFileType>::APP = NULL;
+template<typename PatternType, typename LinkFileType, typename LinkFileTypeOut> GaugeConfigurationIteratingApplication<PatternType,LinkFileType,LinkFileTypeOut>* GaugeConfigurationIteratingApplication<PatternType,LinkFileType,LinkFileTypeOut>::APP = NULL;
 
 }
 
