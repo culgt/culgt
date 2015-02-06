@@ -12,6 +12,21 @@ option( PRINT_KERNEL_INFO "print kernel infos" OFF )
 option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
 
 #========================================================
+
+
+if( EXISTS "${CMAKE_SOURCE_DIR}/../../.git" )
+execute_process(COMMAND git describe --long --dirty
+                OUTPUT_VARIABLE CULGT_VERSION
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process( COMMAND bash -c "echo \"\#define CULGT_VERSION_MACRO \\\"${CULGT_VERSION}\\\"\" > ${CMAKE_SOURCE_DIR}/version" )
+else( EXISTS "${CMAKE_SOURCE_DIR}/../../.git" )
+    if( NOT EXISTS ${CMAKE_SOURCE_DIR}/version )
+        message( WARNING "No version number available" )
+        execute_process( COMMAND bash -c "echo \"\#define CULGT_VERSION_MACRO \\\"undefined\\\"\" > ${CMAKE_SOURCE_DIR}/version" )
+    endif( NOT EXISTS ${CMAKE_SOURCE_DIR}/version )
+endif( EXISTS "${CMAKE_SOURCE_DIR}/../../.git" )
+
+
 include_directories( $ENV{CULGT_HOME}/include )
 link_directories( /usr/local/cuda/lib64)
 add_definitions(-std=c++11)

@@ -22,6 +22,7 @@
 #include "gaugefixing/RandomGaugeTrafo.h"
 #include "gaugefixing/GaugeSettings.h"
 //#include "lattice/parameterization_types/SUNRealFull.h"
+#include "version.h"
 
 #if __cplusplus >= 201103L
 // this fixes a strange error in boost/lexical_cast.hpp where it needs std::pow( double, int )
@@ -200,10 +201,11 @@ private:
 using namespace culgt;
 
 #if BOOST_VERSION < 105300
-	int main( int argc, char* argv[] )
+int main( int argc, char* argv[] )
 #else
-	int main( const int argc, const char* argv[] )
+int main( const int argc, const char* argv[] )
 #endif
 {
+	std::cout << "cuLGT Version " << CULGT_VERSION << std::endl;
 	CoulombGaugeFixingApp::main<CoulombGaugeFixingApp>( argc, argv );
 }
