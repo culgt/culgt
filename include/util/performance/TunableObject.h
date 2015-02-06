@@ -133,7 +133,7 @@ public:
 		{
 			preTuneAction();
 
-			std::cout << "Tuning option " << it->name << ": ";
+			std::cout << "Tuning option " << it->name << ": " << std::flush;
 			double performance;
 			try
 			{
