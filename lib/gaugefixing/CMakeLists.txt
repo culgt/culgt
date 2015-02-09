@@ -1,6 +1,6 @@
 project(propagator)
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.3)
 
 set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
 set( SUN "3" CACHE STRING "Gauge group, 2 = SU(2) or 3 = SU(3) (default)" )
@@ -14,7 +14,7 @@ option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
 #========================================================
 
 
-include( versioning.cmake )
+#include( versioning.cmake )
 
 include_directories( $ENV{CULGT_HOME}/include )
 link_directories( /usr/local/cuda/lib64)
@@ -68,25 +68,32 @@ endif()
 
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
+add_custom_target( MakeGitVersion 
+                COMMAND ${CMAKE_COMMAND} -P ../versioning.cmake )
+
 cuda_add_executable(CoulombGaugeSP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS ${CULGT_OPTIONS})
+add_dependencies( CoulombGaugeSP MakeGitVersion )
 target_link_libraries(CoulombGaugeSP pthread)
 target_link_libraries(CoulombGaugeSP cudart)
 target_link_libraries(CoulombGaugeSP cufft)
 target_link_libraries(CoulombGaugeSP boost_program_options)
 
 cuda_add_executable(CoulombGaugeDP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
+add_dependencies( CoulombGaugeDP MakeGitVersion )
 target_link_libraries(CoulombGaugeDP pthread)
 target_link_libraries(CoulombGaugeDP cudart)
 target_link_libraries(CoulombGaugeDP cufft)
 target_link_libraries(CoulombGaugeDP boost_program_options)
 
 cuda_add_executable(LandauGaugeSP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS ${CULGT_OPTIONS} )
+add_dependencies( LandauGaugeSP MakeGitVersion )
 target_link_libraries(LandauGaugeSP pthread)
 target_link_libraries(LandauGaugeSP cudart)
 target_link_libraries(LandauGaugeSP cufft)
 target_link_libraries(LandauGaugeSP boost_program_options)
 
 cuda_add_executable(LandauGaugeDP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
+add_dependencies( LandauGaugeDP MakeGitVersion )
 target_link_libraries(LandauGaugeDP pthread)
 target_link_libraries(LandauGaugeDP cudart)
 target_link_libraries(LandauGaugeDP cufft)
