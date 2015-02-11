@@ -16,6 +16,7 @@
 #include "parameterization_types/SU2Vector4.h"
 #include "parameterization_types/SUNRealFull.h"
 #include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "parameterization_types/ParameterizationMediatorSU2_Vector4_Real8.h"
 #include "SubgroupIterator.h"
 #include "../cuLGT1legacy/SiteIndex.hxx"
 #include "parameterization_types/SUNRealFull.h"
