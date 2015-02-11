@@ -25,7 +25,7 @@ public:
 
 	CUDA_HOST_DEVICE static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
-		return ((site[0]*SITETYPE::Ndim+mu)*ParamType::SIZE+paramIndex)*site.getSizeTimeslice()+site.getIndexTimeslice();
+		return ((site.getCoord(0)*SITETYPE::Ndim+mu)*ParamType::SIZE+paramIndex)*site.getSizeTimeslice()+site.getIndexTimeslice();
 	}
 
 	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::Ndim> dim )
