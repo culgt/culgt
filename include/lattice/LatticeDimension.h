@@ -133,6 +133,13 @@ public:
 		return result;
 	}
 
+	CUDA_HOST_DEVICE inline LatticeDimension<Ndim> getFFTComplexDimension() const
+	{
+		LatticeDimension<Ndim> result(*this);
+		result.setDimension( Ndim-1, getDimension(Ndim-1)/2+1 );
+		return result;
+	}
+
 
 	/**
 	 * I don't know if this is a wise choice or if we should keep a local variable for latSizeTimeslice (but probably the compiler is smart enough to do so).

@@ -66,3 +66,12 @@ CUDA_TEST( ALatticeDimension, GetReduzedDimension )
 	ASSERT_EQ( 6, dimReduced.getDimension(1) );
 }
 
+CUDA_TEST( ALatticeDimension, GetFFTComplexDimension )
+{
+	LatticeDimension<4> dim( 4,5,6,8 );
+	LatticeDimension<4> dimFFTComplexDimension = dim.getFFTComplexDimension();
+
+	ASSERT_EQ( 6, dimFFTComplexDimension.getDimension(2) );
+	ASSERT_EQ( 5, dimFFTComplexDimension.getDimension(3) );
+}
+
