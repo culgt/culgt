@@ -1,4 +1,4 @@
-project(propagator)
+project(gaugefixing)
 
 cmake_minimum_required(VERSION 2.8.3)
 
@@ -69,7 +69,7 @@ endif()
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
 add_custom_target( MakeGitVersion 
-                COMMAND ${CMAKE_COMMAND} -P ../versioning.cmake )
+    COMMAND ${CMAKE_COMMAND} -DPATH_TO_CURRENT_PROJECT=${CMAKE_CURRENT_LIST_DIR} -P $ENV{CULGT_HOME}/cmake/versioning.cmake )
 
 cuda_add_executable(CoulombGaugeSP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cuLGT1legacy/Chronotimer.cc OPTIONS ${CULGT_OPTIONS})
 add_dependencies( CoulombGaugeSP MakeGitVersion )
