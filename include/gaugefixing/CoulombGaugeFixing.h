@@ -7,13 +7,13 @@
 #define COULOMBGAUGEFIXING_H_
 #include "gaugefixing_thread_types.h"
 #include <assert.h>
-#include "../lattice/parameterization_types/SU2Vector4.h"
-#include "../lattice/SubgroupIterator.h"
-#include "../common/culgt_typedefs.h"
-#include "../cuLGT1legacy/Chronotimer.h"
+#include "lattice/parameterization_types/SU2Vector4.h"
+#include "lattice/SubgroupIterator.h"
+#include "common/culgt_typedefs.h"
+#include "util/timer/Chronotimer.h"
 #include <iostream>
-#include "../cuLGT1legacy/Reduction.hxx"
-#include "../cudacommon/cuda_error.h"
+#include "util/reduction/Reduction.h"
+#include "cudacommon/cuda_error.h"
 #include "GaugeFixing8Threads.h"
 #include "GaugeFixing4Threads.h"
 #include "algorithms/OrUpdate.h"
@@ -22,8 +22,8 @@
 #include "RunInfo.h"
 #include "GaugeStats.h"
 #include <string>
-#include "../lattice/GlobalLink.h"
-#include "../util/rng/PhiloxWrapper.h"
+#include "lattice/GlobalLink.h"
+#include "util/rng/PhiloxWrapper.h"
 
 #include "GaugeSettings.h"
 

@@ -125,3 +125,34 @@ CUDA_TEST(AComplex, AsinForProblematicCaseWhereLogDefOfAcosFails3 )
 	ASSERT_FLOAT_EQ( result.x, temp.x );
 	ASSERT_FLOAT_EQ( result.y, temp.y );
 }
+
+CUDA_TEST(AComplex, Assign )
+{
+	Complex<float> temp( 342.546, 3423.454 );
+	Complex<float> temp2;
+	temp2 = temp;
+
+	ASSERT_FLOAT_EQ( temp.x, temp2.x );
+	ASSERT_FLOAT_EQ( temp.y, temp2.y );
+}
+
+CUDA_TEST(AComplex, AssignToVolatile )
+{
+	Complex<float> temp( 342.546, 3423.454 );
+	volatile Complex<float> temp2;
+	temp2 = temp;
+
+	ASSERT_FLOAT_EQ( temp.x, temp2.x );
+	ASSERT_FLOAT_EQ( temp.y, temp2.y );
+}
+
+CUDA_TEST(AComplex, CopyConstructorVolatile )
+{
+	Complex<float> temp( 1., 2. );
+	volatile Complex<float> temp2( 3., 4. );
+
+	temp = temp + temp2;
+
+	ASSERT_FLOAT_EQ( (float)4., temp.x );
+	ASSERT_FLOAT_EQ( (float)6., temp.y );
+}

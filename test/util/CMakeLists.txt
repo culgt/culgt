@@ -22,6 +22,7 @@ endif()
 
 
 set(sources_cuda
+    reduction/test_Reduction.cu
 	)
 
 cuda_add_executable(test_util_cuda ../test_main.cpp ${sources_cuda} )

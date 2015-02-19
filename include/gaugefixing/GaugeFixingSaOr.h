@@ -11,7 +11,7 @@
 #include "RunInfo.h"
 #include "GaugeSettings.h"
 #include "GaugeStats.h"
-#include "../cuLGT1legacy/Chronotimer.h"
+#include "util/timer/Chronotimer.h"
 
 namespace culgt
 {

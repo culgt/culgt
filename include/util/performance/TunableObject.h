@@ -8,7 +8,7 @@
 #define TUNABLEOBJECT_H_
 
 #include <vector>
-#include "../../cuLGT1legacy/Chronotimer.h"
+#include "util/timer/Chronotimer.h"
 #include "../template_instantiation/SequenceRunner.h"
 #include "../template_instantiation/RuntimeChooser.h"
 #include "AutotuneManager.h"

@@ -9,13 +9,13 @@
 #define LANDAUGAUGEFIXING_H_
 
 #include <assert.h>
-#include "../lattice/parameterization_types/SU2Vector4.h"
-#include "../lattice/SubgroupIterator.h"
-#include "../common/culgt_typedefs.h"
-#include "../cuLGT1legacy/Chronotimer.h"
+#include "lattice/parameterization_types/SU2Vector4.h"
+#include "lattice/SubgroupIterator.h"
+#include "common/culgt_typedefs.h"
+#include "util/timer/Chronotimer.h"
 #include <iostream>
-#include "../cuLGT1legacy/Reduction.hxx"
-#include "../cudacommon/cuda_error.h"
+#include "util/reduction/Reduction.h"
+#include "cudacommon/cuda_error.h"
 #include "GaugeFixing8Threads.h"
 #include "GaugeFixing4Threads.h"
 #include "algorithms/OrUpdate.h"
@@ -27,13 +27,13 @@
 #include <string>
 
 #include "gaugefixing_thread_types.h"
-#include "../lattice/GaugeConfigurationCudaHelper.h"
-#include "../util/performance/TunableObject.h"
+#include "lattice/GaugeConfigurationCudaHelper.h"
+#include "util/performance/TunableObject.h"
 #include "FullGaugeFixingOverrelaxation.h"
 #include "FullGaugeFixingSimulatedAnnealing.h"
 #include "GaugeFixingSaOr.h"
 #include "RandomGaugeTrafo.h"
-#include "../lattice/GlobalLink.h"
+#include "lattice/GlobalLink.h"
 
 using std::string;
 

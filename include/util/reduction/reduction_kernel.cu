@@ -17,6 +17,7 @@
 #define _REDUCE_KERNEL_H_
 
 #include <stdio.h>
+#include "../../cuLGT1legacy/Complex.hxx"
 
 namespace culgt
 {
@@ -405,7 +406,7 @@ reduce6(T *g_idata, T *g_odata, unsigned int n)
     unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
     unsigned int gridSize = blockSize*2*gridDim.x;
 
-    T mySum = 0;
+    T mySum = 0.;
 
     // we reduce multiple elements per thread.  The number is determined by the
     // number of active thread blocks (via gridDim).  More blocks will result
@@ -507,7 +508,7 @@ reduce6(T *g_idata, T *g_odata, unsigned int n)
  * @param g_odata
  * @param n
  */
-template <class T, unsigned int blockSize, bool nIsPow2>
+template <class T, unsigned int blockSize, bool nIsPow2, bool conjugate>
 __global__ void
 reduce6dot(T *g_idata, T *g_idata2, T *g_odata, unsigned int n)
 {
@@ -519,18 +520,34 @@ reduce6dot(T *g_idata, T *g_idata2, T *g_odata, unsigned int n)
     unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
     unsigned int gridSize = blockSize*2*gridDim.x;
 
-    T mySum = 0;
+    T mySum = 0.;
 
     // we reduce multiple elements per thread.  The number is determined by the
     // number of active thread blocks (via gridDim).  More blocks will result
     // in a larger gridSize and therefore fewer elements per thread
     while (i < n)
     {
-        mySum += g_idata[i] * g_idata2[i];
+    	if( conjugate )
+		{
+    		mySum += g_idata[i] * conj( g_idata2[i] );
+		}
+    	else
+    	{
+    		mySum += g_idata[i] * g_idata2[i];
+    	}
 
         // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
         if (nIsPow2 || i + blockSize < n)
-            mySum += g_idata[i+blockSize] * g_idata2[i+blockSize];
+        {
+        	if( conjugate )
+        	{
+        		mySum += g_idata[i+blockSize] * conj( g_idata2[i+blockSize] );
+        	}
+        	else
+        	{
+        		mySum += g_idata[i+blockSize] * g_idata2[i+blockSize];
+        	}
+        }
 
         i += gridSize;
     }
@@ -1007,7 +1024,7 @@ reduce(int size, int threads, int blocks,
  * @param d_idata
  * @param d_odata
  */
-template <class T>
+template <class T, bool conjugate>
 void
 reducedot(int size, int threads, int blocks,
        int whichKernel, T *d_idata, T *d_idata2, T *d_odata)
@@ -1093,25 +1110,25 @@ reducedot(int size, int threads, int blocks,
                 switch (threads)
                 {
                     case 512:
-                        reduce6dot<T, 512, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                        reduce6dot<T, 512, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 256:
-                    	reduce6dot<T, 256, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T, 256, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 128:
-                    	reduce6dot<T, 128, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T, 128, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 64:
-                    	reduce6dot<T,  64, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,  64, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 32:
-                    	reduce6dot<T,  32, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,  32, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 16:
-                    	reduce6dot<T,  16, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,  16, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  8:
-                    	reduce6dot<T,   8, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   8, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  4:
-                    	reduce6dot<T,   4, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   4, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  2:
-                    	reduce6dot<T,   2, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   2, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  1:
-                    	reduce6dot<T,   1, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   1, true, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                 }
             }
             else
@@ -1119,25 +1136,25 @@ reducedot(int size, int threads, int blocks,
                 switch (threads)
                 {
                     case 512:
-                    	reduce6dot<T, 512, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T, 512, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 256:
-                    	reduce6dot<T, 256, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T, 256, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 128:
-                    	reduce6dot<T, 128, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T, 128, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 64:
-                    	reduce6dot<T,  64, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,  64, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 32:
-                    	reduce6dot<T,  32, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,  32, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case 16:
-                    	reduce6dot<T,  16, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,  16, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  8:
-                    	reduce6dot<T,   8, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   8, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  4:
-                    	reduce6dot<T,   4, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   4, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  2:
-                    	reduce6dot<T,   2, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   2, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                     case  1:
-                    	reduce6dot<T,   1, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
+                    	reduce6dot<T,   1, false, conjugate><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_idata2, d_odata, size); break;
                 }
             }
             break;

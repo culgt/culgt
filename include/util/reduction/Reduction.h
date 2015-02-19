@@ -8,10 +8,10 @@
  *
  */
 
-#ifndef REDUCTION_HXX_
-#define REDUCTION_HXX_
+#ifndef REDUCTION_H_
+#define REDUCTION_H_
 
-#include "../cudacommon/cuda_host_device.h"
+#include "cudacommon/cuda_host_device.h"
 #include "reduction_kernel.cu"
 
 namespace culgt
@@ -28,6 +28,7 @@ public:
 	void getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThreads, int &blocks, int &threads);
 	T reduceAll( T* d_idata );
 	T reduceAllDot( T* d_idata, T* d_idata2 );
+	T reduceAllDotConjugate( T* d_idata, T* d_idata2 );
 	T reduceAllAbs( T* d_idata );
 	T reduceAllMax( T* d_idata );
 	static inline void assign( T* dest, T a );
@@ -99,7 +100,7 @@ template<class T> T Reduction<T>::reduceAll( T* d_idata )
 {
 	int s=numBlocks;
 	int kernel = whichKernel;
-	T gpu_result = 0;
+	T gpu_result = 0.;
 	bool needReadBack = true;
 
 	reduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
@@ -147,10 +148,57 @@ template<class T> T Reduction<T>::reduceAllDot( T* d_idata, T* d_idata2 )
 {
 	int s=numBlocks;
 	int kernel = whichKernel;
-	T gpu_result = 0;
+	T gpu_result = 0.;
 	bool needReadBack = true;
 
-	reducedot<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_idata2, d_odata);
+	reducedot<T,false>(size, numThreads, numBlocks, whichKernel, d_idata, d_idata2, d_odata);
+
+	while (s > cpuFinalThreshold )
+	{
+		int threads = 0, blocks = 0;
+		getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
+
+		reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+
+		if (kernel < 3)
+		{
+			s = (s + threads - 1) / threads;
+		}
+		else
+		{
+			s = (s + (threads*2-1)) / (threads*2);
+		}
+	}
+
+	if (s > 1)
+	{
+		// copy result from device to host
+		cudaMemcpy(h_odata, d_odata, s * sizeof(T), cudaMemcpyDeviceToHost);
+
+		for (int i=0; i < s; i++)
+		{
+			gpu_result += h_odata[i];
+		}
+
+		needReadBack = false;
+	}
+
+	if (needReadBack)
+	{
+		// copy final sum from device to host
+		cudaMemcpy(&gpu_result, d_odata, sizeof(T), cudaMemcpyDeviceToHost);
+	}
+	return gpu_result;
+}
+
+template<class T> T Reduction<T>::reduceAllDotConjugate( T* d_idata, T* d_idata2 )
+{
+	int s=numBlocks;
+	int kernel = whichKernel;
+	T gpu_result = 0.;
+	bool needReadBack = true;
+
+	reducedot<T,true>(size, numThreads, numBlocks, whichKernel, d_idata, d_idata2, d_odata);
 
 	while (s > cpuFinalThreshold )
 	{

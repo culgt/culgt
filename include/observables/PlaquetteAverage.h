@@ -8,11 +8,11 @@
 #ifndef PLAQUETTEAVERAGE_H_
 #define PLAQUETTEAVERAGE_H_
 
-#include "../lattice/LatticeDimension.h"
-#include "../lattice/LocalLink.h"
-#include "../lattice/parameterization_types/SUNRealFull.h"
+#include "lattice/LatticeDimension.h"
+#include "lattice/LocalLink.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
 #include "PlaquetteAverageCudaHelper.h"
-#include "../cuLGT1legacy/Reduction.hxx"
+#include "util/reduction/Reduction.h"
 
 namespace culgt
 {

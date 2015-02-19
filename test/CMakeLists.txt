@@ -17,7 +17,7 @@ add_subdirectory( eigensolver )
 
 message( "allsources = ${allsources}" )
 
-CUDA_ADD_EXECUTABLE(test test_main.cpp ${allsources} )
+CUDA_ADD_EXECUTABLE(test test_main.cpp ${allsources} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu )
 target_link_libraries(test pthread)
 target_link_libraries(test gmock)
 target_link_libraries(test gtest)

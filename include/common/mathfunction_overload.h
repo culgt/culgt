@@ -11,20 +11,20 @@
 
 namespace culgt
 {
-	inline double norm_squared( double& a )
+	inline CUDA_HOST_DEVICE double norm_squared( double& a )
 	{
 		return a*a;
 	}
-	inline float norm_squared( float& a )
+	inline CUDA_HOST_DEVICE float norm_squared( float& a )
 	{
 		return a*a;
 	}
 
-	inline double conj( double& a )
+	inline CUDA_HOST_DEVICE double conj( double& a )
 	{
 		return a;
 	}
-	inline float conj( float& a )
+	inline CUDA_HOST_DEVICE float conj( float& a )
 	{
 		return a;
 	}

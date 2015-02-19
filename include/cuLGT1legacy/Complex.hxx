@@ -29,6 +29,7 @@ public:
 	CUDA_HOST_DEVICE inline Complex( const float x );
 	CUDA_HOST_DEVICE inline Complex( const double x );
 	CUDA_HOST_DEVICE inline Complex( const Complex<T>& a);
+	CUDA_HOST_DEVICE inline Complex( volatile const Complex<T>& a);
 	CUDA_HOST_DEVICE inline Complex();
 	CUDA_HOST_DEVICE inline T abs();
 	CUDA_HOST_DEVICE inline T phase();
@@ -43,6 +44,20 @@ public:
 	CUDA_HOST_DEVICE inline Complex<T>& operator/=( const T a );
 	CUDA_HOST_DEVICE inline Complex<T>& operator/=( const Complex<T> a );
 	static CUDA_HOST_DEVICE inline Complex<T> I();
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator=( const Complex<T> a )
+	{
+		this->x = a.x;
+		this->y = a.y;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline volatile Complex<T>& operator=( const Complex<T> a ) volatile
+	{
+		this->x = a.x;
+		this->y = a.y;
+		return *this;
+	}
 
 };
 
@@ -73,6 +88,12 @@ template<typename T> Complex<T>::Complex(const double x )
 //}
 
 template<typename T> Complex<T>::Complex( const Complex<T>& a )
+{
+	this->x = a.x;
+	this->y = a.y;
+}
+
+template<typename T> Complex<T>::Complex( volatile const Complex<T>& a )
 {
 	this->x = a.x;
 	this->y = a.y;

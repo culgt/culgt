@@ -45,11 +45,10 @@ set(sources_cuda
 	test_GaugeConfigurationWithPattern.cu
 	test_LatticeDimension.cu
 	test_KernelSetup.cu
-	$ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu
 	parameterization_types/test_SU2Vector4.cu
 	)
 
-cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} )
+cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu )
 target_link_libraries(test_lattice_cuda pthread)
 target_link_libraries(test_lattice_cuda gmock)
 target_link_libraries(test_lattice_cuda gtest)
