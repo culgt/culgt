@@ -17,7 +17,139 @@ namespace culgt
 
 template<typename T, int Size> class Matrix
 {
+public:
+	CUDA_HOST_DEVICE Matrix()
+	{
+		for( int i = 0; i < Size*Size; i++ )
+		{
+			mat[i] = 0.;
+		}
+	}
 
+	CUDA_HOST_DEVICE Matrix( T d )
+	{
+		for( int i = 0; i < Size; i++ )
+		{
+			for( int j = 0; j < Size; j++ )
+			{
+				if( i == j )
+					mat[i*Size+j] = d;
+				else
+					mat[i*Size+j] = 0;
+			}
+		}
+	}
+
+	CUDA_HOST_DEVICE Matrix( T (&diag)[Size] )
+	{
+		for( int i = 0; i < Size; i++ )
+		{
+			for( int j = 0; j < Size; j++ )
+			{
+				if( i == j )
+					mat[i*Size+j] = diag[i];
+				else
+					mat[i*Size+j] = 0;
+			}
+		}
+	}
+
+	CUDA_HOST_DEVICE Matrix( T (&vals)[Size*Size] )
+	{
+		for( int i = 0; i < Size*Size; i++ )
+		{
+			mat[i] = vals[i];
+		}
+	}
+
+	CUDA_HOST_DEVICE T& operator()( int row, int col )
+	{
+		return mat[row*Size+col];
+	}
+
+	CUDA_HOST_DEVICE Vector<T,Size> col( int i )
+	{
+		Vector<T,Size> vec;
+		for( int j = 0; j < Size; j++ )
+		{
+			vec[j] = this->operator()(j,i);
+		}
+		return vec;
+	}
+
+	CUDA_HOST_DEVICE void setCol( int i, Vector<T,Size> vec )
+	{
+		for( int j = 0; j < Size; j++ )
+		{
+			this->operator()(j,i) = vec(j);
+		}
+	}
+
+	CUDA_HOST_DEVICE Vector<T,Size> row( int i )
+	{
+		Vector<T,Size> vec;
+		for( int j = 0; j < Size; j++ )
+		{
+			vec[j] = this->operator()(i,j);
+		}
+		return vec;
+	}
+
+	CUDA_HOST_DEVICE Matrix<T,Size>& hermitian()
+	{
+		for( int i = 0; i < Size; i++ )
+		{
+			this->operator()(i,i) = conj( this->operator()(i,i) );
+			for( int j = 0; j < i; j++ )
+			{
+				T temp = conj( this->operator()(i,j) );
+				this->operator()(i,j) = conj(this->operator()(j,i));
+				this->operator()(j,i) = temp;
+			}
+		}
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE Matrix<T,Size>& operator*=( Matrix<T,Size> rhs )
+	{
+		Matrix<T,Size> temp = *this;
+
+		for( int i = 0; i < Size; i++ )
+			for( int j = 0; j < Size; j++ )
+			{
+				this->operator()(i,j) = 0.;
+				for( int k = 0; k < Size; k++ )
+				{
+					this->operator()(i,j) += temp(i,k)*rhs(k,j);
+				}
+			}
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE Matrix<T,Size>& operator*=( T rhs )
+	{
+		for( int i = 0; i < Size; i++ )
+			for( int j = 0; j < Size; j++ )
+			{
+				this->operator()(i,j) *= rhs;
+			}
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE Matrix<T,Size>& operator/=( T rhs )
+	{
+		return this->operator*=( 1./rhs );
+	}
+
+	CUDA_HOST_DEVICE T trace()
+	{
+		T temp = (T)0;
+		for( int i = 0; i < Size; i++ )
+			temp+=this->operator()( i, i );
+		return temp;
+	}
+private:
+	T mat[Size*Size];
 };
 
 template<typename T> class Matrix<T,3>

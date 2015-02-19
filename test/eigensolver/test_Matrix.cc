@@ -1,5 +1,6 @@
 #include "eigensolver/Matrix.h"
 #include "gmock/gmock.h"
+#include "cuLGT1legacy/Complex.hxx"
 
 using namespace culgt;
 
@@ -70,4 +71,32 @@ TEST( Matrix3x3Double, Det )
 	matrix(0,2) = someValue2;
 
 	ASSERT_DOUBLE_EQ( 1.-someValue2*someValue2, matrix.det() );
+}
+
+TEST( Matrix4x4Double, ElementAccessOperatorWorks )
+{
+	const double someValue = 1.2423;
+	Matrix<double,4> matrix;
+
+	matrix( 2, 1 ) = someValue;
+
+	ASSERT_DOUBLE_EQ( someValue, matrix(2,1) );
+}
+
+TEST( Matrix4x4Double, Trace )
+{
+	const double someValue = 1.2423;
+	Matrix<double,4> matrix( someValue );
+
+	ASSERT_DOUBLE_EQ( 4.*someValue, matrix.trace() );
+}
+
+TEST( Matrix4x4ComplexDouble, ElementAccessOperatorWorks )
+{
+	const Complex<double> someValue( 1.2423, 0 );
+	Matrix<Complex<double>,4> matrix;
+
+	matrix( 2, 1 ) = someValue;
+
+	ASSERT_DOUBLE_EQ( someValue.x, matrix(2,1).x );
 }
