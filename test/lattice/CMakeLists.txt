@@ -60,7 +60,7 @@ endif()
 
 
 
-cuda_add_executable(test_lattice ../test_main.cpp ${sources} ${sources_cuda})
+cuda_add_executable(test_lattice ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu )
 target_link_libraries(test_lattice pthread)
 target_link_libraries(test_lattice gmock)
 target_link_libraries(test_lattice gtest)
