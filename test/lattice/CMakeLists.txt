@@ -11,6 +11,7 @@ set(sources
 	test_LocalLink.cc
 	parameterization_types/test_ParameterizationMediatorSU3_Real12_Real18.cc 
 	parameterization_types/test_ParameterizationMediatorSU2_Real4_Real8.cc 
+	parameterization_types/test_ParameterizationMediatorSU3_Vector4_Complex9.cc 
 	parameterization_types/test_SUNRealFull.cc
 	parameterization_types/test_SU3Real12.cc
 	configuration_patterns/test_StandardPattern.cc

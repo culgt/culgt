@@ -76,7 +76,7 @@ public:
 	{
 		typedef typename SUNComplexFull<3,T>::TYPE COMPLEX;
 
-		typename SU2Vector4<T>::TYPE temp = l2.get(0);
+		typename SU3Vector4<T>::TYPE temp = l2.get(0);
 		l1.set( 0, COMPLEX( temp.x, temp.y ) );
 		l1.set( 1, COMPLEX( temp.z, temp.w ) );
 		temp = l2.get(1);
