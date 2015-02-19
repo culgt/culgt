@@ -11,7 +11,7 @@
 #include "../../common/culgt_typedefs.h"
 #include "../ParameterizationMediator.h"
 #include "SU3Vector4.h"
-#include "SUNRealFull.h"
+#include "SUNComplexFull.h"
 
 namespace culgt
 {
