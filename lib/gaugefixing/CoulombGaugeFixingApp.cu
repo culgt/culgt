@@ -96,7 +96,8 @@ public:
 		boost::program_options::options_description gaugeOptions;
 		gaugeOptions.add_options()
 				("sethot", boost::program_options::value<bool>(&sethot)->default_value(false), "start from a random gauge field")
-				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)");
+				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)")
+				("timeslice", boost::program_options::value<int>(&fixSlice)->default_value(-1), "fix only specific timeslice (-1 = fix all)");
 
 		programOptions->addOption( gaugeOptions );
 
@@ -125,17 +126,31 @@ private:
 			std::cout << "Using a hot (random) lattice" << std::endl;
 			configuration.setHotOnDevice<RNG>( programOptions->getSeed(), RNG::getNextCounter());
 			CUDA_LAST_ERROR( "setHotOnDevice ");
-			fix();
+			if( fixSlice == -1)
+				fix();
+			else
+				fix( fixSlice );
 		}
 		else
 		{
 			if( loadToDevice() )
 			{
-				fix();
+				if( fixSlice == -1)
+					fix();
+				else
+					fix( fixSlice );
 				saveFromDevice( fileAppendix );
 			}
 		}
 	};
+
+	void fix( int t )
+	{
+		int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
+		std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
+		coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
+		coulomb->fix( settings );
+	}
 
 	void fix()
 	{
@@ -179,11 +194,7 @@ private:
 
 		for( int t = 0; t < dimension.getDimension(0); t++ )
 		{
-			int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
-			std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
-			coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
-//			coulomb->randomTrafo();
-			coulomb->fix( settings );
+			fix(t);
 		}
 
 		std::cout << "Plaquette after: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
@@ -192,6 +203,7 @@ private:
 	CoulombGaugefixing<PATTERNTYPE::TIMESLICE_PATTERNTYPE,LOCALLINK>* coulomb;
 	PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette;
 	string fileAppendix;
+	int fixSlice;
 	bool sethot;
 };
 
