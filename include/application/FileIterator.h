@@ -56,7 +56,7 @@ public:
 	std::string next()
 	{
 		std::string result = getFilename();
-		currentFileNumber++;
+		currentFileNumber += fileNumberStep;
 		return result;
 	}
 
