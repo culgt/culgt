@@ -18,11 +18,21 @@
 		float z;
 		float w;
 	};
+	struct float3 {
+		float x;
+		float y;
+		float z;
+	};
 	struct double4 {
 		double x;
 		double y;
 		double z;
 		double w;
+	};
+	struct double3 {
+		double x;
+		double y;
+		double z;
 	};
 	struct float2 {
 		float x;
@@ -58,6 +68,20 @@ template<> struct Real4<float>
 template<> struct Real4<double>
 {
 	typedef double4 VECTORTYPE;
+};
+
+template<typename T> struct Real3
+{
+};
+
+template<> struct Real3<float>
+{
+	typedef float3 VECTORTYPE;
+};
+
+template<> struct Real3<double>
+{
+	typedef double3 VECTORTYPE;
 };
 
 template<typename T> struct Real2
