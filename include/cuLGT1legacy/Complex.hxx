@@ -422,6 +422,13 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> conj( Complex<T> b )
 	return b.conj();
 }
 
+template<typename T> CUDA_HOST_DEVICE static Complex<T> exp( Complex<T> b )
+{
+	T temp = ::exp( b.x );
+	return Complex<T>( temp*::cos( b.y ), temp*::sin( b.y ) );
+}
+
+
 template<typename T> inline std::ostream& operator<<(std::ostream& out, Complex<T> t)
 {
     out << t.x << "+i*" << t.y;
