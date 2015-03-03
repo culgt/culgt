@@ -69,6 +69,8 @@ typedef PhiloxWrapper<REAL> RNG;
 typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPE;
 #elif CULGT_FILETYPE_HIREP
 typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPE;
+#elif CULGT_FILETYPE_ILDG
+typedef LinkFileILDG<PATTERNTYPE,REAL> FILETYPE;
 #else
 typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
 #endif

@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.8)
 include_directories(../../include)
 include( ../commonsettings.cmake )
 
-#set( CMAKE_VERBOSE_MAKEFILE on )
+set( CMAKE_VERBOSE_MAKEFILE on )
 
 set(sources 
 	test_LocalLink.cc
@@ -26,11 +26,13 @@ set(sources
 	test_LinkFileVogtWithPattern.cc
 	test_LinkFile.cc
 	test_LinkToGaugefieldConverter.cc
+	filetypes/test_limereader.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources})
 target_link_libraries(test_lattice_host pthread)
 target_link_libraries(test_lattice_host gmock)
 target_link_libraries(test_lattice_host gtest)
+target_link_libraries(test_lattice_host liblime.a)
 
 if( DEFINED allsources )
 addWithDirectory( lattice "${sources}" )

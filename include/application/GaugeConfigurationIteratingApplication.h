@@ -13,6 +13,9 @@
 #include "../lattice/LatticeDimension.h"
 #include "FileIterator.h"
 #include "ProgramOptions.h"
+#include <typeinfo>
+
+using std::type_info;
 
 namespace culgt
 {
@@ -117,7 +120,10 @@ public:
 		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::Ndim>(po->getNt(),po->getNx(),po->getNy(),po->getNz()), fileiterator, po );
 
 		APP->linkFile = new LinkFileType( APP->dimension, po->getReinterpretReal() );
-		APP->linkFileOut = new LinkFileTypeOut( APP->dimension, po->getReinterpretReal() );
+		if( typeid(LinkFileType) == typeid(LinkFileTypeOut) )
+			APP->linkFileOut = APP->linkFile;
+		else
+			APP->linkFileOut = new LinkFileTypeOut( APP->dimension, po->getReinterpretReal() );
 
 		// parse again for options that where added in the constructor
 		po->parseOptions( argc, argv );

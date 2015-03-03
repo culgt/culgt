@@ -15,6 +15,7 @@
 #include "lattice/LatticeDimension.h"
 #include "lattice/LinkFileVogt.h"
 #include "lattice/LinkFileHirep.h"
+#include "lattice/filetypes/LinkFileILDG.h"
 #include "lattice/LinkFileHeaderOnly.h"
 #include "observables/PlaquetteAverage.h"
 #include "lattice/GlobalLink.h"
@@ -73,6 +74,8 @@ typedef PhiloxWrapper<REAL> RNG;
 typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPE;
 #elif CULGT_FILETYPE_HIREP
 typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPE;
+#elif CULGT_FILETYPE_ILDG
+typedef LinkFileILDG<PATTERNTYPE,REAL> FILETYPE;
 #else
 typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
 #endif
