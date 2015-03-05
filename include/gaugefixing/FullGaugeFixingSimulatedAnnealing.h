@@ -173,7 +173,7 @@ public:
 #if CUDART_VERSION >= 6050
 			int numBlocks;
 			size_t sharedMemorySize = 0; // TODO
-			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, TimesliceGaugeFixingOverrelaxationKernel::kernelOrStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
+			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, TimesliceGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
 			if( numBlocks == 0 || err != cudaSuccess ) throw InvalidKernelSetupException();
 
 			int timesliceArraySize = GlobalLinkType::getArraySize( object->super::dim.getDimensionTimeslice() );
@@ -191,7 +191,7 @@ public:
 				TimesliceGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), false, object->temperature, object->super::seed, PhiloxWrapper<REALT>::getNextCounter() );
 				TimesliceGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*ThreadsPerSite::value,GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT)>>>( &((*object->super::U)[t*timesliceArraySize]), &((*object->super::U)[tdown*timesliceArraySize]), object->super::dim.getSizeTimeslice(), SiteNeighbourTableManager<SiteTypeTimeslice>::getDevicePointer( object->super::dim.getDimensionTimeslice() ), true, object->temperature, object->super::seed, PhiloxWrapper<REALT>::getNextCounter() );
 			}
-			CUDA_LAST_ERROR( "FullGaugeFixingOverrelaxation-TimeslicePattern" );
+			CUDA_LAST_ERROR( "FullGaugeFixingSimulatedAnnealing-TimeslicePattern" );
 #else
 			int timesliceArraySize = GlobalLinkType::getArraySize( object->super::dim.getDimensionTimeslice() );
 			for( int t = 0; t < object->super::dim.getDimension(0); t++ )
@@ -219,7 +219,7 @@ public:
 			}
 			else
 			{
-				CUDA_ERROR( error, "FullGaugeFixingOverrelaxation" );
+				CUDA_ERROR( error, "FullGaugeFixingSimulatedAnnealing-TimeslicePattern" );
 			}
 #endif
 		}
