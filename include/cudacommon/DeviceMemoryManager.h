@@ -14,6 +14,9 @@
 #define DEVICEMEMORYMANAGER_H_
 #include <iomanip>
 
+namespace
+{
+
 class DeviceMemoryManager
 {
 public:
@@ -73,5 +76,7 @@ private:
 
 size_t DeviceMemoryManager::allocatedMemory = 0;
 bool DeviceMemoryManager::verbose = true;
+
+}
 
 #endif /* DEVICEMEMORYMANAGER_H_ */
