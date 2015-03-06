@@ -15,6 +15,7 @@
 
 #ifdef __CUDACC__
 #include "../cudacommon/cuda_error.h"
+#include "../cudacommon/DeviceMemoryManager.h"
 #endif
 
 
@@ -55,7 +56,8 @@ public:
 		storeHost[dim] = nn;
 #ifdef __CUDACC__
 		lat_index_t* nnd;
-		CUDA_SAFE_CALL( cudaMalloc( &nnd, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ) ), "malloc neighbour table" );
+		DeviceMemoryManager::malloc( &nnd, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ) );
+//		CUDA_SAFE_CALL( cudaMalloc( &nnd, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ) ), "malloc neighbour table" );
 		CUDA_SAFE_CALL( cudaMemcpy( nnd, nn, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ), cudaMemcpyHostToDevice ), "memcpy neighbour table" );
 		storeDevice[dim] = nnd;
 #endif
