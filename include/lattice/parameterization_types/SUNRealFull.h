@@ -84,6 +84,11 @@ public:
 		store[7] = 0.;
 	}
 
+	static CUDA_HOST_DEVICE Complex<REALTYPE> inline trace( TYPE store[SIZE] )
+	{
+		return Complex<REALTYPE>( store[0]+store[6], store[1]+store[7] );
+	}
+
 	static CUDA_HOST_DEVICE inline REALTYPE reDet( TYPE store[SIZE] )
 	{
 		return store[0]*store[6] - store[2]*store[4] - store[1]*store[7] + store[3]*store[5];
@@ -120,6 +125,43 @@ public:
 		dest[7] = a[4]*b[3] + a[5]*b[2] + a[6]*b[7] + a[7]*b[6];
 	}
 
+	static CUDA_HOST_DEVICE void inline addAssign( TYPE dest[SIZE], const TYPE b[SIZE] )
+	{
+		dest[0] += b[0];
+		dest[1] += b[1];
+		dest[2] += b[2];
+		dest[3] += b[3];
+		dest[4] += b[4];
+		dest[5] += b[5];
+		dest[6] += b[6];
+		dest[7] += b[7];
+	}
+
+	static CUDA_HOST_DEVICE void inline subtractAssign( TYPE dest[SIZE], const TYPE b[SIZE] )
+	{
+		dest[0] -= b[0];
+		dest[1] -= b[1];
+		dest[2] -= b[2];
+		dest[3] -= b[3];
+		dest[4] -= b[4];
+		dest[5] -= b[5];
+		dest[6] -= b[6];
+		dest[7] -= b[7];
+	}
+
+	static CUDA_HOST_DEVICE void inline subtractAssign( TYPE dest[SIZE], const Complex<REALTYPE> b )
+	{
+		dest[0] -= b.x;
+		dest[1] -= b.y;
+		dest[6] -= b.x;
+		dest[7] -= b.y;
+	}
+
+	static CUDA_HOST_DEVICE REALTYPE inline normFrobeniusSquared( TYPE store[SIZE] )
+	{
+		return store[0]*store[0]+store[1]*store[1]+store[2]*store[2]+store[3]*store[3] +store[4]*store[4] +store[5]*store[5]+store[6]*store[6]+store[7]*store[7];
+	}
+
 	static CUDA_HOST_DEVICE void inline flipSign( TYPE& a )
 	{
 		a = -a;
@@ -145,6 +187,21 @@ public:
 		swap( store[2], store[4] );
 		swapAndFlipSign( store[3], store[5] );
 		flipSign( store[7] );
+	}
+
+	static CUDA_HOST_DEVICE void inline reproject( TYPE store[SIZE] )
+	{
+		T fac = 1./::sqrt( reDet( store ) );
+
+		store[0] *= fac;
+		store[1] *= fac;
+		store[2] *= fac;
+		store[3] *= fac;
+
+		store[4] = -store[2];
+		store[5] *= store[3];
+		store[6] *= store[0];
+		store[7] *= -store[1];
 	}
 
 	/**
