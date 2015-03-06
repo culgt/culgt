@@ -90,7 +90,7 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, 1.5, seed ), simulatedAnnealing( &this->U, dim, seed, 1.0 ), microcanonical( &this->U, dim, seed ), seed(seed)
+	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, 1.5, seed ), simulatedAnnealing( &this->U, dim, seed, 1.0 ), microcanonical( &this->U, dim, seed ), seed(seed), reducer(dim.getSize())
 	{
 		// TODO we should assert here that we use GPUPatternParitySplit!
 	}
@@ -203,6 +203,8 @@ public:
 
 private:
 	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim;
+
+	Reduction<double> reducer;
 
 	T* U;
 

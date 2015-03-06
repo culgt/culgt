@@ -136,7 +136,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 	COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 
-	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), seed(seed)
+	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), seed(seed), reducer(dimTimeslice.getSize())
 	{
 		setTimeslice( Ut, UtDown );
 	}
@@ -171,7 +171,7 @@ public:
 		}
 		CUDA_LAST_ERROR( "generateGaugeQualityPerSite" );
 
-		Reduction<double> reducer(dimTimeslice.getSize());
+
 		double dAAvg = reducer.reduceAll( dA )/(double)dimTimeslice.getSize()/(double)(GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
 		double dGffAvg = reducer.reduceAll( dGff )/(double)dimTimeslice.getSize()/(double)((GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim-1)*GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
 
@@ -294,6 +294,8 @@ private:
 	T* UtDownBest;
 	T* UtClean;
 	T* UtDownClean;
+
+	Reduction<double> reducer;
 
 	TimesliceGaugeFixingOverrelaxation<PatternType,LocalLinkType,LandauCoulombGaugeType<COULOMB> > overrelaxation;
 	TimesliceGaugeFixingOverrelaxation<PatternType,LocalLinkType,LandauCoulombGaugeType<COULOMB>, true > microcanonical;
