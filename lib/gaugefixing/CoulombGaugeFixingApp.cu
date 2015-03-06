@@ -15,6 +15,7 @@
 #include "lattice/LinkFileVogt.h"
 #include "lattice/LinkFileHirep.h"
 #include "lattice/LinkFileHeaderOnly.h"
+#include "lattice/filetypes/LinkFileILDG.h"
 #include "observables/PlaquetteAverage.h"
 #include "lattice/GlobalLink.h"
 #include "gaugefixing/CoulombGaugeFixing.h"
