@@ -24,6 +24,8 @@ class bad_alloc_cuda : public std::bad_alloc
 public:
 	bad_alloc_cuda( std::string str ) throw() :str(str) { }
 
+	~bad_alloc_cuda() throw(){};
+
 	const char* what() const throw()
 	{
 		return str.c_str();
