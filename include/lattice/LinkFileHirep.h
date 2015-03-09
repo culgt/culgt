@@ -26,12 +26,12 @@ public:
 template<typename MemoryConfigurationPattern, typename TFloatFile> class LinkFileHirep: public LinkFile<MemoryConfigurationPattern>
 {
 private:
-	int ndim = 4;
+	int ndim;
 	int nc;
 	double plaquette;
 	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::Ndim;
 	int size[memoryNdim];
-	int sizeOfReal = sizeof( double );
+	int sizeOfReal;
 
 	int32_t readInt()
 	{
@@ -96,9 +96,13 @@ public:
 	LinkFileHirep(){};
 	LinkFileHirep( const int size[memoryNdim], ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
 	{
+		ndim=4;
+		sizeOfReal = sizeof( double );
 	}
 	LinkFileHirep( const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
 	{
+		ndim=4;
+		sizeOfReal = sizeof( double );
 	}
 
 #if __cplusplus == 201103L

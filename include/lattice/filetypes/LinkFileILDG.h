@@ -41,8 +41,8 @@ private:
 
 	char* header;
 	char* footer;
-	n_uint64_t allocatedHeaderSize = 0;
-	n_uint64_t allocatedFooterSize = 0;
+	n_uint64_t allocatedHeaderSize;
+	n_uint64_t allocatedFooterSize;
 
 public:
 	typedef LinkFile<MemoryConfigurationPattern> super;
@@ -50,9 +50,13 @@ public:
 	LinkFileILDG(){};
 	LinkFileILDG( const int size[memoryNdim], ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
 	{
+		allocatedHeaderSize = 0;
+		allocatedFooterSize = 0;
 	}
 	LinkFileILDG( const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
 	{
+		allocatedHeaderSize = 0;
+		allocatedFooterSize = 0;
 	}
 
 #if __cplusplus == 201103L
