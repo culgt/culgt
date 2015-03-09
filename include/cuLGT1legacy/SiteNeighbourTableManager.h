@@ -56,7 +56,7 @@ public:
 		storeHost[dim] = nn;
 #ifdef __CUDACC__
 		lat_index_t* nnd;
-		DeviceMemoryManager::malloc( &nnd, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ) );
+		DeviceMemoryManager::malloc( &nnd, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ), "Neighbour table" );
 //		CUDA_SAFE_CALL( cudaMalloc( &nnd, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ) ), "malloc neighbour table" );
 		CUDA_SAFE_CALL( cudaMemcpy( nnd, nn, dim.getSize()*SiteType::Ndim*2*sizeof( lat_index_t ), cudaMemcpyHostToDevice ), "memcpy neighbour table" );
 		storeDevice[dim] = nnd;

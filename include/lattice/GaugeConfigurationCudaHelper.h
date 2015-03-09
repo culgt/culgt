@@ -32,7 +32,7 @@ template<typename T> class GaugeConfigurationCudaHelper
 {
 public:
 	static void allocateMemory( T** pointer, size_t size );
-	static void freeMemory( T* pointer, size_t freeConfigurationSize = 0 );
+	static void freeMemory( T* pointer );
 	static void setElement( T* pointer, int i, const T val );
 	template<typename ConfigurationPattern, typename LinkType> static void setLink( T* pointer, const typename ConfigurationPattern::SITETYPE site, const int mu, const LinkType link  );
 	template<typename ConfigurationPattern, typename LinkType> static LinkType getLink( T* pointer, const typename ConfigurationPattern::SITETYPE site, const int mu );
@@ -48,13 +48,13 @@ public:
 
 template<typename T> void GaugeConfigurationCudaHelper<T>::allocateMemory( T** pointerToPointer, size_t configurationSize )
 {
-	DeviceMemoryManager::malloc( pointerToPointer, configurationSize*sizeof(T) );
+	culgt::DeviceMemoryManager::malloc( pointerToPointer, configurationSize*sizeof(T), "Gauge configuration" );
 //	CUDA_SAFE_CALL( cudaMalloc( pointerToPointer, configurationSize*sizeof(T) ) , "cudaMalloc in GaugeConfigurationHelper" );
 }
 
-template<typename T> void GaugeConfigurationCudaHelper<T>::freeMemory( T* pointer, size_t freeConfigurationSize )
+template<typename T> void GaugeConfigurationCudaHelper<T>::freeMemory( T* pointer )
 {
-	DeviceMemoryManager::free( pointer, freeConfigurationSize*sizeof(T) );
+	culgt::DeviceMemoryManager::free( pointer );
 //	CUDA_SAFE_CALL( cudaFree( pointer ), "cudaFree in GaugeConfigurationHelper" );
 }
 

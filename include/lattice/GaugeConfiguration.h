@@ -95,7 +95,7 @@ public:
 	{
 		if( UdeviceIsAllocated )
 		{
-			GaugeConfigurationCudaHelper<T>::freeMemory( Udevice, configurationSize );
+			GaugeConfigurationCudaHelper<T>::freeMemory( Udevice );
 			Udevice = NULL;
 			UdeviceIsAllocated = false;
 		}
