@@ -7,9 +7,9 @@
 #ifndef PARAMETERIZATIONMEDIATOR_REAL12_COMPLEX9_H_
 #define PARAMETERIZATIONMEDIATOR_REAL12_COMPLEX9_H_
 
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../common/culgt_typedefs.h"
-#include "../ParameterizationMediator.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
+#include "ParameterizationMediator.h"
 #include "SU3Real12.h"
 #include "SUNComplexFull.h"
 

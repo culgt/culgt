@@ -7,7 +7,7 @@
 #ifndef PARAMETERIZATIONMEDIATOR_H_
 #define PARAMETERIZATIONMEDIATOR_H_
 
-#include "../cudacommon/cuda_host_device.h"
+#include "cudacommon/cuda_host_device.h"
 
 namespace culgt
 {

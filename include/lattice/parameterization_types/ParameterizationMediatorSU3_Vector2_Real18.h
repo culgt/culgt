@@ -7,9 +7,9 @@
 #ifndef PARAMETERIZATIONMEDIATORSU3_VECTOR2_REAL18_H_
 #define PARAMETERIZATIONMEDIATORSU3_VECTOR2_REAL18_H_
 
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../common/culgt_typedefs.h"
-#include "../ParameterizationMediator.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
+#include "ParameterizationMediator.h"
 #include "SU3Vector2.h"
 #include "SUNRealFull.h"
 

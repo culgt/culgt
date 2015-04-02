@@ -7,16 +7,16 @@
 #ifndef GLOBALLINK_H_
 #define GLOBALLINK_H_
 
-#include "../cudacommon/cuda_host_device.h"
-#include "../common/culgt_typedefs.h"
-#include "ParameterizationMediator.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
+#include "parameterization_types/ParameterizationMediator.h"
 #include "Link.h"
 #include "LatticeDimension.h"
 #include <boost/static_assert.hpp>
 
 #ifdef __CUDACC__
 #include "TextureManager.h"
-#include "../cudacommon/DeviceProperties.h"
+#include "cudacommon/DeviceProperties.h"
 
 #define COPY_GLOBALLINKTYPE( SRC, DEST, TEXTUREID )\
 	typedef GlobalLink<typename SRC::PATTERNTYPE, SRC::USETEXTURE, TEXTUREID> DEST

@@ -10,8 +10,8 @@
 #include "cudacommon/cuda_host_device.h"
 #include "common/culgt_typedefs.h"
 #include "Link.h"
-#include "ParameterizationMediator.h"
 #include <cmath>
+#include "parameterization_types/ParameterizationMediator.h"
 #include "parameterization_types/SU2Vector4.h"
 #include "math/Complex.h"
 

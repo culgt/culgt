@@ -7,9 +7,9 @@
 #ifndef PARAMETERIZATIONMEDIATOR_SU3_VECTOR4_COMPLEX9_H_
 #define PARAMETERIZATIONMEDIATOR_SU3_VECTOR4_COMPLEX9_H_
 
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../common/culgt_typedefs.h"
-#include "../ParameterizationMediator.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
+#include "ParameterizationMediator.h"
 #include "SU3Vector4.h"
 #include "SUNComplexFull.h"
 

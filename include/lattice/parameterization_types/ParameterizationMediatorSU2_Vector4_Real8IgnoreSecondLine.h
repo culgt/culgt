@@ -7,9 +7,9 @@
 #ifndef PARAMETERIZATIONMEDIATOR_VECTOR4_REAL8_IGNORESECONDLINE_H_
 #define PARAMETERIZATIONMEDIATOR_VECTOR4_REAL8_IGNORESECONDLINE_H_
 
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../common/culgt_typedefs.h"
-#include "../ParameterizationMediator.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
+#include "ParameterizationMediator.h"
 #include "SU2Vector4.h"
 #include "SU2RealFullIgnoreSecondLine.h"
 
