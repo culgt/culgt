@@ -17,7 +17,7 @@
 #define _REDUCE_KERNEL_H_
 
 #include <stdio.h>
-#include "../../cuLGT1legacy/Complex.hxx"
+#include "math/Complex.h"
 
 namespace culgt
 {

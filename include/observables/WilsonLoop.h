@@ -8,12 +8,12 @@
 #ifndef WILSONLOOP_H_
 #define WILSONLOOP_H_
 
-#include "../lattice/LatticeDimension.h"
-#include "../lattice/LocalLink.h"
-#include "../lattice/GlobalLink.h"
-#include "../lattice/parameterization_types/SUNRealFull.h"
-#include "../cudacommon/cuda_host_device.h"
-#include "../cuLGT1legacy/Complex.hxx"
+#include "lattice/LatticeDimension.h"
+#include "lattice/LocalLink.h"
+#include "lattice/GlobalLink.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
+#include "cudacommon/cuda_host_device.h"
+#include "math/Complex.h"
 
 namespace culgt
 {

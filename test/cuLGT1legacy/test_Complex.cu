@@ -1,6 +1,6 @@
 #include "gmock/gmock.h"
 #include "cudatest/cuda_gtest_plugin.h"
-#include "cuLGT1legacy/Complex.hxx"
+#include "math/Complex.h"
 using namespace ::testing;
 using namespace culgt;
 

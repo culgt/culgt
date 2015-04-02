@@ -1,6 +1,6 @@
 #include "eigensolver/Matrix.h"
 #include "gmock/gmock.h"
-#include "cuLGT1legacy/Complex.hxx"
+#include "math/Complex.h"
 
 using namespace culgt;
 

@@ -14,7 +14,7 @@
 #include "parameterization_types/SU2Real4.h"
 #include "parameterization_types/SUNComplexFull.h"
 #include "LocalLink.h"
-#include "../util/math/GellMannMatrices.h"
+#include "math/GellMannMatrices.h"
 #include "eigensolver/Matrix.h"
 #include "eigensolver/Cardano3x3.h"
 #include <boost/algorithm/string.hpp>

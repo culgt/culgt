@@ -6,7 +6,6 @@
 #include "lattice/LocalLink.h"
 #include "common/culgt_typedefs.h"
 #include "lattice/parameterization_types/SUNComplexFull.h"
-#include "cuLGT1legacy/Complex.hxx"
 using namespace culgt;
 using namespace ::testing;
 

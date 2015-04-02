@@ -7,13 +7,13 @@
 #ifndef LOCALLINK_H_
 #define LOCALLINK_H_
 
-#include "../cudacommon/cuda_host_device.h"
-#include "../common/culgt_typedefs.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
 #include "Link.h"
 #include "ParameterizationMediator.h"
 #include <cmath>
 #include "parameterization_types/SU2Vector4.h"
-#include "../cuLGT1legacy/Complex.hxx"
+#include "math/Complex.h"
 
 namespace culgt
 {

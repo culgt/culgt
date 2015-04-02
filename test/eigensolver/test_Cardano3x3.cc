@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include <iostream>
 #include <iomanip>
-#include "cuLGT1legacy/Complex.hxx"
+#include "math/Complex.h"
 #include "eigensolver/matrix_vector.h"
 #include "eigensolver/Cardano3x3.h"
 

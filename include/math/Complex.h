@@ -23,28 +23,6 @@ public:
 		};
 	};
 
-//	T x; // we use the naming convention of cuComplex.h
-//	T y;
-	CUDA_HOST_DEVICE inline Complex( const T x, const T y );
-	CUDA_HOST_DEVICE inline Complex( const float x );
-	CUDA_HOST_DEVICE inline Complex( const double x );
-	CUDA_HOST_DEVICE inline Complex( const Complex<T>& a);
-	CUDA_HOST_DEVICE inline Complex( volatile const Complex<T>& a);
-	CUDA_HOST_DEVICE inline Complex();
-	CUDA_HOST_DEVICE inline T abs();
-	CUDA_HOST_DEVICE inline T phase();
-	CUDA_HOST_DEVICE inline T abs_squared();
-	CUDA_HOST_DEVICE inline Complex<T> conj();
-	CUDA_HOST_DEVICE inline Complex<T>& operator+=( const Complex<T> a );
-	CUDA_HOST_DEVICE inline Complex<T>& operator+=( const T a );
-	CUDA_HOST_DEVICE inline Complex<T>& operator-=( const Complex<T> a );
-	CUDA_HOST_DEVICE inline Complex<T>& operator-=( const T a );
-	CUDA_HOST_DEVICE inline Complex<T>& operator*=( const Complex<T> a );
-	CUDA_HOST_DEVICE inline Complex<T>& operator*=( const T a );
-	CUDA_HOST_DEVICE inline Complex<T>& operator/=( const T a );
-	CUDA_HOST_DEVICE inline Complex<T>& operator/=( const Complex<T> a );
-	static CUDA_HOST_DEVICE inline Complex<T> I();
-
 	CUDA_HOST_DEVICE inline Complex<T>& operator=( const Complex<T> a )
 	{
 		this->x = a.x;
@@ -59,137 +37,127 @@ public:
 		return *this;
 	}
 
+	CUDA_HOST_DEVICE inline Complex(const T x, const T y)
+	{
+		this->x = x;
+		this->y = y;
+	}
+
+	CUDA_HOST_DEVICE inline Complex(const float x )
+	{
+		this->x = (T)x;
+		this->y = 0;
+	}
+	CUDA_HOST_DEVICE inline Complex(const double x )
+	{
+		this->x = (T)x;
+		this->y = 0;
+	}
+
+	CUDA_HOST_DEVICE inline Complex( const Complex<T>& a )
+	{
+		this->x = a.x;
+		this->y = a.y;
+	}
+
+	CUDA_HOST_DEVICE inline Complex( volatile const Complex<T>& a )
+	{
+		this->x = a.x;
+		this->y = a.y;
+	}
+
+	CUDA_HOST_DEVICE inline Complex()
+	{
+		this->x = 0;
+		this->y = 0;
+	}
+
+	CUDA_HOST_DEVICE inline T abs()
+	{
+		return sqrt( x*x + y*y );
+	}
+
+	CUDA_HOST_DEVICE inline T phase()
+	{
+		return atan2( y, x );
+	}
+
+	CUDA_HOST_DEVICE inline T abs_squared()
+	{
+		return ( x*x + y*y );
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T> conj()
+	{
+		return Complex<T>(x,-y);
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator+=( const Complex<T> a )
+	{
+		x += a.x;
+		y += a.y;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator+=( const T a )
+	{
+		x += a;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator-=( const Complex<T> a )
+	{
+		x -= a.x;
+		y -= a.y;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator-=( const T a )
+	{
+		x -= a;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator*=( const Complex<T> a )
+	{
+		T re = x;
+		T im = y;
+		x = re*a.x - im*a.y;
+		y = re*a.y + im*a.x;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator*=( const T a )
+	{
+		x *= a;
+		y *= a;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator/=( const T a )
+	{
+		x /= a;
+		y /= a;
+		return *this;
+	}
+
+	CUDA_HOST_DEVICE inline Complex<T>& operator/=( const Complex<T> a )
+	{
+		T re = x;
+		T im = y;
+		T abs = a.x*a.x+a.y*a.y;
+		x = (re*a.x + im*a.y)/abs;
+		y = (-re*a.y + im*a.x)/abs;
+
+		return *this;
+	}
+
+	static CUDA_HOST_DEVICE inline Complex<T> I()
+	{
+		return Complex<T>(0,1);
+	}
+
 };
-
-//template<typename T> const Complex<T> Complex<T>::I(0,1.);
-//template<> __constant__ Complex<double> Complex<double>::I(0,1.);
-//template<> __constant__ Complex<float> Complex<float>::I(0,1.);
-
-template<typename T> Complex<T>::Complex(const T x, const T y)
-{
-	this->x = x;
-	this->y = y;
-}
-
-template<typename T> Complex<T>::Complex(const float x )
-{
-	this->x = (T)x;
-	this->y = 0;
-}
-template<typename T> Complex<T>::Complex(const double x )
-{
-	this->x = (T)x;
-	this->y = 0;
-}
-//template<typename T> Complex<T>::Complex(const T x )
-//{
-//	this->x = x;
-//	this->y = 0;
-//}
-
-template<typename T> Complex<T>::Complex( const Complex<T>& a )
-{
-	this->x = a.x;
-	this->y = a.y;
-}
-
-template<typename T> Complex<T>::Complex( volatile const Complex<T>& a )
-{
-	this->x = a.x;
-	this->y = a.y;
-}
-
-template<typename T> Complex<T>::Complex()
-{
-	this->x = 0;
-	this->y = 0;
-}
-
-template<typename T> T Complex<T>::abs()
-{
-	return sqrt( x*x + y*y );
-}
-
-template<typename T> T Complex<T>::phase()
-{
-	return atan2( y, x );
-}
-
-template<typename T> T Complex<T>::abs_squared()
-{
-	return ( x*x + y*y );
-}
-
-template<typename T> Complex<T> Complex<T>::conj()
-{
-	return Complex<T>(x,-y);
-}
-
-template<typename T> Complex<T>& Complex<T>::operator+=( const Complex<T> a )
-{
-	x += a.x;
-	y += a.y;
-	return *this;
-}
-
-template<typename T> Complex<T>& Complex<T>::operator+=( const T a )
-{
-	x += a;
-	return *this;
-}
-
-template<typename T> Complex<T>& Complex<T>::operator-=( const Complex<T> a )
-{
-	x -= a.x;
-	y -= a.y;
-	return *this;
-}
-
-template<typename T> Complex<T>& Complex<T>::operator-=( const T a )
-{
-	x -= a;
-	return *this;
-}
-
-template<typename T> Complex<T>& Complex<T>::operator*=( const Complex<T> a )
-{
-	T re = x;
-	T im = y;
-	x = re*a.x - im*a.y;
-	y = re*a.y + im*a.x;
-	return *this;
-}
-
-template<typename T> Complex<T>& Complex<T>::operator*=( const T a )
-{
-	x *= a;
-	y *= a;
-	return *this;
-}
-
-template<typename T> Complex<T>& Complex<T>::operator/=( const T a )
-{
-	x /= a;
-	y /= a;
-	return *this;
-}
-
-template<typename T> Complex<T>& Complex<T>::operator/=( const Complex<T> a )
-{
-	T re = x;
-	T im = y;
-	T abs = a.x*a.x+a.y*a.y;
-	x = (re*a.x + im*a.y)/abs;
-	y = (-re*a.y + im*a.x)/abs;
-
-	return *this;
-}
-
-template<typename T> Complex<T> Complex<T>::I()
-{
-	return Complex<T>(0,1);
-}
-
 
 
 template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a, Complex<T> b )
@@ -198,11 +166,6 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a,
 	return c+=b;
 }
 
-//template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a, T b )
-//{
-//	Complex<T> c = a;
-//	return c+=b;
-//}
 template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a, float b )
 {
 	Complex<T> c = a;
@@ -214,11 +177,6 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a,
 	return c+=(T)b;
 }
 
-//template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( T a, Complex<T> b )
-//{
-//	Complex<T> c(a);
-//	return c+=b;
-//}
 template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( float a, Complex<T> b )
 {
 	Complex<T> c((T)a);
@@ -260,11 +218,6 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( Complex<T> a,
 	return c/=b;
 }
 
-//template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( Complex<T> a, T b )
-//{
-//	Complex<T> c = a;
-//	return c*=b;
-//}
 template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( Complex<T> a, float b )
 {
 	Complex<T> c = a;
@@ -276,11 +229,6 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( Complex<T> a,
 	return c*=(T)b;
 }
 
-//template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( T a, Complex<T> b )
-//{
-//	Complex<T> c = b; // we commuted arguments to use *=(T) which is simpler
-//	return c*=a;
-//}
 template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( float a, Complex<T> b )
 {
 	Complex<T> c = b; // we commuted arguments to use *=(T) which is simpler
@@ -291,12 +239,6 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( double a, Com
 	Complex<T> c = b; // we commuted arguments to use *=(T) which is simpler
 	return c*=(T)a;
 }
-
-//template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( Complex<T> a, T b )
-//{
-//	Complex<T> c = a;
-//	return c/=b;
-//}
 
 template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( Complex<T> a, float b )
 {
@@ -342,9 +284,6 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> csqrt( T b )
 
 template<typename T> CUDA_HOST_DEVICE static Complex<T> log( Complex<T> b )
 {
-//	Complex<double> db( b.x, b.y );
-//	return Complex<T>( (T)::log( db.abs() ), (T)db.phase() );
-
 	return Complex<T>( ::log( b.abs() ), b.phase() );
 }
 
@@ -434,7 +373,6 @@ template<typename T> inline std::ostream& operator<<(std::ostream& out, Complex<
     out << t.x << "+i*" << t.y;
     return out;
 }
-
 
 
 }

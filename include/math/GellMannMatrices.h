@@ -5,15 +5,13 @@
 
 #ifndef GELLMANNMATRICES_H_
 #define GELLMANNMATRICES_H_
-#include "../../lattice/LocalLink.h"
-#include "../../lattice/parameterization_types/SUNComplexFull.h"
-#include "../../cuLGT1legacy/Complex.hxx"
-#include "../../cudacommon/cuda_host_device.h"
+#include "lattice/LocalLink.h"
+#include "lattice/parameterization_types/SUNComplexFull.h"
+#include "Complex.h"
+#include "cudacommon/cuda_host_device.h"
 
-using culgt::LocalLink;
-using culgt::SUNComplexFull;
-using culgt::Complex;
-
+namespace culgt
+{
 
 template<typename LinkType> class GellMannMatrices
 {
@@ -63,9 +61,9 @@ public:
 			link.set( 7, MyComplex(0,1) );
 			break;
 		case 8:
-			link.set( 0, MyComplex(1./sqrt(3.),0) );
-			link.set( 4, MyComplex(1./sqrt(3.),0) );
-			link.set( 8, MyComplex(-2./sqrt(3.),0) );
+			link.set( 0, MyComplex(1./::sqrt(3.),0) );
+			link.set( 4, MyComplex(1./::sqrt(3.),0) );
+			link.set( 8, MyComplex(-2./::sqrt(3.),0) );
 			break;
 		}
 
@@ -74,5 +72,5 @@ public:
 	}
 };
 
-
+}
 #endif /* GELLMANNMATRICES_H_ */

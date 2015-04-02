@@ -1,6 +1,6 @@
 #include "gmock/gmock.h"
 #include <iostream>
-#include "cuLGT1legacy/Complex.hxx"
+#include "math/Complex.h"
 #include "cudatest/cuda_gtest_plugin.h"
 #include "eigensolver/Cardano3x3.h"
 
