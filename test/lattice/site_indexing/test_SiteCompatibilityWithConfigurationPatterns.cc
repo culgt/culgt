@@ -9,9 +9,9 @@
 
 #include "gmock/gmock.h"
 #include "lattice/configuration_patterns/StandardPattern.h"
-#include "../lattice/configuration_patterns/testhelper_PatternMocks.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
-#include "cuLGT1legacy/SiteCoord.hxx"
+#include "../configuration_patterns/testhelper_PatternMocks.h"
+#include "lattice/site_indexing/SiteIndex.h"
+#include "lattice/site_indexing/SiteCoord.h"
 
 using namespace ::testing;
 using namespace culgt;

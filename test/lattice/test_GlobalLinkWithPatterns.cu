@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 
 #include "cudatest/cuda_gtest_plugin.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "lattice/GlobalLink.h"
 #include "lattice/configuration_patterns/StandardPattern.h"
 #include "lattice/configuration_patterns/GPUPattern.h"

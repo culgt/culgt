@@ -73,7 +73,12 @@ endif()
 add_custom_target( MakeGitVersion 
     COMMAND ${CMAKE_COMMAND} -DPATH_TO_CURRENT_PROJECT=${CMAKE_CURRENT_LIST_DIR} -P $ENV{CULGT_HOME}/cmake/versioning.cmake )
 
-cuda_add_executable(CoulombGaugeSP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc OPTIONS ${CULGT_OPTIONS})
+cuda_add_executable(CoulombGaugeSP
+    CoulombGaugeFixingApp.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu
+    $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc
+    OPTIONS ${CULGT_OPTIONS})
 add_dependencies( CoulombGaugeSP MakeGitVersion )
 target_link_libraries(CoulombGaugeSP liblime.a )
 target_link_libraries(CoulombGaugeSP pthread)
@@ -81,7 +86,11 @@ target_link_libraries(CoulombGaugeSP cudart)
 target_link_libraries(CoulombGaugeSP cufft)
 target_link_libraries(CoulombGaugeSP boost_program_options)
 
-cuda_add_executable(CoulombGaugeDP CoulombGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
+cuda_add_executable(CoulombGaugeDP CoulombGaugeFixingApp.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu
+    $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc
+    OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
 add_dependencies( CoulombGaugeDP MakeGitVersion )
 target_link_libraries(CoulombGaugeDP liblime.a )
 target_link_libraries(CoulombGaugeDP pthread)
@@ -89,7 +98,12 @@ target_link_libraries(CoulombGaugeDP cudart)
 target_link_libraries(CoulombGaugeDP cufft)
 target_link_libraries(CoulombGaugeDP boost_program_options)
 
-cuda_add_executable(LandauGaugeSP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc OPTIONS ${CULGT_OPTIONS} )
+cuda_add_executable(LandauGaugeSP
+    LandauGaugeFixingApp.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu
+    $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc
+    OPTIONS ${CULGT_OPTIONS} )
 add_dependencies( LandauGaugeSP MakeGitVersion )
 target_link_libraries(LandauGaugeSP liblime.a )
 target_link_libraries(LandauGaugeSP pthread)
@@ -97,7 +111,12 @@ target_link_libraries(LandauGaugeSP cudart)
 target_link_libraries(LandauGaugeSP cufft)
 target_link_libraries(LandauGaugeSP boost_program_options)
 
-cuda_add_executable(LandauGaugeDP LandauGaugeFixingApp.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
+cuda_add_executable(LandauGaugeDP
+    LandauGaugeFixingApp.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu
+    $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu
+    $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc
+    OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
 add_dependencies( LandauGaugeDP MakeGitVersion )
 target_link_libraries(LandauGaugeDP liblime.a )
 target_link_libraries(LandauGaugeDP pthread)

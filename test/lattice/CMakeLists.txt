@@ -27,6 +27,10 @@ set(sources
 	test_LinkFile.cc
 	test_LinkToGaugefieldConverter.cc
 	filetypes/test_limereader.cc
+	site_indexing/test_SiteIndex.cc
+	site_indexing/test_SiteCoord.cc
+	site_indexing/test_SiteCompatibilityWithConfigurationPatterns.cc
+	site_indexing/test_SiteIndexSiteCoordCompatibility.cc
 	)
 add_executable(test_lattice_host ../test_main.cpp ${sources} $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
 target_link_libraries(test_lattice_host pthread)
@@ -49,6 +53,7 @@ set(sources_cuda
 	test_LatticeDimension.cu
 	test_KernelSetup.cu
 	parameterization_types/test_SU2Vector4.cu
+	site_indexing/test_SiteNeighbourTableManager.cu
 	)
 
 cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )

@@ -5,10 +5,6 @@ include_directories(../../include)
 include( ../commonsettings.cmake )
 
 set(sources 
-	test_SiteIndex.cc
-	test_SiteCoord.cc
-	test_SiteCompatibilityWithConfigurationPatterns.cc
-	test_SiteIndexSiteCoordCompatibility.cc
 	)
 add_executable(test_cuLGT1legacy_host ../test_main.cpp  ${sources})
 target_link_libraries(test_cuLGT1legacy_host pthread)
@@ -20,7 +16,6 @@ addWithDirectory( cuLGT1legacy "${sources}" )
 endif()
 
 set(sources_cuda 
-	test_SiteNeighbourTableManager.cu
 	test_Complex.cu
 	)
 

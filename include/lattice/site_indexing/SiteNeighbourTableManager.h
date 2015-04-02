@@ -10,12 +10,12 @@
 
 #include <cstddef>
 #include <map>
-#include "../lattice/LatticeDimension.h"
+#include "lattice/LatticeDimension.h"
 #include <iostream>
 
 #ifdef __CUDACC__
-#include "../cudacommon/cuda_error.h"
-#include "../cudacommon/DeviceMemoryManager.h"
+#include "cudacommon/cuda_error.h"
+#include "cudacommon/DeviceMemoryManager.h"
 #endif
 
 

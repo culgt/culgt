@@ -8,10 +8,11 @@
 
 
 #include "gmock/gmock.h"
-#include "cuLGT1legacy/SiteCoord.hxx"
+#include "lattice/site_indexing/SiteCoord.h"
 #include "testhelper_Site.h"
 
 using namespace ::testing;
+using namespace culgt;
 
 
 TEST(ASiteCoord, ShowSetGetUsage )

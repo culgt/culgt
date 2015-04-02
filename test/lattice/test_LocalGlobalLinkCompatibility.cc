@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "lattice/LocalLink.h"
 #include "lattice/GlobalLink.h"
 #include "lattice/configuration_patterns/StandardPattern.h"

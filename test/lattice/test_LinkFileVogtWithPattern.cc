@@ -10,7 +10,7 @@
 #include "lattice/configuration_patterns/GPUPattern.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU2_Real4_Real8.h"
 #include "lattice/LatticeDimension.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "common/culgt_typedefs.h"
 
 using namespace culgt;

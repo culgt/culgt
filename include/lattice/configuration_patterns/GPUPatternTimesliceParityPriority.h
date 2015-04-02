@@ -6,15 +6,15 @@
 #ifndef GPUPATTERNTIMESLICEPARITYPRIORITY_H_
 #define GPUPATTERNTIMESLICEPARITYPRIORITY_H_
 
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../common/culgt_typedefs.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
 
 #include "StandardPattern.h"
-#include "../LatticeDimension.h"
-#include "../../cuLGT1legacy/SiteCoord.hxx"
-#include <boost/mpl/assert.hpp>
 #include "GPUPatternParityPriority.h"
-#include "../../cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/LatticeDimension.h"
+#include "lattice/site_indexing/SiteCoord.h"
+#include "lattice/site_indexing/SiteIndex.h"
+#include <boost/mpl/assert.hpp>
 
 namespace culgt
 {

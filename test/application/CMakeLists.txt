@@ -21,7 +21,7 @@ set(sources_cuda
 	test_GaugeConfigurationIteratingApplication.cu
 	)
 
-cuda_add_executable(test_application_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu )
+cuda_add_executable(test_application_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
 target_link_libraries(test_application_cuda pthread)
 target_link_libraries(test_application_cuda gmock)
 target_link_libraries(test_application_cuda gtest)
@@ -35,7 +35,7 @@ endif()
 
 
 
-cuda_add_executable(test_application ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu )
+cuda_add_executable(test_application ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
 target_link_libraries(test_application pthread)
 target_link_libraries(test_application gmock)
 target_link_libraries(test_application gtest)

@@ -9,7 +9,7 @@
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector2_Real18.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 #include "application/GaugeConfigurationIteratingApplication.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "lattice/configuration_patterns/GPUPatternTimesliceParityPriority.h"
 #include "lattice/LinkFile.h"
 #include "lattice/LatticeDimension.h"

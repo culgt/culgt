@@ -7,7 +7,9 @@
 
 #ifndef TEST_PATTERNMOCKS_H_
 #define TEST_PATTERNMOCKS_H_
-#include "cuLGT1legacy/ParityType.h"
+#include "lattice/site_indexing/ParityType.h"
+
+using namespace culgt;
 
 template<int TNdim=4, ParityType Parity=NO_SPLIT> class SiteTypeMock
 {

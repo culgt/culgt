@@ -10,14 +10,17 @@
  *  - See "SiteIndex".
  */
 
-#ifndef SITECOORD_HXX_
-#define SITECOORD_HXX_
+#ifndef SITECOORD_H_
+#define SITECOORD_H_
 
 #include "ParityType.h"
-#include "../cudacommon/cuda_host_device.h"
-#include "../common/culgt_typedefs.h"
-#include "../lattice/LatticeDimension.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
+#include "lattice/LatticeDimension.h"
 #include <assert.h>
+
+namespace culgt
+{
 
 /**
  * The template parameter "ParityType par" defines normal indexing (par==NO_SPLIT), full parity splitting (par==FULL_SPLIT) or splitting
@@ -482,5 +485,6 @@ template<lat_dim_t Nd, ParityType par> SiteCoord<Nd, par> SiteCoord<Nd, par>::ge
 	return site;
 }
 
+}
 
 #endif /* SITECOORD_HXX_ */

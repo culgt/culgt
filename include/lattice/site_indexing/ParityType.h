@@ -8,11 +8,15 @@
 #ifndef PARITYTYPE_H_
 #define PARITYTYPE_H_
 
+namespace culgt
+{
 
 enum ParityType { NO_SPLIT, FULL_SPLIT, TIMESLICE_SPLIT };
 
 enum NeigbourTableType {
 	DO_NOT_USE_NEIGHBOURS
 };
+
+}
 
 #endif /* PARITYTYPE_H_ */

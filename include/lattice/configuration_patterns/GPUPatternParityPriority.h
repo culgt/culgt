@@ -10,12 +10,12 @@
 #ifndef GPUPATTERNPARITYPRIORITY_H_
 #define GPUPATTERNPARITYPRIORITY_H_
 
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../common/culgt_typedefs.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
 #include "StandardPattern.h"
 #include "../LatticeDimension.h"
 #include <boost/mpl/assert.hpp>
-#include "../../cuLGT1legacy/ParityType.h"
+#include "lattice/site_indexing/ParityType.h"
 
 namespace culgt
 {

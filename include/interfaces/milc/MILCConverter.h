@@ -7,10 +7,10 @@
 
 #ifndef MILCCONVERTER_H_
 #define MILCCONVERTER_H_
-#include "../../lattice/LatticeDimension.h"
-#include "../../lattice/LocalLink.h"
-#include "../../lattice/parameterization_types/SUNRealFull.h"
-#include "../../cuLGT1legacy/SiteCoord.hxx"
+#include "lattice/LatticeDimension.h"
+#include "lattice/LocalLink.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
+#include "lattice/site_indexing/SiteCoord.h"
 
 #include "su3.h" // milc
 

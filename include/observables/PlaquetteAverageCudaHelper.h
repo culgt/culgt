@@ -8,13 +8,13 @@
 #ifndef PLAQUETTEAVERAGECUDAHELPER_H_
 #define PLAQUETTEAVERAGECUDAHELPER_H_
 
-#include "../lattice/LatticeDimension.h"
-#include "../lattice/LocalLink.h"
-#include "../lattice/parameterization_types/SUNRealFull.h"
-#include "../cudacommon/cuda_error.h"
-#include "../lattice/KernelSetup.h"
+#include "lattice/LatticeDimension.h"
+#include "lattice/LocalLink.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
+#include "lattice/KernelSetup.h"
+#include "cudacommon/cuda_error.h"
 #include "Plaquette.h"
-#include "../cuLGT1legacy/SiteNeighbourTableManager.h"
+#include "lattice/site_indexing/SiteNeighbourTableManager.h"
 
 namespace culgt
 {

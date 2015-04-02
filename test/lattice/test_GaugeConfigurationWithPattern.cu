@@ -4,7 +4,7 @@
 #include "lattice/GaugeConfigurationHelper.h"
 #include "lattice/configuration_patterns/StandardPattern.h"
 #include "lattice/parameterization_types/SU3Real12.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "cudacommon/cuda_host_device.h"
 
 using namespace culgt;

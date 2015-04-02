@@ -10,7 +10,7 @@
 #include <iostream>
 #include "observables/WilsonLoopAverage.h"
 #include "lattice/parameterization_types/SU3Vector4.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "lattice/configuration_patterns/GPUPatternParityPriority.h"
 #include "lattice/GlobalLink.h"
 #include "lattice/LocalLink.h"
@@ -20,16 +20,7 @@
 #include "gaugefixing/GaugeSettings.h"
 #include "util/rng/PhiloxWrapper.h"
 
-using culgt::GaugeConfiguration;
-using culgt::SU3Vector4;
-using culgt::SiteIndex;
-using culgt::GPUPatternParityPriority;
-using culgt::GlobalLink;
-using culgt::LocalLink;
-using culgt::MILCConverter;
-using culgt::LandauGaugefixing;
-using culgt::GaugeSettings;
-using culgt::PhiloxWrapper;
+using namespace culgt;
 
 typedef SU3Vector4<REAL> PARAMTYPE;
 typedef SiteIndex<4,FULL_SPLIT> SITE;

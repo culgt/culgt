@@ -4,13 +4,13 @@
 #ifndef GPUPATTERNTIMESLICE_HXX_
 #define GPUPATTERNTIMESLICE_HXX_
 
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../common/culgt_typedefs.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
 
 #include "StandardPattern.h"
-#include "../LatticeDimension.h"
-#include "../../cuLGT1legacy/SiteCoord.hxx"
-#include "../../cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/LatticeDimension.h"
+#include "lattice/site_indexing/SiteCoord.h"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "GPUPattern.h"
 
 namespace culgt

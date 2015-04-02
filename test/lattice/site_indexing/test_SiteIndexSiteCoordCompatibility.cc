@@ -9,8 +9,8 @@
 
 #include "gmock/gmock.h"
 #include "lattice/LatticeDimension.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
-#include "cuLGT1legacy/SiteCoord.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
+#include "lattice/site_indexing/SiteCoord.h"
 #include <iostream>
 
 using namespace std;

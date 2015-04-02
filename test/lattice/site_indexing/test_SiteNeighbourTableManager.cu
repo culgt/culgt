@@ -1,7 +1,7 @@
 
 #include "gmock/gmock.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
-#include "cuLGT1legacy/SiteNeighbourTableManager.h"
+#include "lattice/site_indexing/SiteIndex.h"
+#include "lattice/site_indexing/SiteNeighbourTableManager.h"
 #include "cudacommon/DeviceCommunicator.h"
 
 using namespace testing;

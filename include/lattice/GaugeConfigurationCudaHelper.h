@@ -8,8 +8,8 @@
 #ifndef GAUGECONFIGURATIONCUDAHELPER_H_
 #define GAUGECONFIGURATIONCUDAHELPER_H_
 
-#include "../cuLGT1legacy/ParityType.h"
-#include "../cudacommon/cuda_error.h"
+#include "lattice/site_indexing/ParityType.h"
+#include "cudacommon/cuda_error.h"
 #include "LatticeDimension.h"
 #include "LocalLink.h"
 #include "GlobalLink.h"
@@ -18,15 +18,13 @@
 #include "parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 #include "parameterization_types/ParameterizationMediatorSU2_Vector4_Real8.h"
 #include "SubgroupIterator.h"
-#include "../cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "parameterization_types/SUNRealFull.h"
 #include "KernelSetup.h"
-#include "../cudacommon/DeviceMemoryManager.h"
+#include "cudacommon/DeviceMemoryManager.h"
 
-using culgt::LatticeDimension;
-using culgt::SUNRealFull;
-using culgt::KernelSetup;
-
+namespace culgt
+{
 
 template<typename T> class GaugeConfigurationCudaHelper
 {
@@ -122,7 +120,7 @@ namespace GaugeConfigurationCudaHelperKernel
 			alpha = rng.rand();
 			phi = 2.0 * rng.rand();
 			cos_theta = 2.0 * rng.rand() - 1.0;
-			sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+			sin_theta = ::sqrt(1.0 - cos_theta * cos_theta);
 			sin_alpha = sinpi(alpha);
 			q.x = cospi(alpha);
 			q.y = sin_alpha * sin_theta * cospi(phi);
@@ -271,5 +269,7 @@ template<typename T> template<typename ConfigurationPattern> void GaugeConfigura
 }
 
 #endif
+
+}
 
 #endif /* GAUGECONFIGURATIONHELPER_H_ */

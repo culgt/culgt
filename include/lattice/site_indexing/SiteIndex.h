@@ -9,12 +9,12 @@
  * like getLatticeIndex() (which simply return the member variable).
  */
 
-#ifndef SITEINDEX_HXX_
-#define SITEINDEX_HXX_
+#ifndef SITEINDEX_H_
+#define SITEINDEX_H_
 
-#include "../cudacommon/cuda_host_device.h"
-#include "../common/culgt_typedefs.h"
-#include "../lattice/LatticeDimension.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
+#include "lattice/LatticeDimension.h"
 #include "ParityType.h"
 #include <assert.h>
 
@@ -28,8 +28,6 @@
 
 namespace culgt
 {
-
-
 
 template<lat_dim_t Nd, ParityType par> class SiteIndex
 {

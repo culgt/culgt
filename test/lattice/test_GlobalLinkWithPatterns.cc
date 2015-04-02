@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 
 #include "lattice/GlobalLink.h"
-#include "cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/site_indexing/SiteIndex.h"
 #include "lattice/configuration_patterns/StandardPattern.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
 #include "lattice/parameterization_types/SU3Real12.h"
