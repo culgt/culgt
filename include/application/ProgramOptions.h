@@ -15,7 +15,7 @@
 #include <boost/program_options/options_description.hpp>
 #include <iosfwd>
 
-#include "../lattice/filetype_typedefs.h"
+#include "lattice/filetypes/filetype_typedefs.h"
 
 using std::string;
 using std::ifstream;

@@ -8,7 +8,7 @@
 #include "GaugeConfigurationCudaHelper.h"
 #include "LocalLink.h"
 #include "GlobalLink.h"
-#include "LinkFile.h"
+#include "filetypes/LinkFile.h"
 #include "LatticeDimension.h"
 
 namespace culgt {

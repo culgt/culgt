@@ -14,10 +14,10 @@
 #include <fstream>
 #include <sstream>
 #include "LinkFile.h"
-#include "LocalLink.h"
-#include "GlobalLink.h"
-#include "parameterization_types/SUNRealFull.h"
-#include "../common/culgt_typedefs.h"
+#include "lattice/LocalLink.h"
+#include "lattice/GlobalLink.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
+#include "common/culgt_typedefs.h"
 #include <iosfwd>
 
 using std::ios;

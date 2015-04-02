@@ -8,9 +8,8 @@
 #ifndef GAUGECONFIGURATIONITERATINGAPPLICATION_H_
 #define GAUGECONFIGURATIONITERATINGAPPLICATION_H_
 
-#include "../lattice/GaugeConfiguration.h"
-#include "../lattice/LinkFile.h"
-#include "../lattice/LatticeDimension.h"
+#include "lattice/GaugeConfiguration.h"
+#include "lattice/LatticeDimension.h"
 #include "FileIterator.h"
 #include "ProgramOptions.h"
 #include <typeinfo>

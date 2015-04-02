@@ -10,8 +10,8 @@
 
 #include <string>
 #include <fstream>
-#include "LatticeDimension.h"
-#include "../common/culgt_typedefs.h"
+#include "lattice/LatticeDimension.h"
+#include "common/culgt_typedefs.h"
 
 #include "filetype_typedefs.h"
 

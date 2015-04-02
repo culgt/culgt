@@ -12,7 +12,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include "../LinkFile.h"
+#include "LinkFile.h"
 #include "lattice/LocalLink.h"
 #include "lattice/GlobalLink.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
