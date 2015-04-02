@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef ZYLINDERMOMENTA_HXX_
-#define ZYLINDERMOMENTA_HXX_
+#ifndef ZYLINDERMOMENTA_H_
+#define ZYLINDERMOMENTA_H_
 
 #include <iostream>
 #include <vector>
