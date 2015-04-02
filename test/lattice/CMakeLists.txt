@@ -28,7 +28,7 @@ set(sources
 	test_LinkToGaugefieldConverter.cc
 	filetypes/test_limereader.cc
 	)
-add_executable(test_lattice_host ../test_main.cpp ${sources})
+add_executable(test_lattice_host ../test_main.cpp ${sources} $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
 target_link_libraries(test_lattice_host pthread)
 target_link_libraries(test_lattice_host gmock)
 target_link_libraries(test_lattice_host gtest)
@@ -51,7 +51,7 @@ set(sources_cuda
 	parameterization_types/test_SU2Vector4.cu
 	)
 
-cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu )
+cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
 target_link_libraries(test_lattice_cuda pthread)
 target_link_libraries(test_lattice_cuda gmock)
 target_link_libraries(test_lattice_cuda gtest)
@@ -63,19 +63,16 @@ endif()
 
 
 
-cuda_add_executable(test_lattice ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu )
+cuda_add_executable(test_lattice ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
 target_link_libraries(test_lattice pthread)
 target_link_libraries(test_lattice gmock)
 target_link_libraries(test_lattice gtest)
+target_link_libraries(test_lattice liblime.a)
 
-
-
-
-
-set(sourcesSpecial 
-	test_GlobalLinkWithPatterns.cc
-	)
-add_executable(test_lattice_special ../test_main.cpp ${sourcesSpecial})
-target_link_libraries(test_lattice_special pthread)
-target_link_libraries(test_lattice_special gmock)
-target_link_libraries(test_lattice_special gtest)
+#set(sourcesSpecial 
+#	test_GlobalLinkWithPatterns.cc
+#	)
+#add_executable(test_lattice_special ../test_main.cpp ${sourcesSpecial} $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
+#target_link_libraries(test_lattice_special pthread)
+#target_link_libraries(test_lattice_special gmock)
+#target_link_libraries(test_lattice_special gtest)
