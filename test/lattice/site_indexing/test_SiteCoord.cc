@@ -22,9 +22,9 @@ TEST(ASiteCoord, ShowSetGetUsage )
 	// then again the index.
 	int size[4] = {4,4,4,4};
 	SiteCoord<4,NO_SPLIT> site( size );
-	site.setLatticeIndex( 123 );
+	site.setIndex( 123 );
 
-	ASSERT_EQ( 123, site.getLatticeIndex() );
+	ASSERT_EQ( 123, site.getIndex() );
 }
 
 
@@ -47,8 +47,8 @@ const int SiteCoordCompatibilityFullSplitNoSplit::size[] = {4,4,4,4};
 
 TEST_F( SiteCoordCompatibilityFullSplitNoSplit, CoordinatesAreEqual )
 {
-	siteNoSplit.setLatticeIndex( latticeIndex );
-	siteFullSplit.setLatticeIndexFromNonParitySplitOrder( latticeIndex );
+	siteNoSplit.setIndex( latticeIndex );
+	siteFullSplit.setIndexFromNonParitySplitOrder( latticeIndex );
 
 	ASSERT_THAT( true, coordinatesAreEqual( siteNoSplit, siteFullSplit ));
 }
@@ -73,8 +73,8 @@ const int SiteCoordCompatibilityTimesliceSplitNoSplit::size[] = {4,4,4,4};
 
 TEST_F( SiteCoordCompatibilityTimesliceSplitNoSplit, CoordinatesAreEqual )
 {
-	siteNoSplit.setLatticeIndex( latticeIndex );
-	siteTimesliceSplit.setLatticeIndexFromNonParitySplitOrder( latticeIndex );
+	siteNoSplit.setIndex( latticeIndex );
+	siteTimesliceSplit.setIndexFromNonParitySplitOrder( latticeIndex );
 
 	ASSERT_THAT( true, coordinatesAreEqual( siteNoSplit, siteTimesliceSplit ));
 }

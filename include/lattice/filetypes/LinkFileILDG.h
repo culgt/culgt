@@ -291,7 +291,7 @@ public:
 								mu = filemu+1;
 							}
 							typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
-							site.setLatticeIndexFromNonParitySplitOrder( siteFile.getLatticeIndex() );
+							site.setIndexFromNonParitySplitOrder( siteFile.getIndex() );
 
 							GlobalLink<MemoryConfigurationPattern> dest( this->getPointerToU(), site, mu );
 
@@ -335,7 +335,7 @@ public:
 
 
 							typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
-							site.setLatticeIndexFromNonParitySplitOrder( siteFile.getLatticeIndex() );
+							site.setIndexFromNonParitySplitOrder( siteFile.getIndex() );
 
 							GlobalLink<MemoryConfigurationPattern> src( this->getPointerToU(), site, mu );
 

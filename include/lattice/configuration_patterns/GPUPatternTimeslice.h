@@ -41,8 +41,8 @@ public:
 		lat_coord_t t = index / SITETYPE::Ndim;
 
 		SiteCoord<Site::Ndim, NO_SPLIT> site( dim );
-		site.setLatticeIndex( t*dim.getSizeTimeslice()+siteIndexTimeslice);
-		return StandardPattern<Site, ParamType>::getStandardIndex( site.getLatticeIndex(), mu, paramIndex );
+		site.setIndex( t*dim.getSizeTimeslice()+siteIndexTimeslice);
+		return StandardPattern<Site, ParamType>::getStandardIndex( site.getIndex(), mu, paramIndex );
 	}
 };
 
