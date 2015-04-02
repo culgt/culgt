@@ -10,7 +10,7 @@
 #include "lattice/GaugeConfigurationHelper.h"
 #include "lattice/configuration_patterns/StandardPattern.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
-#include "cuLGT1legacy/SiteCoord.hxx"
+#include "lattice/site_indexing/SiteCoord.h"
 #include "observables/Plaquette.h"
 
 
@@ -35,7 +35,7 @@ public:
 	APlaquette() : dim(N,N), plaquette( U, dim ), site( dim )
 	{
 		GaugeConfigurationHelper<MyPattern>::setCold( U, dim );
-		site.setLatticeIndex(0);
+		site.setIndex(0);
 	}
 
 };

@@ -6,7 +6,7 @@
  */
 
 #include "gmock/gmock.h"
-#include "lattice/LinkFileVogt.h"
+#include "lattice/filetypes/LinkFileVogt.h"
 #include "lattice/configuration_patterns/GPUPattern.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU2_Real4_Real8.h"
 #include "lattice/LatticeDimension.h"

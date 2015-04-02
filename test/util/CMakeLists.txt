@@ -16,7 +16,7 @@ target_link_libraries(test_util_host gmock)
 target_link_libraries(test_util_host gtest)
 
 if( DEFINED allsources )
-addWithDirectory( observables "${sources}" )
+addWithDirectory( util "${sources}" )
 endif()
 
 
@@ -32,7 +32,7 @@ target_link_libraries(test_util_cuda gtest)
 target_link_libraries(test_util_cuda cudart)
 
 if( DEFINED allsources )
-addWithDirectory( observables "${sources_cuda}"  )
+addWithDirectory( util "${sources_cuda}"  )
 endif()
 
 

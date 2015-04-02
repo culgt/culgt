@@ -10,10 +10,12 @@ set( allsources "" )
 
 add_subdirectory( application )
 add_subdirectory( cudacommon )
-add_subdirectory( cuLGT1legacy )
+add_subdirectory( eigensolver )
 add_subdirectory( gaugefixing )
 add_subdirectory( lattice )
-add_subdirectory( eigensolver )
+add_subdirectory( math )
+add_subdirectory( observables )
+add_subdirectory( util )
 
 message( "allsources = ${allsources}" )
 

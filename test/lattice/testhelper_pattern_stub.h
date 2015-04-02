@@ -8,7 +8,7 @@
 #define TESTHELPER_PATTERN_STUB_H_
 #include "common/culgt_typedefs.h"
 #include "lattice/LatticeDimension.h"
-#include "lattice/ParameterizationMediator.h"
+#include "lattice/parameterization_types/ParameterizationMediator.h"
 #include "lattice/GlobalLink.h"
 #include "lattice/LocalLink.h"
 #include "lattice/parameterization_types/SUNRealFull.h"

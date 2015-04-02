@@ -2,7 +2,7 @@
 
 
 #include "gmock/gmock.h"
-#include "lattice/LinkFile.h"
+#include "lattice/filetypes/LinkFile.h"
 #include "testhelper_pattern_stub.h"
 
 using namespace culgt;

@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "util/reduction/Reduction.h"
 #include "cudacommon/DeviceCommunicator.h"
-#include "cuLGT1legacy/Complex.hxx"
+#include "math/Complex.h"
 
 using namespace testing;
 using namespace culgt;

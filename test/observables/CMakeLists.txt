@@ -22,11 +22,10 @@ endif()
 
 
 set(sources_cuda
-	$ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu 
 	test_PlaquetteAverage.cu
 	)
 
-cuda_add_executable(test_observables_cuda ../test_main.cpp ${sources_cuda} )
+cuda_add_executable(test_observables_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
 target_link_libraries(test_observables_cuda pthread)
 target_link_libraries(test_observables_cuda gmock)
 target_link_libraries(test_observables_cuda gtest)
@@ -38,7 +37,7 @@ endif()
 
 
 
-cuda_add_executable(test_observables ../test_main.cpp ${sources} ${sources_cuda})
+cuda_add_executable(test_observables ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
 target_link_libraries(test_observables pthread)
 target_link_libraries(test_observables gmock)
 target_link_libraries(test_observables gtest)
