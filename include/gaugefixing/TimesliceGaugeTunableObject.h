@@ -1,24 +1,23 @@
 /**
- * CoulombGaugeTunableObject.h
  *
  *  Created on: Apr 30, 2014
  *      Author: vogt
  */
 
-#ifndef COULOMBGAUGETUNABLEOBJECT_H_
-#define COULOMBGAUGETUNABLEOBJECT_H_
+#ifndef TIMESLICEGAUGETUNABLEOBJECT_H_
+#define TIMESLICEGAUGETUNABLEOBJECT_H_
 
-#include "../util/performance/TunableObject.h"
+#include "util/performance/TunableObject.h"
 
 namespace culgt
 {
 
-template<typename GlobalLinkType, typename LocalLinkType> class CoulombGaugeTunableObject: public TunableObject
+template<typename GlobalLinkType, typename LocalLinkType> class TimesliceGaugeTunableObject: public TunableObject
 {
 public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	CoulombGaugeTunableObject( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice, long seed ) : Ut(Ut), UtDown(UtDown), dimTimeslice(dimTimeslice), seed(seed)
+	TimesliceGaugeTunableObject( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice, long seed ) : Ut(Ut), UtDown(UtDown), dimTimeslice(dimTimeslice), seed(seed)
 	{
 	}
 
@@ -45,4 +44,4 @@ protected:
 
 }
 
-#endif /* COULOMBGAUGETUNABLEOBJECT_H_ */
+#endif

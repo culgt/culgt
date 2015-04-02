@@ -31,8 +31,8 @@
 
 #include "GaugeFixingSaOr.h"
 #include <boost/mpl/assert.hpp>
-#include "TimesliceGaugefixingOverrelaxation.h"
-#include "TimesliceGaugefixingSimulatedAnnealing.h"
+#include "TimesliceGaugeFixingOverrelaxation.h"
+#include "TimesliceGaugeFixingSimulatedAnnealing.h"
 
 using std::string;
 

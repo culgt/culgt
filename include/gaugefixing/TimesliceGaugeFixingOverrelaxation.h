@@ -12,7 +12,7 @@
 #ifndef TIMESLICEGAUGEFIXINGOVERRELAXATION_H_
 #define TIMESLICEGAUGEFIXINGOVERRELAXATION_H_
 
-#include "CoulombGaugeTunableObject.h"
+#include "TimesliceGaugeTunableObject.h"
 #include "algorithms/OrUpdate.h"
 #include "GaugeFixing8Threads.h"
 #include "GaugeFixing4Threads.h"
@@ -26,11 +26,11 @@
 namespace culgt
 {
 
-template<typename PatternType, typename LocalLinkType, typename GaugeType, bool DoMicro = false> class TimesliceGaugeFixingOverrelaxation: public CoulombGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
+template<typename PatternType, typename LocalLinkType, typename GaugeType, bool DoMicro = false> class TimesliceGaugeFixingOverrelaxation: public TimesliceGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<PatternType, true > GlobalLinkType;
-	typedef CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
+	typedef TimesliceGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
@@ -107,7 +107,7 @@ public:
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	TimesliceGaugeFixingOverrelaxation( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice, long seed, float orParameter = 1.0  ) : CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType>( Ut, UtDown, dimTimeslice, seed ), orParameter(orParameter)
+	TimesliceGaugeFixingOverrelaxation( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice, long seed, float orParameter = 1.0  ) : TimesliceGaugeTunableObject<GlobalLinkType,LocalLinkType>( Ut, UtDown, dimTimeslice, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}

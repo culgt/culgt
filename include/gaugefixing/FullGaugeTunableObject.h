@@ -3,8 +3,8 @@
  *      Author: vogt
  */
 
-#ifndef LANDAUGAUGETUNABLEOBJECT_H_
-#define LANDAUGAUGETUNABLEOBJECT_H_
+#ifndef FULLGAUGETUNABLEOBJECT_H_
+#define FULLGAUGETUNABLEOBJECT_H_
 
 #include "../util/performance/TunableObject.h"
 #include "../util/rng/PhiloxWrapper.h"
@@ -12,12 +12,12 @@
 namespace culgt
 {
 
-template<typename GlobalLinkType, typename LocalLinkType> class LandauGaugeTunableObject: public TunableObject
+template<typename GlobalLinkType, typename LocalLinkType> class FullGaugeTunableObject: public TunableObject
 {
 public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	LandauGaugeTunableObject( T** U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, long seed ) : U(U), dim(dim), seed(seed)
+	FullGaugeTunableObject( T** U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, long seed ) : U(U), dim(dim), seed(seed)
 	{
 	}
 

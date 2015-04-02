@@ -8,7 +8,7 @@
 #ifndef FULLGAUGEFIXINGSIMULATEDANNEALING_H_
 #define FULLGAUGEFIXINGSIMULATEDANNEALING_H_
 
-#include "LandauGaugeTunableObject.h"
+#include "FullGaugeTunableObject.h"
 #include "GaugeFixing8Threads.h"
 #include "GaugeFixing4Threads.h"
 #include "../util/rng/PhiloxWrapper.h"
@@ -32,11 +32,11 @@ namespace culgt
 /**
  * General class, needs specialization for different Patterns
  */
-template<typename PatternType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingSimulatedAnnealing: public LandauGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
+template<typename PatternType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingSimulatedAnnealing: public FullGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<PatternType,true> GlobalLinkType;
-	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
+	typedef FullGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
@@ -49,11 +49,11 @@ public:
 /**
  * Specialization for PatternType == GPUPatternParityPriority (i.e. the natural choice for Landau-like gauges)
  */
-template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingSimulatedAnnealing<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public LandauGaugeTunableObject<GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true>,LocalLinkType>
+template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingSimulatedAnnealing<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public FullGaugeTunableObject<GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true > GlobalLinkType;
-	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
+	typedef FullGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename ParamType::TYPE T;
 	typedef typename ParamType::REALTYPE REALT;
@@ -109,7 +109,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float temperature ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
+	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float temperature ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
 	{
 		Chooser::object = this;
 	}
@@ -146,12 +146,12 @@ private:
 /**
  * Specialization for PatternType == GPUPatternTimesliceParityPriority (i.e. the natural choice for Coulomb-like gauges)
  */
-template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingSimulatedAnnealing<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public LandauGaugeTunableObject<GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true>,LocalLinkType>
+template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType> class FullGaugeFixingSimulatedAnnealing<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType>: public FullGaugeTunableObject<GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true> GlobalLinkType;
 	typedef SiteIndex<SiteType::NDIM, FULL_SPLIT> SiteTypeTimeslice;
-	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
+	typedef FullGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename ParamType::TYPE T;
 	typedef typename ParamType::REALTYPE REALT;
@@ -235,7 +235,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float temperature ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
+	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float temperature ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
 	{
 		Chooser::object = this;
 	}

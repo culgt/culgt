@@ -11,7 +11,7 @@
 #ifndef FULLGAUGEFIXINGOVERRELAXATION_H_
 #define FULLGAUGEFIXINGOVERRELAXATION_H_
 
-#include "LandauGaugeTunableObject.h"
+#include "FullGaugeTunableObject.h"
 #include "algorithms/OrUpdate.h"
 #include "GaugeFixing8Threads.h"
 #include "GaugeFixing4Threads.h"
@@ -36,13 +36,13 @@ namespace culgt
 /**
  * General class, needs specialization for different Patterns
  */
-template<typename PatternType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation: public LandauGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
+template<typename PatternType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation: public FullGaugeTunableObject<GlobalLink<PatternType,true>,LocalLinkType>
 {
 public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef GlobalLink<PatternType, true > GlobalLinkType;
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<PatternType::SITETYPE::NDIM> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed )
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<PatternType::SITETYPE::NDIM> dim, long seed, float orParameter = 1.0 ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed )
 	{
 	};
 
@@ -70,11 +70,11 @@ public:
 /**
  * Specialization for PatternType == GPUPatternParityPriority (i.e. the natural choice for Landau-like gauges)
  */
-template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType,DoMicro>: public LandauGaugeTunableObject<GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true>,LocalLinkType>
+template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType,DoMicro>: public FullGaugeTunableObject<GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, true > GlobalLinkType;
-	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
+	typedef FullGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename ParamType::TYPE T;
 	typedef typename ParamType::REALTYPE REALT;
@@ -163,7 +163,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}
@@ -200,12 +200,12 @@ private:
 /**
  * Specialization for PatternType == GPUPatternTimesliceParityPriority (i.e. the natural choice for Coulomb-like gauges)
  */
-template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro>: public LandauGaugeTunableObject<GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true>,LocalLinkType>
+template<typename SiteType, typename ParamType, typename LocalLinkType, typename GaugeType, bool DoMicro> class FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro>: public FullGaugeTunableObject<GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true>,LocalLinkType>
 {
 public:
 	typedef GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true> GlobalLinkType;
 	typedef SiteIndex<SiteType::NDIM, FULL_SPLIT> SiteTypeTimeslice;
-	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
+	typedef FullGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename ParamType::TYPE T;
 	typedef typename ParamType::REALTYPE REALT;
@@ -322,7 +322,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}
