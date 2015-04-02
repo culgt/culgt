@@ -15,7 +15,7 @@ template<int TNdim=4, ParityType Parity=NO_SPLIT> class SiteTypeMock
 {
 public:
 	static const ParityType PARITYTYPE = Parity;
-	static const int Ndim = TNdim;
+	static const int NDIM = TNdim;
 	const int size;
 	const int sizeTimeslice;
 	int index;

@@ -23,7 +23,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 
-	CUDA_HOST_DEVICE inline Plaquette( T* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim ) : U(U), dim(dim)
+	CUDA_HOST_DEVICE inline Plaquette( T* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim ) : U(U), dim(dim)
 	{
 	}
 
@@ -62,7 +62,7 @@ public:
 
 private:
 	T* U;
-	LatticeDimension<PatternType::SITETYPE::Ndim> dim;
+	LatticeDimension<PatternType::SITETYPE::NDIM> dim;
 
 	CUDA_HOST_DEVICE inline LocalLinkType getLink( const typename PatternType::SITETYPE& site, const lat_dim_t& mu )
 	{

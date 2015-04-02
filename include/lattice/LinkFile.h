@@ -59,11 +59,11 @@ public:
 //		U = copy.getPointerToU();
 //	};
 
-	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::Ndim], ReinterpretReal reinterpret ) :reinterpretReal(reinterpret), fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
+	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::NDIM], ReinterpretReal reinterpret ) :reinterpretReal(reinterpret), fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
 
-	LinkFile( const LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> size, ReinterpretReal reinterpret ) : reinterpretReal(reinterpret),fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
+	LinkFile( const LatticeDimension<MemoryConfigurationPattern::SITETYPE::NDIM> size, ReinterpretReal reinterpret ) : reinterpretReal(reinterpret),fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
 
@@ -156,7 +156,7 @@ public:
 		return U;
 	}
 
-	LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> getLatticeDimension() const
+	LatticeDimension<MemoryConfigurationPattern::SITETYPE::NDIM> getLatticeDimension() const
 	{
 		return latticeDimension;
 	}
@@ -180,7 +180,7 @@ protected:
 private:
 	bool fileIsOpen;
 	bool filenameIsSet;
-	LatticeDimension<MemoryConfigurationPattern::SITETYPE::Ndim> latticeDimension;
+	LatticeDimension<MemoryConfigurationPattern::SITETYPE::NDIM> latticeDimension;
 	std::string filename;
 	typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U;
 };

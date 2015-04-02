@@ -43,7 +43,7 @@ namespace culgt
 namespace LandauGaugefixingKernel
 {
 
-template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSite( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, lat_index_t* nn, double *dGff, double *dA )
+template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSite( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, lat_index_t* nn, double *dGff, double *dA )
 {
 	typename GlobalLinkType::PATTERNTYPE::SITETYPE site( dim, nn );
 
@@ -57,7 +57,7 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	{
 		LocalLinkType temp;
 
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 		GlobalLinkType globalLink( U, site, mu );
 		temp = globalLink;
 		Sum += temp;
@@ -90,7 +90,7 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, 1.5, seed ), simulatedAnnealing( &this->U, dim, seed, 1.0 ), microcanonical( &this->U, dim, seed ), seed(seed), reducer(dim.getSize())
+	LandauGaugefixing( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dim(dim), U(U), overrelaxation( &this->U, dim, 1.5, seed ), simulatedAnnealing( &this->U, dim, seed, 1.0 ), microcanonical( &this->U, dim, seed ), seed(seed), reducer(dim.getSize())
 	{
 		// TODO we should assert here that we use GPUPatternParitySplit!
 	}
@@ -103,13 +103,13 @@ public:
 	{
 		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
 
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupNoSplit( dim, false );
+		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> setupNoSplit( dim, false );
 		LandauGaugefixingKernel::generateGaugeQualityPerSite<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( U, dim, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), dGff, dA );
 		CUDA_LAST_ERROR( "generateGaugeQualityPerSite" );
 
 		Reduction<double> reducer(dim.getSize());
 		double dAAvg = reducer.reduceAll( dA )/(double)dim.getSize()/(double)(GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
-		double dGffAvg = reducer.reduceAll( dGff )/(double)dim.getSize()/(double)(GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim*GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
+		double dGffAvg = reducer.reduceAll( dGff )/(double)dim.getSize()/(double)(GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM*GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
 
 		return GaugeStats( dGffAvg, dAAvg );
 	}
@@ -202,7 +202,7 @@ public:
 	}
 
 private:
-	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim;
+	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim;
 
 	Reduction<double> reducer;
 

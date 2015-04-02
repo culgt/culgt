@@ -43,7 +43,7 @@ public:
 			typedef  GlobalLink<PatternType, UseTexture::value > GlobalLinkTypeInStep;
 			COPY_GLOBALLINKTYPE( GlobalLinkTypeInStep, GlobalLinkTypeInStep2, 1 );
 
-			KernelSetup<GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE::Ndim> setupSplit( object->super::dimTimeslice, true, GFLaunchBounds::SitesPerBlock );
+			KernelSetup<GlobalLinkTypeInStep::PATTERNTYPE::SITETYPE::NDIM> setupSplit( object->super::dimTimeslice, true, GFLaunchBounds::SitesPerBlock );
 
 			cudaFuncSetCacheConfig( TimesliceGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeInStep,GlobalLinkTypeInStep2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
 
@@ -85,7 +85,7 @@ public:
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	TimesliceGaugeFixingSimulatedAnnealing( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, long seed, float temperature  ) : CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType>( Ut, UtDown, dimTimeslice, seed ), temperature(temperature)
+	TimesliceGaugeFixingSimulatedAnnealing( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice, long seed, float temperature  ) : CoulombGaugeTunableObject<GlobalLinkType,LocalLinkType>( Ut, UtDown, dimTimeslice, seed ), temperature(temperature)
 	{
 		Chooser::object = this;
 	}

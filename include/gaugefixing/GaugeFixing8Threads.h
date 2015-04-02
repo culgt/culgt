@@ -30,9 +30,9 @@ public:
 
 		lat_index_t index = blockIdx.x * blockDim.x/threadsPerSite + id;
 
-		if( parity == 1 ) index += site.getLatticeSize()/2;
+		if( parity == 1 ) index += site.getSize()/2;
 
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 
 		if( updown == 1 )
 		{
@@ -55,9 +55,9 @@ public:
 
 		lat_index_t index = blockIdx.x * blockDim.x/threadsPerSite + id;
 
-		if( parity == 1 ) index += site.getLatticeSize()/2;
+		if( parity == 1 ) index += site.getSize()/2;
 
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 
 		if( updown == 1 && mu > 0 )
 		{

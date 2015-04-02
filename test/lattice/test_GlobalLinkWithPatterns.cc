@@ -36,7 +36,7 @@ public:
 	float U[2*2*2*2*4*18];
 	float someValue;
 
-	AGlobalLinkWithPattern() : s(size), s2(size), someValue(1.234)
+	AGlobalLinkWithPattern() : s(size, DO_NOT_USE_NEIGHBOURS), s2(size, DO_NOT_USE_NEIGHBOURS), someValue(1.234)
 	{
 	}
 };
@@ -46,7 +46,7 @@ const int AGlobalLinkWithPattern::size[4] = {2,2,2,2};
 
 TEST_F(AGlobalLinkWithPattern, TypedefSITETYPEworks )
 {
-	GlobalLinkStandardSU3Real18Index::CONFIGURATIONPATTERN::SITETYPE s(size);
+	GlobalLinkStandardSU3Real18Index::CONFIGURATIONPATTERN::SITETYPE s(size, DO_NOT_USE_NEIGHBOURS);
 	s.setIndex( 1 );
 	ASSERT_EQ( 1, s.getIndex() );
 }
@@ -114,12 +114,12 @@ public:
 	GlobalLinkStandardSU3Real18Index* link18;
 	GlobalLinkStandardSU3Real12Index* link12;
 
-	AGlobalLinkWithSU3Real12AndSU3Real18() : s(size), s2(size), someValue(1.234)
+	AGlobalLinkWithSU3Real12AndSU3Real18() : s(size, DO_NOT_USE_NEIGHBOURS), s2(size, DO_NOT_USE_NEIGHBOURS), someValue(1.234)
 	{
-		s.setLatticeIndex( 0 );
+		s.setIndex( 0 );
 		link18 = new GlobalLinkStandardSU3Real18Index( U, s, mu );
 		link18->zero();
-		s2.setLatticeIndex( 1 );
+		s2.setIndex( 1 );
 		link12 = new GlobalLinkStandardSU3Real12Index( U, s2, mu );
 		link12->zero();
 	}

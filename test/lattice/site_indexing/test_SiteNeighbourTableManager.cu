@@ -40,10 +40,10 @@ TEST_F( ASiteNeighbourTableManager, NeighbourIndexIsCorrect )
 {
 	MySite site( dim, SiteNeighbourTableManager<MySite>::getHostPointer( dim ) );
 
-	site.setLatticeIndex( 0 );
+	site.setIndex( 0 );
 	site.setNeighbour( 3, true );
 
-	ASSERT_EQ( 1, site.getLatticeIndex() );
+	ASSERT_EQ( 1, site.getIndex() );
 }
 
 __global__ void kernelTestNeighbourTable( LatticeDimension<4> dim, lat_index_t* nn, lat_index_t* var )
@@ -51,10 +51,10 @@ __global__ void kernelTestNeighbourTable( LatticeDimension<4> dim, lat_index_t* 
 	typedef SiteIndex<4,NO_SPLIT> MySite;
 	MySite site( dim, nn );
 
-	site.setLatticeIndex( 0 );
+	site.setIndex( 0 );
 	site.setNeighbour( 3, true );
 
-	var[0] = site.getLatticeIndex();
+	var[0] = site.getIndex();
 }
 
 TEST( ASiteNeighbourTableManagerOnDevice, NeighbourIndexIsCorrect )

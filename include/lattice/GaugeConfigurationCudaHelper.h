@@ -34,10 +34,10 @@ public:
 	static void setElement( T* pointer, int i, const T val );
 	template<typename ConfigurationPattern, typename LinkType> static void setLink( T* pointer, const typename ConfigurationPattern::SITETYPE site, const int mu, const LinkType link  );
 	template<typename ConfigurationPattern, typename LinkType> static LinkType getLink( T* pointer, const typename ConfigurationPattern::SITETYPE site, const int mu );
-	template<typename ConfigurationPattern, typename RNG> static void setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter );
-	template<typename ConfigurationPattern, typename RNG> static void setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter, float percentage );
-	template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> static void reproject( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter );
-	template<typename ConfigurationPattern> static void setCold( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim );
+	template<typename ConfigurationPattern, typename RNG> static void setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter );
+	template<typename ConfigurationPattern, typename RNG> static void setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter, float percentage );
+	template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> static void reproject( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter );
+	template<typename ConfigurationPattern> static void setCold( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim );
 	static T getElement( T* pointer, int i );
 	static void copyDeviceToDevice( T* dest, T* src, size_t size );
 	static void copyToDevice( T* dest, T* src, size_t size );
@@ -136,7 +136,7 @@ namespace GaugeConfigurationCudaHelperKernel
 	};
 
 
-	template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> __global__ void reproject( typename ConfigurationPattern::PARAMTYPE::TYPE* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
+	template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> __global__ void reproject( typename ConfigurationPattern::PARAMTYPE::TYPE* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter )
 	{
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -146,7 +146,7 @@ namespace GaugeConfigurationCudaHelperKernel
 
 		typename ConfigurationPattern::SITETYPE site( dim, DO_NOT_USE_NEIGHBOURS );
 		site.setIndex( index );
-		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::Ndim; mu++ )
+		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::NDIM; mu++ )
 		{
 			LocalLinkType local;
 			culgt::GlobalLink<ConfigurationPattern> global( pointer, site, mu );
@@ -166,7 +166,7 @@ namespace GaugeConfigurationCudaHelperKernel
 	 * @param rngSeed
 	 * @param rngCounter
 	 */
-	template<typename T, typename ConfigurationPattern, typename RNG> __global__ void setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
+	template<typename T, typename ConfigurationPattern, typename RNG> __global__ void setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter )
 	{
 		typedef culgt::LocalLink<culgt::SUNRealFull<ConfigurationPattern::PARAMTYPE::NC, typename ConfigurationPattern::PARAMTYPE::REALTYPE> > LocalLinkType;
 
@@ -178,7 +178,7 @@ namespace GaugeConfigurationCudaHelperKernel
 
 		typename ConfigurationPattern::SITETYPE site( dim, DO_NOT_USE_NEIGHBOURS );
 		site.setIndex( index );
-		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::Ndim; mu++ )
+		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::NDIM; mu++ )
 		{
 			LocalLinkType local;
 			local.identity();
@@ -196,7 +196,7 @@ namespace GaugeConfigurationCudaHelperKernel
 	/**
 	 * TODO this is only Z(2)
 	 */
-	template<typename T, typename ConfigurationPattern, typename RNG> __global__ void setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter, float percentage )
+	template<typename T, typename ConfigurationPattern, typename RNG> __global__ void setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter, float percentage )
 	{
 		typedef culgt::LocalLink<culgt::SUNRealFull<ConfigurationPattern::PARAMTYPE::NC, typename ConfigurationPattern::PARAMTYPE::REALTYPE> > LocalLinkType;
 
@@ -207,7 +207,7 @@ namespace GaugeConfigurationCudaHelperKernel
 
 		typename ConfigurationPattern::SITETYPE site( dim, DO_NOT_USE_NEIGHBOURS );
 		site.setIndex( index );
-		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::Ndim; mu++ )
+		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::NDIM; mu++ )
 		{
 			LocalLinkType local;
 			local.identity();
@@ -219,7 +219,7 @@ namespace GaugeConfigurationCudaHelperKernel
 		}
 	}
 
-	template<typename T, typename ConfigurationPattern> __global__ void setCold( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim )
+	template<typename T, typename ConfigurationPattern> __global__ void setCold( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim )
 	{
 		typedef culgt::LocalLink<culgt::SUNRealFull<ConfigurationPattern::PARAMTYPE::NC, typename ConfigurationPattern::PARAMTYPE::REALTYPE> > LocalLinkType;
 
@@ -228,7 +228,7 @@ namespace GaugeConfigurationCudaHelperKernel
 
 		typename ConfigurationPattern::SITETYPE site( dim, DO_NOT_USE_NEIGHBOURS );
 		site.setIndex( index );
-		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::Ndim; mu++ )
+		for( int mu = 0; mu < ConfigurationPattern::SITETYPE::NDIM; mu++ )
 		{
 			LocalLinkType local;
 			local.identity();
@@ -239,31 +239,31 @@ namespace GaugeConfigurationCudaHelperKernel
 	}
 }
 
-template<typename T> template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> void GaugeConfigurationCudaHelper<T>::reproject( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
+template<typename T> template<typename ConfigurationPattern, typename LocalLinkType, typename RNG> void GaugeConfigurationCudaHelper<T>::reproject( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter )
 {
 	CUDA_LAST_ERROR( "before reproject" );
-	KernelSetup<ConfigurationPattern::SITETYPE::Ndim> setup(dim);
+	KernelSetup<ConfigurationPattern::SITETYPE::NDIM> setup(dim);
 	GaugeConfigurationCudaHelperKernel::reproject<ConfigurationPattern,LocalLinkType,RNG><<<setup.getGridSize(),setup.getBlockSize()>>>( pointer, dim, rngSeed, rngCounter );
 	CUDA_LAST_ERROR( "kernel reproject" );
 }
 
-template<typename T> template<typename ConfigurationPattern, typename RNG> void GaugeConfigurationCudaHelper<T>::setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter )
+template<typename T> template<typename ConfigurationPattern, typename RNG> void GaugeConfigurationCudaHelper<T>::setHot( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter )
 {
-	KernelSetup<ConfigurationPattern::SITETYPE::Ndim> setup(dim);
+	KernelSetup<ConfigurationPattern::SITETYPE::NDIM> setup(dim);
 	GaugeConfigurationCudaHelperKernel::setHot<T,ConfigurationPattern,RNG><<<setup.getGridSize(),setup.getBlockSize()>>>( pointer, dim, rngSeed, rngCounter );
 	CUDA_LAST_ERROR( "kernel setHot" );
 }
 
-template<typename T> template<typename ConfigurationPattern, typename RNG> void GaugeConfigurationCudaHelper<T>::setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim, int rngSeed, int rngCounter, float percentage )
+template<typename T> template<typename ConfigurationPattern, typename RNG> void GaugeConfigurationCudaHelper<T>::setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter, float percentage )
 {
-	KernelSetup<ConfigurationPattern::SITETYPE::Ndim> setup(dim);
+	KernelSetup<ConfigurationPattern::SITETYPE::NDIM> setup(dim);
 	GaugeConfigurationCudaHelperKernel::setRandomZN<T,ConfigurationPattern,RNG><<<setup.getGridSize(),setup.getBlockSize()>>>( pointer, dim, rngSeed, rngCounter, percentage );
 	CUDA_LAST_ERROR( "kernel setRandomZN" );
 }
 
-template<typename T> template<typename ConfigurationPattern> void GaugeConfigurationCudaHelper<T>::setCold( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim )
+template<typename T> template<typename ConfigurationPattern> void GaugeConfigurationCudaHelper<T>::setCold( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim )
 {
-	KernelSetup<ConfigurationPattern::SITETYPE::Ndim> setup(dim);
+	KernelSetup<ConfigurationPattern::SITETYPE::NDIM> setup(dim);
 	GaugeConfigurationCudaHelperKernel::setCold<T,ConfigurationPattern><<<setup.getGridSize(),setup.getBlockSize()>>>( pointer, dim );
 	CUDA_LAST_ERROR( "kernel setCold" );
 }

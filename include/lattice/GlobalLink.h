@@ -135,9 +135,9 @@ public:
 //		return *this;
 //	}
 
-	static inline lat_array_index_t getArraySize( LatticeDimension<ConfigurationPattern::SITETYPE::Ndim> dim )
+	static inline lat_array_index_t getArraySize( LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim )
 	{
-		return dim.getSize()*ConfigurationPattern::SITETYPE::Ndim*PARAMTYPE::SIZE;
+		return dim.getSize()*ConfigurationPattern::SITETYPE::NDIM*PARAMTYPE::SIZE;
 	}
 
 	/**

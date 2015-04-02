@@ -42,7 +42,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef GlobalLink<PatternType, true > GlobalLinkType;
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<PatternType::SITETYPE::Ndim> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed )
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<PatternType::SITETYPE::NDIM> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed )
 	{
 	};
 
@@ -87,7 +87,7 @@ public:
 		template<typename T> static void exec( T* object )
 		{
 			typedef GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, UseTexture::value > GlobalLinkTypeInStep;
-			KernelSetup<SiteType::Ndim> setupSplit( object->super::dim, true, GFLaunchBounds::SitesPerBlock );
+			KernelSetup<SiteType::NDIM> setupSplit( object->super::dim, true, GFLaunchBounds::SitesPerBlock );
 
 			if( DoMicro )
 			{
@@ -163,7 +163,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}
@@ -204,7 +204,7 @@ template<typename SiteType, typename ParamType, typename LocalLinkType, typename
 {
 public:
 	typedef GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true> GlobalLinkType;
-	typedef SiteIndex<SiteType::Ndim, FULL_SPLIT> SiteTypeTimeslice;
+	typedef SiteIndex<SiteType::NDIM, FULL_SPLIT> SiteTypeTimeslice;
 	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename ParamType::TYPE T;
@@ -220,7 +220,7 @@ public:
 			typedef GlobalLink<GPUPatternParityPriority<SiteTypeTimeslice,ParamType>, UseTexture::value> GlobalLinkTypeTimeslice;
 			COPY_GLOBALLINKTYPE( GlobalLinkTypeTimeslice, GlobalLinkTypeTimeslice2, 1 );
 
-			KernelSetup<SiteType::Ndim> setupSplit( object->super::dim.getDimensionTimeslice(), true, GFLaunchBounds::SitesPerBlock );
+			KernelSetup<SiteType::NDIM> setupSplit( object->super::dim.getDimensionTimeslice(), true, GFLaunchBounds::SitesPerBlock );
 
 			if( DoMicro )
 			{
@@ -322,7 +322,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::Ndim> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}

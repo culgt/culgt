@@ -34,7 +34,7 @@ public:
 		lat_index_t halfLatSize = site.getSize()/2;
 		lat_bool_t parity = site.getIndex() / halfLatSize;
 		lat_index_t indexInParity = site.getIndex() % halfLatSize;
-		return ((parity*Site::Ndim+mu)*ParamType::SIZE+paramIndex)*halfLatSize+indexInParity;
+		return ((parity*Site::NDIM+mu)*ParamType::SIZE+paramIndex)*halfLatSize+indexInParity;
 	}
 
 	/**
@@ -44,7 +44,7 @@ public:
 	 * @param latSize
 	 * @return
 	 */
-	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::Ndim> dim )
+	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::NDIM> dim )
 	{
 		lat_index_t halfLatSize = dim.getSize()/2;
 
@@ -54,9 +54,9 @@ public:
 		lat_group_index_t paramIndex = index % ParamType::SIZE;
 
 		index /= ParamType::SIZE;
-		lat_dim_t mu = index % Site::Ndim;
+		lat_dim_t mu = index % Site::NDIM;
 
-		lat_bool_t parity = index / Site::Ndim;
+		lat_bool_t parity = index / Site::NDIM;
 
 		lat_index_t siteIndex = siteIndexInParity + parity*halfLatSize;
 

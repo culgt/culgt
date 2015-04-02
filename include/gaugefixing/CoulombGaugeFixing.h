@@ -45,7 +45,7 @@ namespace culgt
 namespace CoulombGaugefixingKernel
 {
 
-template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSite( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, lat_index_t* nn, double *dGff, double *dA )
+template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSite( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, lat_index_t* nn, double *dGff, double *dA )
 {
 	typename GlobalLinkType::PATTERNTYPE::SITETYPE site( dim, nn );
 
@@ -59,7 +59,7 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	{
 		LocalLinkType temp;
 
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 		GlobalLinkType globalLink( U, site, mu );
 		temp = globalLink;
 		Sum += temp;
@@ -83,7 +83,7 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	dGff[index] = gff;
 }
 
-template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSiteLogarithmic( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, lat_index_t* nn, double *dGff, double *dA )
+template<typename GlobalLinkType, typename LocalLinkType>  __global__ void generateGaugeQualityPerSiteLogarithmic( typename GlobalLinkType::PARAMTYPE::TYPE* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, lat_index_t* nn, double *dGff, double *dA )
 {
 	// only for SU(2)
 //	BOOST_MPL_ASSERT_RELATION( LocalLinkType::PARAMTYPE::NC, ==, 2 );
@@ -102,7 +102,7 @@ template<typename GlobalLinkType, typename LocalLinkType>  __global__ void gener
 	{
 		LOCALLINKREALFULL temp;
 
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 		GlobalLinkType globalLink( U, site, mu );
 		temp = globalLink;
 		typename LocalLinkType::PARAMTYPE::REALTYPE norm = ::sqrt( temp.get(1)*temp.get(1) + temp.get(2)*temp.get(2) + temp.get(3)*temp.get(3) );
@@ -136,7 +136,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 	COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
 
-	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), seed(seed), reducer(dimTimeslice.getSize())
+	CoulombGaugefixing( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, long seed ) : GaugeFixingSaOr( dim.getSize() ), dimTimeslice(dim), overrelaxation( &this->Ut, &this->UtDown, dim, seed, 1.5 ), microcanonical( &this->Ut, &this->UtDown, dim, seed ), simulatedAnnealing( &this->Ut, &this->UtDown, dim, seed, 1. ), seed(seed), reducer(dimTimeslice.getSize())
 	{
 		setTimeslice( Ut, UtDown );
 	}
@@ -153,7 +153,7 @@ public:
 
 	GaugeStats getGaugeStats( GaugeFieldDefinition defintion = GAUGEFIELD_STANDARD )
 	{
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupNoSplit( dimTimeslice, false );
+		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> setupNoSplit( dimTimeslice, false );
 		if( defintion == GAUGEFIELD_STANDARD )
 		{
 			CoulombGaugefixingKernel::generateGaugeQualityPerSite<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( Ut, dimTimeslice, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), dGff, dA );
@@ -173,7 +173,7 @@ public:
 
 
 		double dAAvg = reducer.reduceAll( dA )/(double)dimTimeslice.getSize()/(double)(GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
-		double dGffAvg = reducer.reduceAll( dGff )/(double)dimTimeslice.getSize()/(double)((GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim-1)*GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
+		double dGffAvg = reducer.reduceAll( dGff )/(double)dimTimeslice.getSize()/(double)((GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM-1)*GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
 
 		return GaugeStats( dGffAvg, dAAvg );
 	}
@@ -286,7 +286,7 @@ public:
 	}
 
 private:
-	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice;
+	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice;
 	T* Ut;
 	T* UtDown;
 

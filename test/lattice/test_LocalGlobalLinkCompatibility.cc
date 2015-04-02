@@ -23,11 +23,11 @@ public:
 
 	LocalLink<SUNRealFull<3,float> > localLink18;
 
-	LocalGlobalLinkWithSU3Real18() : site(size){};
+	LocalGlobalLinkWithSU3Real18() : site(size, DO_NOT_USE_NEIGHBOURS){};
 
 	void SetUp()
 	{
-		site.setLatticeIndex(1);
+		site.setIndex(1);
 		globalLink18 = new GlobalLink<StandardPattern<SiteIndex<4,NO_SPLIT>,SUNRealFull<3,float> > >( U, site, 1 );
 
 		localLink18.zero();
@@ -67,11 +67,11 @@ public:
 
 	int someValue;
 
-	LocalGlobalLinkWithDifferentParamTypes() : site( size ), someValue( 1.42 ) {};
+	LocalGlobalLinkWithDifferentParamTypes() : site( size, DO_NOT_USE_NEIGHBOURS ), someValue( 1.42 ) {};
 
 	void SetUp()
 	{
-		site.setLatticeIndex(1);
+		site.setIndex(1);
 		globalLink12 = new GlobalLink<StandardPattern<SiteIndex<4,NO_SPLIT>,SU3Real12<float> > >( U, site, 1 );
 
 		localLink18.zero();

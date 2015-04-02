@@ -28,7 +28,7 @@ namespace culgt
 template<typename MemoryConfigurationPattern, typename TFloatFile> class LinkFileHeaderOnly: public LinkFile<MemoryConfigurationPattern>
 {
 private:
-	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::Ndim;
+	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::NDIM;
 
 	long arraySize;
 	long filelength;
@@ -172,7 +172,7 @@ public:
 			for( int mu = 0; mu < memoryNdim; mu++ )
 			{
 				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
-				site.setLatticeIndexFromNonParitySplitOrder( i );
+				site.setIndexFromNonParitySplitOrder( i );
 
 				GlobalLink<MemoryConfigurationPattern> dest( this->getPointerToU(), site, mu );
 
@@ -191,7 +191,7 @@ public:
 			for( int mu = 0; mu < memoryNdim; mu++ )
 			{
 				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
-				site.setLatticeIndexFromNonParitySplitOrder( i );
+				site.setIndexFromNonParitySplitOrder( i );
 
 				GlobalLink<MemoryConfigurationPattern> src( this->getPointerToU(), site, mu );
 

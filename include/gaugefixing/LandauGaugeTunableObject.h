@@ -17,7 +17,7 @@ template<typename GlobalLinkType, typename LocalLinkType> class LandauGaugeTunab
 public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	LandauGaugeTunableObject( T** U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, long seed ) : U(U), dim(dim), seed(seed)
+	LandauGaugeTunableObject( T** U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, long seed ) : U(U), dim(dim), seed(seed)
 	{
 	}
 
@@ -33,7 +33,7 @@ public:
 
 protected:
 	T** U;
-	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim;
+	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim;
 	long seed;
 };
 

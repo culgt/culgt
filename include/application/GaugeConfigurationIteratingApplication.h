@@ -24,7 +24,7 @@ namespace culgt
 template<typename PatternType, typename LinkFileType, typename LinkFileTypeOut=LinkFileType> class GaugeConfigurationIteratingApplication
 {
 public:
-	GaugeConfigurationIteratingApplication( const LatticeDimension<PatternType::SITETYPE::Ndim> dimension, FileIterator fileiterator, ProgramOptions* programOptions ): dimension(dimension), configuration(dimension), fileiterator(fileiterator), programOptions(programOptions)
+	GaugeConfigurationIteratingApplication( const LatticeDimension<PatternType::SITETYPE::NDIM> dimension, FileIterator fileiterator, ProgramOptions* programOptions ): dimension(dimension), configuration(dimension), fileiterator(fileiterator), programOptions(programOptions)
 	{
 		configuration.allocateMemory();
 	}
@@ -114,10 +114,10 @@ public:
 		FileIterator fileiterator( po->getFileBasename(), po->getFileEnding(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd, po->getFileNumberStep() );
 
 
-		LatticeDimension<PatternType::SITETYPE::Ndim> dimtest(po->getNt(),po->getNx(),po->getNy(),po->getNz());
+		LatticeDimension<PatternType::SITETYPE::NDIM> dimtest(po->getNt(),po->getNx(),po->getNy(),po->getNz());
 
 		// TODO in principle we could read the sizes from the gaugeconfig file!
-		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::Ndim>(po->getNt(),po->getNx(),po->getNy(),po->getNz()), fileiterator, po );
+		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::NDIM>(po->getNt(),po->getNx(),po->getNy(),po->getNz()), fileiterator, po );
 
 		APP->linkFile = new LinkFileType( APP->dimension, po->getReinterpretReal() );
 		if( typeid(LinkFileType) == typeid(LinkFileTypeOut) )
@@ -141,7 +141,7 @@ public:
 		return *linkFile;
 	}
 
-	const LatticeDimension<PatternType::SITETYPE::Ndim>& getDimension() const
+	const LatticeDimension<PatternType::SITETYPE::NDIM>& getDimension() const
 	{
 		return dimension;
 	}
@@ -158,7 +158,7 @@ public:
 	}
 
 protected:
-	LatticeDimension<PatternType::SITETYPE::Ndim> dimension;
+	LatticeDimension<PatternType::SITETYPE::NDIM> dimension;
 	LinkFileType* linkFile;
 	LinkFileTypeOut* linkFileOut;
 	GaugeConfiguration<PatternType> configuration;

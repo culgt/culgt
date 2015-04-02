@@ -26,7 +26,7 @@ private:
 public:
 	typedef Site SITETYPE;
 	typedef ParamType PARAMTYPE;
-	typedef GPUPatternParityPriority<SiteIndex<Site::Ndim,FULL_SPLIT>, ParamType > TIMESLICE_PATTERNTYPE; // this should not be hard coded SiteIndex<Ndim,FULL_SPLIT> but any Site<Ndim,FULL_SPLIT> (depending on SITETYPE)
+	typedef GPUPatternParityPriority<SiteIndex<Site::NDIM,FULL_SPLIT>, ParamType > TIMESLICE_PATTERNTYPE; // this should not be hard coded SiteIndex<Ndim,FULL_SPLIT> but any Site<Ndim,FULL_SPLIT> (depending on SITETYPE)
 
 	CUDA_HOST_DEVICE static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
@@ -34,10 +34,10 @@ public:
 		lat_bool_t parity = site.getIndexTimeslice() / halfTimesliceSize;
 		lat_index_t indexInParityInTimeslice = site.getIndexTimeslice() % halfTimesliceSize;
 
-		return (((site.getCoord(0)*2+parity)*SITETYPE::Ndim+mu)*ParamType::SIZE+paramIndex)*halfTimesliceSize+indexInParityInTimeslice;
+		return (((site.getCoord(0)*2+parity)*SITETYPE::NDIM+mu)*ParamType::SIZE+paramIndex)*halfTimesliceSize+indexInParityInTimeslice;
 	}
 
-	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::Ndim> dim )
+	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::NDIM> dim )
 	{
 		lat_index_t halfTimesliceSize = dim.getSizeTimeslice()/2;
 
@@ -47,14 +47,14 @@ public:
 		lat_group_index_t paramIndex = index % ParamType::SIZE;
 
 		index /= ParamType::SIZE;
-		lat_dim_t mu = index % SITETYPE::Ndim;
+		lat_dim_t mu = index % SITETYPE::NDIM;
 
-		index /= SITETYPE::Ndim;
+		index /= SITETYPE::NDIM;
 		lat_coord_t parity = index % 2;
 
 		lat_coord_t t = index / 2;
 
-		SiteCoord<Site::Ndim, NO_SPLIT> site( dim );
+		SiteCoord<Site::NDIM, NO_SPLIT> site( dim );
 		site.setIndex( t*dim.getSizeTimeslice()+parity*halfTimesliceSize+siteIndexInTimesliceInParity);
 		return StandardPattern<Site, ParamType>::getStandardIndex( site.getIndex(), mu, paramIndex );
 	}

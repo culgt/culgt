@@ -54,19 +54,19 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	static void randomTrafo( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, int seed )
+	static void randomTrafo( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, int seed )
 	{
 		const int SitesPerBlock = 128;
 
 		GlobalLinkType::bindTexture( U, GlobalLinkType::getArraySize( dim ) );
 
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim, true, SitesPerBlock );
+		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> setupSplit( dim, true, SitesPerBlock );
 		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, seed, PhiloxWrapper<REALT>::getNextCounter() );
 		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( U, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), true, seed, PhiloxWrapper<REALT>::getNextCounter() );
 		CUDA_LAST_ERROR( "kernelRandomTrafo" );
 	}
 
-	static void randomTrafo( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, int seed )
+	static void randomTrafo( T* Ut, T* UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, int seed )
 	{
 		const int SitesPerBlock = 128;
 		COPY_GLOBALLINKTYPE( GlobalLinkType, GlobalLinkType2, 1 );
@@ -74,7 +74,7 @@ public:
 		GlobalLinkType::bindTexture( Ut, GlobalLinkType::getArraySize( dim ) );
 		GlobalLinkType2::bindTexture( UtDown, GlobalLinkType2::getArraySize( dim ) );
 
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim, true, SitesPerBlock );
+		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> setupSplit( dim, true, SitesPerBlock );
 		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), false, seed, PhiloxWrapper<REALT>::getNextCounter() );
 		RandomGaugeTrafoKernel::kernelRandom4<GlobalLinkType,GlobalLinkType2,LocalLinkType,SitesPerBlock><<<setupSplit.getGridSize(),setupSplit.getBlockSize()*4,4*setupSplit.getBlockSize()*sizeof(REALT)>>>( Ut, UtDown, dim.getSize(), SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dim ), true, seed, PhiloxWrapper<REALT>::getNextCounter() );
 		CUDA_LAST_ERROR( "kernelRandomTrafo" );
@@ -88,15 +88,15 @@ public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
 
-	typedef SiteIndex<SiteType::Ndim, FULL_SPLIT> SiteTypeTimeslice;
+	typedef SiteIndex<SiteType::NDIM, FULL_SPLIT> SiteTypeTimeslice;
 	typedef GlobalLink<GPUPatternParityPriority<SiteTypeTimeslice,ParamType> > GlobalLinkTypeTimeslice;
 
-	static void randomTrafo( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dim, int seed )
+	static void randomTrafo( T* U, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dim, int seed )
 	{
 		COPY_GLOBALLINKTYPE( GlobalLinkTypeTimeslice, GlobalLinkTypeTimeslice2, 1 );
 		const int SitesPerBlock = 128;
 
-		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> setupSplit( dim.getDimensionTimeslice(), true, SitesPerBlock );
+		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> setupSplit( dim.getDimensionTimeslice(), true, SitesPerBlock );
 
 		int timesliceArraySize = GlobalLinkType::getArraySize( dim.getDimensionTimeslice() );
 		for( int t = 0; t < dim.getDimension(0); t++ )

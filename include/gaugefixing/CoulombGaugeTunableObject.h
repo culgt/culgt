@@ -18,7 +18,7 @@ template<typename GlobalLinkType, typename LocalLinkType> class CoulombGaugeTuna
 public:
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE T;
 	typedef typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::REALTYPE REALT;
-	CoulombGaugeTunableObject( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice, long seed ) : Ut(Ut), UtDown(UtDown), dimTimeslice(dimTimeslice), seed(seed)
+	CoulombGaugeTunableObject( T** Ut, T** UtDown, LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice, long seed ) : Ut(Ut), UtDown(UtDown), dimTimeslice(dimTimeslice), seed(seed)
 	{
 	}
 
@@ -36,7 +36,7 @@ public:
 protected:
 	T** Ut;
 	T** UtDown;
-	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::Ndim> dimTimeslice;
+	LatticeDimension<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> dimTimeslice;
 	long seed;
 };
 

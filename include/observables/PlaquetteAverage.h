@@ -23,7 +23,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 
-	PlaquetteAverage( T* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim ) : dim(dim), U(U)
+	PlaquetteAverage( T* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim ) : dim(dim), U(U)
 	{
 		cudaMalloc( (void**)&devPtr, sizeof( REALT )*dim.getSize() );
 	};
@@ -52,7 +52,7 @@ public:
 	}
 
 private:
-	LatticeDimension<PatternType::SITETYPE::Ndim> dim;
+	LatticeDimension<PatternType::SITETYPE::NDIM> dim;
 	T* U;
 	REALT* devPtr;
 };

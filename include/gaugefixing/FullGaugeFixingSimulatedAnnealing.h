@@ -66,7 +66,7 @@ public:
 		template<typename T> static void exec( T* object )
 		{
 			typedef GlobalLink<GPUPatternParityPriority<SiteType,ParamType>, UseTexture::value > GlobalLinkTypeInStep;
-			KernelSetup<SiteType::Ndim> setupSplit( object->super::dim, true, GFLaunchBounds::SitesPerBlock );
+			KernelSetup<SiteType::NDIM> setupSplit( object->super::dim, true, GFLaunchBounds::SitesPerBlock );
 
 			cudaFuncSetCacheConfig( FullGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
 
@@ -109,7 +109,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::Ndim> dim, long seed, float temperature ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
+	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float temperature ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
 	{
 		Chooser::object = this;
 	}
@@ -150,7 +150,7 @@ template<typename SiteType, typename ParamType, typename LocalLinkType, typename
 {
 public:
 	typedef GlobalLink<GPUPatternTimesliceParityPriority<SiteType,ParamType>, true> GlobalLinkType;
-	typedef SiteIndex<SiteType::Ndim, FULL_SPLIT> SiteTypeTimeslice;
+	typedef SiteIndex<SiteType::NDIM, FULL_SPLIT> SiteTypeTimeslice;
 	typedef LandauGaugeTunableObject<GlobalLinkType,LocalLinkType> super;
 
 	typedef typename ParamType::TYPE T;
@@ -166,7 +166,7 @@ public:
 			typedef GlobalLink<GPUPatternParityPriority<SiteTypeTimeslice,ParamType>, UseTexture::value> GlobalLinkTypeTimeslice;
 			COPY_GLOBALLINKTYPE( GlobalLinkTypeTimeslice, GlobalLinkTypeTimeslice2, 1 );
 
-			KernelSetup<SiteType::Ndim> setupSplit( object->super::dim.getDimensionTimeslice(), true, GFLaunchBounds::SitesPerBlock );
+			KernelSetup<SiteType::NDIM> setupSplit( object->super::dim.getDimensionTimeslice(), true, GFLaunchBounds::SitesPerBlock );
 
 			cudaFuncSetCacheConfig( TimesliceGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, cudaFuncCachePreferL1 );
 
@@ -235,7 +235,7 @@ public:
 	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
-	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::Ndim> dim, long seed, float temperature ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
+	FullGaugeFixingSimulatedAnnealing( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float temperature ) : LandauGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), temperature(temperature)
 	{
 		Chooser::object = this;
 	}

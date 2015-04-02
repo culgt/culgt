@@ -21,14 +21,14 @@ template<typename Site, typename ParamType> class GPUPatternTimeslice
 public:
 	typedef Site SITETYPE;
 	typedef ParamType PARAMTYPE;
-	typedef GPUPattern<SiteIndex<Site::Ndim,NO_SPLIT>, ParamType > TIMESLICE_PATTERNTYPE; // this should not be hard coded SiteIndex<Ndim,NO_SPLIT> but any Site<Ndim,NO_SPLIT> (depending on SITETYPE)
+	typedef GPUPattern<SiteIndex<Site::NDIM,NO_SPLIT>, ParamType > TIMESLICE_PATTERNTYPE; // this should not be hard coded SiteIndex<Ndim,NO_SPLIT> but any Site<Ndim,NO_SPLIT> (depending on SITETYPE)
 
 	CUDA_HOST_DEVICE static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
-		return ((site.getCoord(0)*SITETYPE::Ndim+mu)*ParamType::SIZE+paramIndex)*site.getSizeTimeslice()+site.getIndexTimeslice();
+		return ((site.getCoord(0)*SITETYPE::NDIM+mu)*ParamType::SIZE+paramIndex)*site.getSizeTimeslice()+site.getIndexTimeslice();
 	}
 
-	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::Ndim> dim )
+	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::NDIM> dim )
 	{
 		lat_index_t siteIndexTimeslice = index % dim.getSizeTimeslice();
 
@@ -36,11 +36,11 @@ public:
 		lat_group_index_t paramIndex = index % ParamType::SIZE;
 
 		index /= ParamType::SIZE;
-		lat_dim_t mu = index % SITETYPE::Ndim;
+		lat_dim_t mu = index % SITETYPE::NDIM;
 
-		lat_coord_t t = index / SITETYPE::Ndim;
+		lat_coord_t t = index / SITETYPE::NDIM;
 
-		SiteCoord<Site::Ndim, NO_SPLIT> site( dim );
+		SiteCoord<Site::NDIM, NO_SPLIT> site( dim );
 		site.setIndex( t*dim.getSizeTimeslice()+siteIndexTimeslice);
 		return StandardPattern<Site, ParamType>::getStandardIndex( site.getIndex(), mu, paramIndex );
 	}

@@ -25,7 +25,7 @@ typedef GlobalLink<GPUPatternParityPriority<SiteIndex4FullSplit,SUNRealFull<3,fl
 CUDA_TEST(AGlobalLinkWithPatternCu, SetGetValueWithSameLinkAndParameterIndexWorks )
 {
 	const int size[4]= {2,2,2,2};
-	SiteIndex4 s(size);
+	SiteIndex4 s(size, DO_NOT_USE_NEIGHBOURS );
 	const int mu = 0;
 	const int parameterIndex = 0;
 	float U[2*2*2*2*4*18];
@@ -42,8 +42,8 @@ CUDA_TEST(AGlobalLinkWithPatternCu, SetGetValueWithSameLinkAndParameterIndexWork
 CUDA_TEST(AGlobalLinkWithPatternCu, OperatorAssignWithSameTypeDoesNotChangeSite )
 {
 	const int size[4]= {2,2,2,2};
-	SiteIndex4 s(size);
-	SiteIndex4 s2(size);
+	SiteIndex4 s(size, DO_NOT_USE_NEIGHBOURS);
+	SiteIndex4 s2(size, DO_NOT_USE_NEIGHBOURS);
 	const int mu = 0;
 	float U[2*2*2*2*4*18];
 	int link2Index = 3;
@@ -61,8 +61,8 @@ CUDA_TEST(AGlobalLinkWithPatternCu, OperatorAssignWithSameTypeDoesNotChangeSite 
 CUDA_TEST(AGlobalLinkWithPatternCu, OperatorAssignWithSameTypeCopiesData )
 {
 	const int size[4]= {2,2,2,2};
-	SiteIndex4 s(size);
-	SiteIndex4 s2(size);
+	SiteIndex4 s(size, DO_NOT_USE_NEIGHBOURS);
+	SiteIndex4 s2(size, DO_NOT_USE_NEIGHBOURS);
 	const int mu = 0;
 	float U[2*2*2*2*4*18];
 	float someValue = 12.421;
@@ -83,8 +83,8 @@ CUDA_TEST(AGlobalLinkWithPatternCu, OperatorAssignWithSameTypeCopiesData )
 CUDA_TEST(AGlobalLinkWithDifferentPatternsCu, OperatorAssignCopiesData )
 {
 	const int size[4]= {2,2,2,2};
-	SiteIndex4 s(size);
-	SiteIndex4FullSplit s2(size);
+	SiteIndex4 s(size, DO_NOT_USE_NEIGHBOURS);
+	SiteIndex4FullSplit s2(size, DO_NOT_USE_NEIGHBOURS);
 	const int mu = 0;
 	float U[2*2*2*2*4*18];
 	float U2[2*2*2*2*4*18];

@@ -25,7 +25,7 @@ public:
 
 	CUDA_HOST_DEVICE static lat_array_index_t getIndex( const Site& site, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
-		return (site.getIndex()*Site::Ndim+mu)*ParamType::SIZE+paramIndex;
+		return (site.getIndex()*Site::NDIM+mu)*ParamType::SIZE+paramIndex;
 	}
 
 	/**
@@ -38,7 +38,7 @@ public:
 	 */
 	CUDA_HOST_DEVICE static lat_array_index_t getStandardIndex( lat_index_t siteIndex, lat_dim_t mu, lat_group_index_t paramIndex )
 	{
-		return (siteIndex*Site::Ndim+mu)*ParamType::SIZE+paramIndex;
+		return (siteIndex*Site::NDIM+mu)*ParamType::SIZE+paramIndex;
 	}
 };
 

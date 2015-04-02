@@ -37,7 +37,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef typename PatternType::PARAMTYPE PARAMTYPE;
 	typedef typename PatternType::SITETYPE SITETYPE;
-	static const int Ndim = PatternType::SITETYPE::Ndim;
+	static const int Ndim = PatternType::SITETYPE::NDIM;
 	static const int LinkSize = PatternType::PARAMTYPE::SIZE;
 
 	GaugeConfiguration( const LatticeDimension<Ndim> dim ) : UhostIsAllocated(false), UdeviceIsAllocated(false), dim(dim)

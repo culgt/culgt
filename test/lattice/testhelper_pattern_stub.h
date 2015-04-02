@@ -13,14 +13,14 @@
 #include "lattice/LocalLink.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
 
-template<int NDIM = 4, int INDEX=0> class SiteStub
+template<int TNDIM = 4, int INDEX=0> class SiteStub
 {
 public:
 	SiteStub(){};
-	SiteStub( culgt::LatticeDimension<NDIM> dim, lat_index_t* nn = NULL ){};
-	static const int Ndim=NDIM;
-	void setLatticeIndex( const int i ){};
-	void setLatticeIndexFromNonParitySplitOrder( const int i ){};
+	SiteStub( culgt::LatticeDimension<TNDIM> dim, lat_index_t* nn = NULL ){};
+	static const int NDIM=TNDIM;
+	void setIndex( const int i ){};
+	void setIndexFromNonParitySplitOrder( const int i ){};
 	int getIndex()  const { return INDEX; };
 };
 
@@ -33,12 +33,12 @@ public:
 	static const int SIZE=18;
 };
 
-template<typename T, int SiteStubNdim=4, int ParamStubNc=3> class PatternStub
+template<typename T = float, int SiteStubNdim=4, int ParamStubNc=3, int INDEX = 0> class PatternStub
 {
 public:
 	typedef ParamStub<T, ParamStubNc> PARAMTYPE;
 	typedef SiteStub<SiteStubNdim> SITETYPE;
-	static lat_index_t getIndex( SITETYPE s, lat_dim_t mu, lat_group_index_t i ){ return 0; };
+	static lat_index_t getIndex( SITETYPE s, lat_dim_t mu, lat_group_index_t i ){ return INDEX; };
 };
 
 

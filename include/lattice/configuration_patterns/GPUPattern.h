@@ -40,7 +40,7 @@ public:
 	 * @param latSize
 	 * @return
 	 */
-	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::Ndim> dim )
+	CUDA_HOST_DEVICE static lat_array_index_t convertToStandardIndex( lat_array_index_t index, LatticeDimension<Site::NDIM> dim )
 	{
 		lat_index_t siteIndex = index % dim.getSize();
 

@@ -38,7 +38,7 @@ public:
 
 	void SetUp()
 	{
-		site.setLatticeIndex( 3 );
+		site.setIndex( 3 );
 		latticesize = Nt*Nx*Ny*Nz;
 		arraysize = Nt*Nx*Ny*Nz*Ndim*12;
 		gaugeconfig = new MyGaugeConfigType( dim );

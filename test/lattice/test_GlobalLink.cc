@@ -1,6 +1,7 @@
 
-#include "lattice/GlobalLink.h"
 #include "gmock/gmock.h"
+#include "lattice/GlobalLink.h"
+
 
 using namespace culgt;
 using namespace ::testing;
@@ -15,7 +16,7 @@ public:
 class SiteStub
 {
 public:
-	static const int Ndim = 4;
+	static const int NDIM = 4;
 	int index;
 	SiteStub() : index(0) {}
 	SiteStub( int i ) : index(i) {}

@@ -26,13 +26,13 @@ public:
 	int size[nDim];
 	SiteIndex<nDim,NO_SPLIT> mySite;
 
-	StandardPatternCompatible(): size{4,4,4,4}, mySite(size){};
+	StandardPatternCompatible(): size{4,4,4,4}, mySite(size, DO_NOT_USE_NEIGHBOURS){};
 };
 
 TEST_F(StandardPatternCompatible, WithSiteIndexNoSplit )
 {
 	const int myParamIndex = 4;
-	mySite.setLatticeIndex( latIndex );
+	mySite.setIndex( latIndex );
 
 	int result = StandardPattern<SiteIndex<nDim,NO_SPLIT>, ParamTypeMock<1> >::getIndex( mySite, 0, myParamIndex );
 
