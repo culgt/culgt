@@ -7,9 +7,9 @@
 #ifndef SU2REALFULLIGNORESECONDLINE_H_
 #define SU2REALFULLIGNORESECONDLINE_H_
 
-#include "../../common/culgt_typedefs.h"
-#include "../../cudacommon/cuda_host_device.h"
-#include "../../cuLGT1legacy/Complex.hxx"
+#include "common/culgt_typedefs.h"
+#include "cudacommon/cuda_host_device.h"
+#include "math/Complex.h"
 
 namespace culgt
 {

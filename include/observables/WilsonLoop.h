@@ -23,7 +23,7 @@ template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<Pa
 public:
 	typedef typename PatternType::PARAMTYPE::REALTYPE T;
 
-	CUDA_HOST_DEVICE inline WilsonLoop( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim ) : U(U), dim(dim)
+	CUDA_HOST_DEVICE inline WilsonLoop( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim ) : U(U), dim(dim)
 	{
 	}
 
@@ -120,7 +120,7 @@ public:
 
 private:
 	typename PatternType::PARAMTYPE::TYPE* U;
-	LatticeDimension<PatternType::SITETYPE::Ndim> dim;
+	LatticeDimension<PatternType::SITETYPE::NDIM> dim;
 
 	CUDA_HOST_DEVICE inline LocalLinkType getLink( const typename PatternType::SITETYPE& site, const lat_dim_t& mu )
 	{

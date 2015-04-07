@@ -7,6 +7,7 @@
 #ifndef TIMESLICEGAUGETUNABLEOBJECT_H_
 #define TIMESLICEGAUGETUNABLEOBJECT_H_
 
+#include "lattice/GaugeConfigurationCudaHelper.h"
 #include "util/performance/TunableObject.h"
 
 namespace culgt

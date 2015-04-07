@@ -8,9 +8,9 @@
 
 #ifndef CUDAFORALLLINKS_H_
 #define CUDAFORALLLINKS_H_
-#include "../lattice/LatticeDimension.h"
-#include "../lattice/KernelSetup.h"
-#include "../cuLGT1legacy/SiteNeighbourTableManager.h"
+#include "lattice/LatticeDimension.h"
+#include "lattice/KernelSetup.h"
+#include "lattice/site_indexing/SiteNeighbourTableManager.h"
 
 namespace culgt
 {
@@ -18,16 +18,16 @@ namespace culgt
 
 namespace CudaForAllLinksKernel
 {
-	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void execute( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim, lat_index_t* nn )
+	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void execute( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim, lat_index_t* nn )
 	{
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 
 		VERIFY_LATTICE_SIZE( dim, index );
 
 		typename PatternType::SITETYPE site( dim, nn );
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 
-		for( int mu = 0; mu < PatternType::SITETYPE::Ndim; mu++ )
+		for( int mu = 0; mu < PatternType::SITETYPE::NDIM; mu++ )
 		{
 			GlobalLink<PatternType> glob( U, site, mu );
 			LocalLinkType link;
@@ -38,16 +38,16 @@ namespace CudaForAllLinksKernel
 		}
 	}
 
-	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim, lat_index_t* nn )
+	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim, lat_index_t* nn )
 	{
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 
 		VERIFY_LATTICE_SIZE( dim, index );
 
 		typename PatternType::SITETYPE site( dim, nn );
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 
-		for( int mu = 1; mu < PatternType::SITETYPE::Ndim; mu++ )
+		for( int mu = 1; mu < PatternType::SITETYPE::NDIM; mu++ )
 		{
 			GlobalLink<PatternType> glob( U, site, mu );
 			LocalLinkType link;
@@ -58,16 +58,16 @@ namespace CudaForAllLinksKernel
 		}
 	}
 
-	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void execute( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::Ndim> dim, lat_index_t* nn )
+	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void execute( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::NDIM> dim, lat_index_t* nn )
 	{
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 
 		VERIFY_LATTICE_SIZE( dim, index );
 
 		typename PatternType::SITETYPE site( dim, nn );
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 
-		for( int mu = 0; mu < PatternType::SITETYPE::Ndim; mu++ )
+		for( int mu = 0; mu < PatternType::SITETYPE::NDIM; mu++ )
 		{
 			GlobalLink<PatternType> glob1( U1, site, mu );
 			LocalLinkType link1;
@@ -81,16 +81,16 @@ namespace CudaForAllLinksKernel
 			glob2 = link2;
 		}
 	}
-	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::Ndim> dim, lat_index_t* nn )
+	template<typename PatternType, typename LocalLinkType, typename ClassToExecute> __global__ void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::NDIM> dim, lat_index_t* nn )
 	{
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 
 		VERIFY_LATTICE_SIZE( dim, index );
 
 		typename PatternType::SITETYPE site( dim, nn );
-		site.setLatticeIndex( index );
+		site.setIndex( index );
 
-		for( int mu = 1; mu < PatternType::SITETYPE::Ndim; mu++ )
+		for( int mu = 1; mu < PatternType::SITETYPE::NDIM; mu++ )
 		{
 			GlobalLink<PatternType> glob1( U1, site, mu );
 			LocalLinkType link1;
@@ -110,27 +110,27 @@ namespace CudaForAllLinksKernel
 template<typename PatternType, typename LocalLinkType, typename ClassToExecute> class CudaForAllLinks
 {
 public:
-	static void execute( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim )
+	static void execute( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim )
 	{
-		KernelSetup<PatternType::SITETYPE::Ndim> setup( dim );
+		KernelSetup<PatternType::SITETYPE::NDIM> setup( dim );
 		CudaForAllLinksKernel::execute<PatternType,LocalLinkType,ClassToExecute><<<setup.getGridSize(), setup.getBlockSize()>>>( U, dim, SiteNeighbourTableManager<typename PatternType::SITETYPE>::getDevicePointer( dim ) );
 	}
 
-	static void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim )
+	static void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim )
 	{
-		KernelSetup<PatternType::SITETYPE::Ndim> setup( dim );
+		KernelSetup<PatternType::SITETYPE::NDIM> setup( dim );
 		CudaForAllLinksKernel::executeSpatial<PatternType,LocalLinkType,ClassToExecute><<<setup.getGridSize(), setup.getBlockSize()>>>( U, dim, SiteNeighbourTableManager<typename PatternType::SITETYPE>::getDevicePointer( dim ) );
 	}
 
-	static void execute( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::Ndim> dim )
+	static void execute( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::NDIM> dim )
 	{
-		KernelSetup<PatternType::SITETYPE::Ndim> setup( dim );
+		KernelSetup<PatternType::SITETYPE::NDIM> setup( dim );
 		CudaForAllLinksKernel::execute<PatternType,LocalLinkType,ClassToExecute><<<setup.getGridSize(), setup.getBlockSize()>>>( U1, U2, dim, SiteNeighbourTableManager<typename PatternType::SITETYPE>::getDevicePointer( dim ) );
 	}
 
-	static void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::Ndim> dim )
+	static void executeSpatial( typename PatternType::PARAMTYPE::TYPE* U1, typename PatternType::PARAMTYPE::TYPE* U2, LatticeDimension<PatternType::SITETYPE::NDIM> dim )
 	{
-		KernelSetup<PatternType::SITETYPE::Ndim> setup( dim );
+		KernelSetup<PatternType::SITETYPE::NDIM> setup( dim );
 		CudaForAllLinksKernel::executeSpatial<PatternType,LocalLinkType,ClassToExecute><<<setup.getGridSize(), setup.getBlockSize()>>>( U1, U2, dim, SiteNeighbourTableManager<typename PatternType::SITETYPE>::getDevicePointer( dim ) );
 	}
 };

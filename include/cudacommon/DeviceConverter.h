@@ -9,10 +9,10 @@
 
 #ifndef DEVICECONVERTER_H_
 #define DEVICECONVERTER_H_
-#include "../lattice/KernelSetup.h"
-#include "../lattice/LocalLink.h"
-#include "../lattice/GlobalLink.h"
-#include "../cuLGT1legacy/SiteIndex.hxx"
+#include "lattice/KernelSetup.h"
+#include "lattice/LocalLink.h"
+#include "lattice/GlobalLink.h"
+#include "lattice/site_indexing/SiteIndex.h"
 
 namespace culgt
 {

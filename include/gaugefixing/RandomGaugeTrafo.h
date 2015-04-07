@@ -5,14 +5,16 @@
 
 #ifndef RANDOMGAUGETRAFO_H_
 #define RANDOMGAUGETRAFO_H_
-#include "../lattice/GlobalLink.h"
-#include "../util/rng/PhiloxWrapper.h"
+#include "lattice/GlobalLink.h"
+#include "util/rng/PhiloxWrapper.h"
 #include "gaugefixing_thread_types.h"
 #include "algorithms/RandomUpdate.h"
 #include "gaugetypes/RandomTrafoType.h"
 #include "GaugeFixing4Threads.h"
-#include "../cudacommon/cuda_error.h"
-#include "../lattice/configuration_patterns/GPUPatternTimesliceParityPriority.h"
+#include "cudacommon/cuda_error.h"
+#include "lattice/configuration_patterns/GPUPatternTimesliceParityPriority.h"
+#include "lattice/site_indexing/SiteNeighbourTableManager.h"
+#include "lattice/KernelSetup.h"
 
 namespace culgt
 {

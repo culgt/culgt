@@ -21,7 +21,7 @@ public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef typename PatternType::PARAMTYPE::REALTYPE REALT;
 
-	WilsonLoopAverage( T* U, LatticeDimension<PatternType::SITETYPE::Ndim> dim ) : dim(dim), U(U), reducer( dim.getSize() )
+	WilsonLoopAverage( T* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim ) : dim(dim), U(U), reducer( dim.getSize() )
 	{
 		cudaMalloc( (void**)&devPtr, sizeof( REALT )*dim.getSize() );
 	};
@@ -76,7 +76,7 @@ public:
 	}
 
 private:
-	LatticeDimension<PatternType::SITETYPE::Ndim> dim;
+	LatticeDimension<PatternType::SITETYPE::NDIM> dim;
 	T* U;
 	REALT* devPtr;
 	Reduction<REALT> reducer;
