@@ -28,6 +28,10 @@ namespace culgt
 	{
 		return a;
 	}
+	inline CUDA_HOST_DEVICE int conj( int& a )
+	{
+		return a;
+	}
 
 	template<typename T> CUDA_HOST_DEVICE T sign( T a )
 	{
