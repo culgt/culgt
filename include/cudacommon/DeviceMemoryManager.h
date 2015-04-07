@@ -64,10 +64,12 @@ public:
 	static size_t getMemoryUsage();
 	static double getMemoryUsageMB();
 	static double getUnregisteredMemoryMB();
+	static void setVerbose();
+	static void unsetVerbose();
 
+	static bool verbose;
 private:
 	static size_t allocatedMemory;
-	static bool verbose;
 	static std::map<void*, MemoryStruct> info;
 	static size_t getFreeMemory();
 	static double getFreeMemoryMB();

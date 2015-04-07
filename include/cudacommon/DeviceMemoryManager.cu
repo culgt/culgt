@@ -108,6 +108,16 @@ double DeviceMemoryManager::getFreeMemoryMB()
 	return (double)getFreeMemory()/1024./1024.;
 }
 
+void DeviceMemoryManager::setVerbose()
+{
+	verbose = true;
+}
+
+void DeviceMemoryManager::unsetVerbose()
+{
+	verbose = false;
+}
+
 size_t DeviceMemoryManager::getTotalAllocatedMemory()
 {
 	size_t freeMem;
