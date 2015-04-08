@@ -15,7 +15,7 @@
 namespace culgt
 {
 
-template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<PatternType::PARAMTYPE::NC, typename PatternType::PARAMTYPE::TYPE> > > class WilsonLoopAverage
+template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<PatternType::PARAMTYPE::NC, typename PatternType::PARAMTYPE::REALTYPE> > > class WilsonLoopAverage
 {
 public:
 	typedef typename PatternType::PARAMTYPE::TYPE T;

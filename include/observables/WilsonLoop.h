@@ -18,7 +18,7 @@
 namespace culgt
 {
 
-template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<PatternType::PARAMTYPE::NC, typename PatternType::PARAMTYPE::TYPE> > > class WilsonLoop
+template<typename PatternType, typename LocalLinkType = LocalLink<SUNRealFull<PatternType::PARAMTYPE::NC, typename PatternType::PARAMTYPE::REALTYPE> > > class WilsonLoop
 {
 public:
 	typedef typename PatternType::PARAMTYPE::REALTYPE T;
