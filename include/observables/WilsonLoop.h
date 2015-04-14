@@ -64,7 +64,7 @@ public:
 		LocalLinkType loop;
 		loop.identity();
 
-		for( int i = 0; i < site.getLatticeSizeDirection( timeDir ); i++ )
+		for( int i = 0; i < site.getSizeDirection( timeDir ); i++ )
 		{
 			loop *= getLink( site, timeDir );
 			site.setNeighbour( timeDir, true );
