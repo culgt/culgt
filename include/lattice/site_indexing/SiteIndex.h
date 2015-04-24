@@ -52,7 +52,7 @@ public:
 		index = 0;
 	}
 
-	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd], NeigbourTableType type )
+	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd], NeigbourTableType type ) : nn(NULL)
 	{
 		latticeSize = 1;
 		for( lat_dim_t i = 0; i < Nd; i++ )
@@ -73,7 +73,7 @@ public:
 		index = 0;
 	}
 
-	CUDA_HOST_DEVICE inline SiteIndex( const culgt::LatticeDimension<Nd> dim, NeigbourTableType type )
+	CUDA_HOST_DEVICE inline SiteIndex( const culgt::LatticeDimension<Nd> dim, NeigbourTableType type ) : nn(NULL)
 	{
 		for( int i = 0; i < Nd; i++ )
 		{
