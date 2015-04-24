@@ -160,109 +160,109 @@ public:
 };
 
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator+( Complex<T> a, Complex<T> b )
 {
 	Complex<T> c = a;
 	return c+=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a, float b )
-{
-	Complex<T> c = a;
-	return c+=(T)b;
-}
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( Complex<T> a, double b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator+( Complex<T> a, float b )
 {
 	Complex<T> c = a;
 	return c+=(T)b;
 }
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator+( Complex<T> a, double b )
+{
+	Complex<T> c = a;
+	return c+=(T)b;
+}
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( float a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator+( float a, Complex<T> b )
 {
 	Complex<T> c((T)a);
 	return c+=b;
 }
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator+( double a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator+( double a, Complex<T> b )
 {
 	Complex<T> c((T)a);
 	return c+=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator-( Complex<T> a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator-( Complex<T> a, Complex<T> b )
 {
 	Complex<T> c = a;
 	return c-=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator-( Complex<T> a, T b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator-( Complex<T> a, T b )
 {
 	Complex<T> c = a;
 	return c-=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator-( T a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator-( T a, Complex<T> b )
 {
 	Complex<T> c(a);
 	return c-=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( Complex<T> a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator*( Complex<T> a, Complex<T> b )
 {
 	Complex<T> c = a;
 	return c*=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( Complex<T> a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator/( Complex<T> a, Complex<T> b )
 {
 	Complex<T> c = a;
 	return c/=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( Complex<T> a, float b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator*( Complex<T> a, float b )
 {
 	Complex<T> c = a;
 	return c*=(T)b;
 }
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( Complex<T> a, double b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator*( Complex<T> a, double b )
 {
 	Complex<T> c = a;
 	return c*=(T)b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( float a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator*( float a, Complex<T> b )
 {
 	Complex<T> c = b; // we commuted arguments to use *=(T) which is simpler
 	return c*=(T)a;
 }
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator*( double a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator*( double a, Complex<T> b )
 {
 	Complex<T> c = b; // we commuted arguments to use *=(T) which is simpler
 	return c*=(T)a;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( Complex<T> a, float b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator/( Complex<T> a, float b )
 {
 	Complex<T> c = a;
 	return c/=(T)b;
 }
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( Complex<T> a, double b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator/( Complex<T> a, double b )
 {
 	Complex<T> c = a;
 	return c/=(T)b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( float a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator/( float a, Complex<T> b )
 {
 	Complex<T> c((T)a,0);
 	return c/=b;
 }
-template<typename T> CUDA_HOST_DEVICE static Complex<T> operator/( double a, Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> operator/( double a, Complex<T> b )
 {
 	Complex<T> c((T)a,0);
 	return c/=b;
 }
 
-template<typename T> CUDA_HOST_DEVICE static T fabs( Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline T fabs( Complex<T> b )
 {
 	return b.abs();
 }
@@ -270,19 +270,19 @@ template<typename T> CUDA_HOST_DEVICE static T fabs( Complex<T> b )
 /**
  * principal root
  */
-template<typename T> CUDA_HOST_DEVICE static Complex<T> sqrt( Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> sqrt( Complex<T> b )
 {
 	T tmp = b.abs();
 	return Complex<T>( ::sqrt(.5*(b.x+tmp)), ((b.y>0)?(1.):(-1.))*::sqrt(.5*(-b.x+tmp)) );
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> csqrt( T b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> csqrt( T b )
 {
 	if( b >=  0. ) return Complex<T>( ::sqrt(b), 0 );
 	else return Complex<T>(0,::sqrt(-b));
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> log( Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> log( Complex<T> b )
 {
 	return Complex<T>( ::log( b.abs() ), b.phase() );
 }
@@ -294,7 +294,7 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> log( Complex<T> b )
  * If you have the time to think carefully about a fail proof version of that, you are very welcome!
  * (or implement the boost way after checking license)
  */
-template<typename T> CUDA_HOST_DEVICE static Complex<T> asin( Complex<T> b, bool calledFromAcos = false )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> asin( Complex<T> b, bool calledFromAcos = false )
 {
 	Complex<double> db( b.x, b.y );
 	Complex<double> sqrttemp = sqrt( (double)1. - db*db );
@@ -324,7 +324,7 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> asin( Complex<T> b, bool
 //	return result;
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> acos( Complex<T> b, bool calledFromAsin = false )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> acos( Complex<T> b, bool calledFromAsin = false )
 {
 	Complex<double> db( b.x, b.y );
 	Complex<double> sqrttemp = sqrt( (double)1. - db*db );
@@ -346,22 +346,22 @@ template<typename T> CUDA_HOST_DEVICE static Complex<T> acos( Complex<T> b, bool
 	}
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> cos( Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> cos( Complex<T> b )
 {
 	return Complex<T>( ::cos(b.x)*::cosh(b.y), -::sin(b.x)*::sinh(b.y) );
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> norm_squared( Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> norm_squared( Complex<T> b )
 {
 	return b.abs_squared();
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> conj( Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> conj( Complex<T> b )
 {
 	return b.conj();
 }
 
-template<typename T> CUDA_HOST_DEVICE static Complex<T> exp( Complex<T> b )
+template<typename T> CUDA_HOST_DEVICE inline Complex<T> exp( Complex<T> b )
 {
 	T temp = ::exp( b.x );
 	return Complex<T>( temp*::cos( b.y ), temp*::sin( b.y ) );
