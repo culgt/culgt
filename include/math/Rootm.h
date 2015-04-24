@@ -27,7 +27,7 @@ public:
 	static itpp::cmat root( itpp::cmat A, int p );
 	template<typename LinkType> static LinkType root( LinkType Q, int p )
 	{
-		LocalLink<SUNRealFull<2,typename LinkType::PARAMTYPE::REALTYPE> > link;
+		LocalLink<SUNRealFull<LinkType::PARAMTYPE::NC,typename LinkType::PARAMTYPE::REALTYPE> > link;
 		link = Q;
 
 		itpp::cmat A(LinkType::PARAMTYPE::NC,LinkType::PARAMTYPE::NC);
