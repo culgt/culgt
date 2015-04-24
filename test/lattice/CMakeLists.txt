@@ -46,6 +46,7 @@ endif()
 
 set(sources_cuda 
 	test_LocalLink.cu
+	site_indexing/test_SiteIndex.cu
 	test_LocalLinkWithSU2Vector4.cu
 	test_GlobalLinkWithPatterns.cu
 	test_GaugeConfiguration.cc
