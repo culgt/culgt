@@ -13,6 +13,9 @@
 #include <iomanip>
 #include <string>
 #include <map>
+#include <iosfwd>
+
+using std::ios;
 
 namespace culgt
 {
@@ -43,6 +46,8 @@ void DeviceMemoryManager::registerMalloc( void* pointer, size_t size, std::strin
 	info.insert( std::pair<void*, MemoryStruct>( pointer, MemoryStruct( size, description) ) );
 	if( verbose )
 	{
+		ios init(NULL);
+		init.copyfmt(std::cout);
 		std::cout << "-----------------------------------------------------\n";
 		std::cout << "Allocating memory for " << description << "\n";
 		std::cout << "Allocating:         " << std::fixed << std::setw( 15 ) <<  std::setprecision(3)
@@ -53,11 +58,14 @@ void DeviceMemoryManager::registerMalloc( void* pointer, size_t size, std::strin
 				<< getUnregisteredMemoryMB() << "MB\n";
 		std::cout << "Available memory:     " <<  std::setw( 15 ) <<  std::setprecision(3)
 				<< getFreeMemoryMB() << " MB\n";
+		std::cout.copyfmt(init);
 	}
 }
 
 void DeviceMemoryManager::registerFree( void* pointer )
 {
+	ios init(NULL);
+	init.copyfmt(std::cout);
 	if( verbose )
 	{
 		std::cout << "-----------------------------------------------------\n";
@@ -73,6 +81,7 @@ void DeviceMemoryManager::registerFree( void* pointer )
 		std::cout << "Available memory: " <<  std::setw( 15 ) <<  std::setprecision(3)
 				<< getFreeMemoryMB() << " MB\n";
 	}
+	std::cout.copyfmt(init);
 }
 
 size_t DeviceMemoryManager::getMemoryUsage()
