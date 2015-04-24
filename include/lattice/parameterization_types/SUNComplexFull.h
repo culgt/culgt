@@ -196,6 +196,14 @@ public:
 		dest[8] -= b[8];
 	}
 
+	static CUDA_HOST_DEVICE void inline multAssignScalar( TYPE dest[SIZE], const REALTYPE scalar )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			dest[i] *= scalar;
+		}
+	}
+
 	static CUDA_HOST_DEVICE void inline multAssignScalarComplex( TYPE dest[SIZE], const Complex<REALTYPE> scalar )
 	{
 		for( int i = 0; i < SIZE; i++ )
