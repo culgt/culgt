@@ -199,9 +199,9 @@ public:
 		store[3] *= fac;
 
 		store[4] = -store[2];
-		store[5] *= store[3];
-		store[6] *= store[0];
-		store[7] *= -store[1];
+		store[5] = store[3];
+		store[6] = store[0];
+		store[7] = -store[1];
 	}
 
 	/**
