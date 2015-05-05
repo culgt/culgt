@@ -10,16 +10,14 @@
 
 #include "itpp/itbase.h"
 #include <complex>
-#include "../lattice/parameterization_types/SU2Vector4.h"
-#include "../lattice/LocalLink.h"
-#include "../lattice/parameterization_types/SUNRealFull.h"
+#include "lattice/parameterization_types/SU2Vector4.h"
+#include "lattice/LocalLink.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
 
-using culgt::LocalLink;
-using culgt::SUNRealFull;
+namespace culgt
+{
 
 typedef std::complex<double> complex_double;
-
-
 
 class Rootm
 {
@@ -148,7 +146,7 @@ itpp::cmat Rootm::root( itpp::cmat A, int p )
 	return Q*U*hermitian_transpose(Q);
 }
 
-
+}
 
 
 
