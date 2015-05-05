@@ -34,6 +34,7 @@ template<typename PatternType> class GaugeConfiguration
 {
 public:
 	// gathering lattice infos
+	typedef PatternType PATTERNTYPE;
 	typedef typename PatternType::PARAMTYPE::TYPE T;
 	typedef typename PatternType::PARAMTYPE PARAMTYPE;
 	typedef typename PatternType::SITETYPE SITETYPE;
