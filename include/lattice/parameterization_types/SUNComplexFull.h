@@ -61,29 +61,25 @@ template<typename T> class SUNComplexFull<2,T>
 public:
 	static const lat_dim_t NC = 2;
 	static const lat_group_index_t SIZE = 4;
-	typedef T TYPE;
+	typedef Complex<T> TYPE;
 	typedef T REALTYPE;
 
-//	static CUDA_HOST_DEVICE void inline zero( TYPE store[SIZE] )
-//	{
-//		for( int i = 0; i < SIZE; i++ )
-//		{
-//			store[i] = 0;
-//		}
-//	}
-//
-//	static CUDA_HOST_DEVICE void inline identity( TYPE store[SIZE] )
-//	{
-//		store[0] = 1.;
-//		store[1] = 0.;
-//		store[2] = 0.;
-//		store[3] = 0.;
-//		store[4] = 0.;
-//		store[5] = 0.;
-//		store[6] = 1.;
-//		store[7] = 0.;
-//	}
-//
+	static CUDA_HOST_DEVICE void inline zero( TYPE store[SIZE] )
+	{
+		for( int i = 0; i < SIZE; i++ )
+		{
+			store[i] = (TYPE)0.;
+		}
+	}
+
+	static CUDA_HOST_DEVICE void inline identity( TYPE store[SIZE] )
+	{
+		store[0] = (TYPE)1.;
+		store[1] = (TYPE)0.;
+		store[2] = (TYPE)0.;
+		store[3] = (TYPE)1.;
+	}
+
 //	static CUDA_HOST_DEVICE inline REALTYPE reDet( TYPE store[SIZE] )
 //	{
 //		return store[0]*store[6] - store[2]*store[4] - store[1]*store[7] + store[3]*store[5];
