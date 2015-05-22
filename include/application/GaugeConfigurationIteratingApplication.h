@@ -13,6 +13,7 @@
 #include "FileIterator.h"
 #include "ProgramOptions.h"
 #include <typeinfo>
+#include "../cudacommon/DeviceHelper.h"
 
 using std::type_info;
 
@@ -105,6 +106,19 @@ public:
 		{
 			cudaSetDevice( po->getDevicenumber() );
 			CUDA_LAST_ERROR( "Set device" );
+		}
+		else
+		{
+			int selectedDevice = DeviceHelper::selectAvailableDevice();
+			if( selectedDevice == -1 )
+			{
+				std::cout << "No device available" << std::endl;
+				exit(1);
+			}
+			else
+			{
+				std::cout << "Device " << selectedDevice << " is available." << std::endl;
+			}
 		}
 
 		std::cout << "Using device: " << DeviceProperties::getName() << "(" << DeviceProperties::getDeviceNumber() << ")" << std::endl;
