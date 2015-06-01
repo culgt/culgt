@@ -89,6 +89,14 @@ public:
 	{
 		return store[i];
 	}
+
+	CUDA_HOST_DEVICE inline typename ParamType::TYPE& operator()( lat_group_index_t i )
+	{
+		return store[i];
+	}
+
+
+
 	/**
 	 * Sets the i-th entry of the ParamType specific array
 	 * @param i
