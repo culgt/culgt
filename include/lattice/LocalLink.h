@@ -135,6 +135,11 @@ public:
 		return ParamType::reDet( store );
 	}
 
+	CUDA_HOST_DEVICE inline Complex<typename ParamType::REALTYPE> det()
+	{
+		return ParamType::det( store );
+	}
+
 	CUDA_HOST_DEVICE inline typename ParamType::REALTYPE reTrace()
 	{
 		return ParamType::reTrace( store );

@@ -278,6 +278,16 @@ public:
 		return store[0]*store[8]*store[16] - store[0]*store[10]*store[14] - store[2]*store[6]*store[16] + store[2]*store[10]*store[12] + store[4]*store[6]*store[14] - store[4]*store[8]*store[12] - store[0]*store[9]*store[17] + store[0]*store[11]*store[15] - store[1]*store[8]*store[17] - store[1]*store[9]*store[16] + store[1]*store[10]*store[15] + store[1]*store[11]*store[14] + store[2]*store[7]*store[17] - store[2]*store[11]*store[13] + store[3]*store[6]*store[17] + store[3]*store[7]*store[16] - store[3]*store[10]*store[13] - store[3]*store[11]*store[12] - store[4]*store[7]*store[15] + store[4]*store[9]*store[13] - store[5]*store[6]*store[15] - store[5]*store[7]*store[14] + store[5]*store[8]*store[13] + store[5]*store[9]*store[12];
 	}
 
+	static CUDA_HOST_DEVICE inline REALTYPE imDet( TYPE store[SIZE] )
+	{
+		return store[0]*store[8]*store[17] - store[0]*store[10]*store[15] - store[0]*store[14]*store[11] + store[0]*store[16]*store[9] - store[2]*store[6]*store[17] + store[2]*store[10]*store[13] + store[2]*store[12]*store[11] - store[2]*store[16]*store[7] + store[4]*store[6]*store[15] - store[4]*store[8]*store[13] - store[4]*store[12]*store[9] + store[4]*store[14]*store[7] + store[6]*store[14]*store[5] - store[6]*store[16]*store[3] - store[8]*store[12]*store[5] + store[8]*store[16]*store[1] + store[10]*store[12]*store[3] - store[10]*store[14]*store[1] - store[1]*store[9]*store[17] + store[1]*store[11]*store[15] + store[3]*store[7]*store[17] - store[3]*store[11]*store[13] - store[5]*store[7]*store[15] + store[5]*store[9]*store[13];
+	}
+
+	static CUDA_HOST_DEVICE inline Complex<REALTYPE> det( TYPE store[SIZE] )
+	{
+		return Complex<REALTYPE>( reDet(store) , imDet(store) );
+	}
+
 	static CUDA_HOST_DEVICE REALTYPE inline reTrace( TYPE store[SIZE] )
 	{
 		return store[0]+store[8]+store[16];
