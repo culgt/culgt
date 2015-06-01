@@ -4,10 +4,8 @@
 #include "Chronotimer.h"
 
 
-Chronotimer::Chronotimer()
+Chronotimer::Chronotimer() :running(false), resetted(true), savedTime(0)
 {
-	resetted = true;
-	running = false;
 }
 
 void Chronotimer::start()
