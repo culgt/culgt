@@ -172,6 +172,7 @@ protected:
 			float tStep = ( settings.getSaMax()-settings.getSaMin() )/(float)settings.getSaSteps();
 			float temperature = settings.getSaMax();
 			cudaDeviceSynchronize();
+			timerSa.reset();
 			timerSa.start();
 			for( int i = 0; i < settings.getSaSteps(); i++ )
 			{
