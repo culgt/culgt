@@ -94,6 +94,16 @@ public:
 		return store[0]*store[6] - store[2]*store[4] - store[1]*store[7] + store[3]*store[5];
 	}
 
+	static CUDA_HOST_DEVICE inline REALTYPE imDet( TYPE store[SIZE] )
+	{
+		return store[0]*store[7] - store[2]*store[5] - store[4]*store[3] + store[6]*store[1];
+	}
+
+	static CUDA_HOST_DEVICE inline Complex<REALTYPE> det( TYPE store[SIZE] )
+	{
+		return Complex<REALTYPE>( reDet( store ), imDet( store) );
+	}
+
 	static CUDA_HOST_DEVICE REALTYPE inline reTrace( TYPE store[SIZE] )
 	{
 		return store[0]+store[6];
@@ -104,6 +114,17 @@ public:
 		for( int i = 0; i < SIZE; i++ )
 		{
 			dest[i] *= scalar;
+		}
+	}
+
+	static CUDA_HOST_DEVICE void inline multAssignScalarComplex( TYPE dest[SIZE], const Complex<REALTYPE> scalar )
+	{
+		for( int i = 0; i < SIZE; i+=2 )
+		{
+			Complex<T> tmp( dest[i], dest[i+1]);
+			tmp *= scalar;
+			dest[i] = tmp.x;
+			dest[i+1] = tmp.y;
 		}
 	}
 
