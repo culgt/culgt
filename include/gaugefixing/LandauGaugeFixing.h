@@ -108,7 +108,8 @@ public:
 		CUDA_LAST_ERROR( "generateGaugeQualityPerSite" );
 
 		Reduction<double> reducer(dim.getSize());
-		double dAAvg = reducer.reduceAll( dA )/(double)dim.getSize()/(double)(GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
+//		double dAAvg = reducer.reduceAll( dA )/(double)dim.getSize()/(double)(GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
+		double dAAvg = reducer.reduceAllMax( dA )/(double)(GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
 		double dGffAvg = reducer.reduceAll( dGff )/(double)dim.getSize()/(double)(GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM*GlobalLinkType::PATTERNTYPE::PARAMTYPE::NC);
 
 		return GaugeStats( dGffAvg, dAAvg );
