@@ -27,8 +27,9 @@
 								<option id="nvcc.compiler.option.level.633295795" name="Generate host debug information (-g)" superClass="nvcc.compiler.option.level" value="true" valueType="boolean"/>
 								<option defaultValue="nvcc.compiler.optimization.level.none" id="nvcc.compiler.optimization.level.517491970" name="Optimization Level" superClass="nvcc.compiler.optimization.level" valueType="enumerated"/>
 								<option id="nvcc.compiler.pic.420874316" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
-								<option id="nvcc.compiler.include.paths.1576591149" superClass="nvcc.compiler.include.paths" valueType="includePath">
+								<option id="nvcc.compiler.include.paths.1576591149" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/c-lime/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${GMOCK_HOME}/include&quot;"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1257610644" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.1613708746" superClass="nvcc.compiler.input.cpp"/>
@@ -42,8 +43,9 @@
 							</tool>
 							<tool id="nvcc.archiver.base.1973534342" name="NVCC Archiver" superClass="nvcc.archiver.base"/>
 							<tool id="com.nvidia.host.assembler.2017432681" name="Host Assembler" superClass="com.nvidia.host.assembler">
-								<option id="gnu.both.asm.option.include.paths.1180079738" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+								<option id="gnu.both.asm.option.include.paths.1180079738" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/c-lime/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${GMOCK_HOME}/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.398101627" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -80,8 +82,9 @@
 								<option id="nvcc.compiler.option.level.1215915646" name="Generate host debug information (-g)" superClass="nvcc.compiler.option.level"/>
 								<option defaultValue="nvcc.compiler.optimization.level.most" id="nvcc.compiler.optimization.level.1167587639" name="Optimization Level" superClass="nvcc.compiler.optimization.level" valueType="enumerated"/>
 								<option id="nvcc.compiler.pic.1911030325" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
-								<option id="nvcc.compiler.include.paths.1847846366" superClass="nvcc.compiler.include.paths" valueType="includePath">
+								<option id="nvcc.compiler.include.paths.1847846366" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/c-lime/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${GMOCK_HOME}/include&quot;"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1988914572" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.1299007378" superClass="nvcc.compiler.input.cpp"/>
@@ -95,8 +98,9 @@
 							</tool>
 							<tool id="nvcc.archiver.base.1641347781" name="NVCC Archiver" superClass="nvcc.archiver.base"/>
 							<tool id="com.nvidia.host.assembler.1155121363" name="Host Assembler" superClass="com.nvidia.host.assembler">
-								<option id="gnu.both.asm.option.include.paths.1285947910" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+								<option id="gnu.both.asm.option.include.paths.1285947910" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/c-lime/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${GMOCK_HOME}/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.516571227" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
