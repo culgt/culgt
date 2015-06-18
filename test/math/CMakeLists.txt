@@ -1,38 +1,23 @@
 project(test_math)
 cmake_minimum_required(VERSION 2.8)
 
-include_directories(../../include)
 include( ../commonsettings.cmake )
 
-set(sources 
-	)
-add_executable(test_math_host ../test_main.cpp  ${sources})
-target_link_libraries(test_math_host pthread)
-target_link_libraries(test_math_host gmock)
-target_link_libraries(test_math_host gtest)
 
-if( DEFINED allsources )
-addWithDirectory( math "${sources}" )
-endif()
 
 set(sources_cuda 
 	test_Complex.cu
 	)
 
-cuda_add_executable(test_math_cuda ../test_main.cpp ${sources_cuda} )
-target_link_libraries(test_math_cuda pthread)
-target_link_libraries(test_math_cuda gmock)
-target_link_libraries(test_math_cuda gtest)
-target_link_libraries(test_math_cuda cudart)
+cuda_add_library(lib_math_cuda ${sources_cuda} )
+target_link_libraries(lib_math_cuda pthread)
+target_link_libraries(lib_math_cuda gmock)
+target_link_libraries(lib_math_cuda gtest)
 
-if( DEFINED allsources )
-addWithDirectory( math "${sources_cuda}"  )
-endif()
+cuda_add_executable( test_math_cuda ../test_main.cpp )
+target_link_libraries_whole_archive( test_math_cuda lib_math_cuda )
 
 
 
-
-cuda_add_executable(test_math ../test_main.cpp ${sources} ${sources_cuda})
-target_link_libraries(test_math pthread)
-target_link_libraries(test_math gmock)
-target_link_libraries(test_math gtest)
+cuda_add_executable(test_math ../test_main.cpp )
+target_link_libraries_whole_archive( test_math lib_math_cuda )

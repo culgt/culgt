@@ -2,41 +2,40 @@ project(test_application)
 cmake_minimum_required(VERSION 2.8)
 
 include( ../commonsettings.cmake )
-include_directories(../../include)
+
+
 
 set(sources 
 	test_FileIterator.cc
 	)
-add_executable(test_application_host ../test_main.cpp  ${sources})
-target_link_libraries(test_application_host pthread)
-target_link_libraries(test_application_host gmock)
-target_link_libraries(test_application_host gtest)
-target_link_libraries(test_application_host boost_program_options)
+	
+add_library( lib_application_host ${sources} )
+target_link_libraries( lib_application_host pthread)
+target_link_libraries( lib_application_host gmock)
+target_link_libraries( lib_application_host gtest)
+target_link_libraries( lib_application_host liblime.a)
+	
+add_executable( test_application_host ../test_main.cpp )
+target_link_libraries_whole_archive( test_application_host lib_application_host )
 
-if( DEFINED allsources )
-addWithDirectory( application "${sources}" )
-endif()
+
 
 set(sources_cuda 
 	test_GaugeConfigurationIteratingApplication.cu
 	)
 
-cuda_add_executable(test_application_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
-target_link_libraries(test_application_cuda pthread)
-target_link_libraries(test_application_cuda gmock)
-target_link_libraries(test_application_cuda gtest)
-target_link_libraries(test_application_cuda cudart)
-target_link_libraries(test_application_cuda boost_program_options)
+cuda_add_library(lib_application_cuda ${sources_cuda} )
+target_link_libraries(lib_application_cuda pthread)
+target_link_libraries(lib_application_cuda gmock)
+target_link_libraries(lib_application_cuda gtest)
+target_link_libraries(lib_application_cuda boost_program_options)
+target_link_libraries(lib_application_cuda culgt_cudacommon )
 
-if( DEFINED allsources )
-addWithDirectory( application "${sources_cuda}"  )
-endif()
-
+cuda_add_executable( test_application_cuda ../test_main.cpp )
+target_link_libraries_whole_archive( test_application_cuda lib_application_cuda )
 
 
 
-cuda_add_executable(test_application ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
-target_link_libraries(test_application pthread)
-target_link_libraries(test_application gmock)
-target_link_libraries(test_application gtest)
-target_link_libraries(test_application boost_program_options)
+cuda_add_executable(test_application ../test_main.cpp )
+target_link_libraries_whole_archive( test_application lib_application_host )
+target_link_libraries_whole_archive( test_application lib_application_cuda )

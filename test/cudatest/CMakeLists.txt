@@ -1,43 +1,40 @@
-project(cuda_test_helper_test)
+# IMPORTANT: This demonstrates the use of the cuda_test code. For demonstration some tests fail. Therefore
+# we do not include this subdirectory in the full test.
 
-#The FindCUDA script is distributed since version 2.8
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+project(cuda_test_helper_test)
+cmake_minimum_required(VERSION 2.8)
+
+
+
+include( ../commonsettings.cmake )
  
-add_definitions()
-set(CMAKE_CXX_FLAGS "${CMAXE_CXX_FLAGS} -Wall")
-include_directories(../../include)
-include_directories($ENV{GMOCK_HOME}/include $ENV{GMOCK_HOME}/gtest/include)
-link_directories($ENV{GMOCK_HOME}/mybuild $ENV{GMOCK_HOME}/gtest/mybuild)
- 
- 
- set(sources_host 
-	../test_main.cpp
+set(sources 
 	test_example_gtest_plugin_host.cc
 	)
-add_executable(test_host ${sources_host} )
-target_link_libraries(test_host pthread)
-target_link_libraries(test_host gmock)
-target_link_libraries(test_host gtest)
+add_library(lib_cuda_test_helper_host ${sources} )
+target_link_libraries(lib_cuda_test_helper_host pthread)
+target_link_libraries(lib_cuda_test_helper_host gmock)
+target_link_libraries(lib_cuda_test_helper_host gtest)
  
-FIND_PACKAGE(CUDA)
- 
-INCLUDE(FindCUDA)
+add_executable( test_cuda_test_helper_host ../test_main.cpp )
+target_link_libraries_whole_archive( test_cuda_test_helper_host lib_cuda_test_helper_host )
 
 
-set(sources 
-	../test_main.cpp
+
+set(sources_cuda 
 	test_example_gtest_plugin.cu
 	)
 
+cuda_add_library(lib_cuda_test_helper_cuda ${sources_cuda} )
+target_link_libraries(lib_cuda_test_helper_cuda pthread)
+target_link_libraries(lib_cuda_test_helper_cuda gmock)
+target_link_libraries(lib_cuda_test_helper_cuda gtest)
+
+add_executable( test_cuda_test_helper_cuda ../test_main.cpp )
+target_link_libraries_whole_archive( test_cuda_test_helper_cuda lib_cuda_test_helper_cuda )
 
 
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-arch=sm_20;--ptxas-options=-v;)
 
-CUDA_ADD_EXECUTABLE(test ${sources} )
-target_link_libraries(test pthread)
-target_link_libraries(test gmock)
-target_link_libraries(test gtest)
-
-
-	
-
+add_executable( test_cuda_test_helper ../test_main.cpp )
+target_link_libraries_whole_archive( test_cuda_test_helper lib_cuda_test_helper_host )
+target_link_libraries_whole_archive( test_cuda_test_helper lib_cuda_test_helper_cuda )

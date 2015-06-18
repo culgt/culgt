@@ -1,23 +1,20 @@
 project(test_observables)
-
 cmake_minimum_required(VERSION 2.8)
 
-include_directories(../../include)
 include( ../commonsettings.cmake )
 
-#set( CMAKE_VERBOSE_MAKEFILE on )
+
 
 set(sources 
 	test_Plaquette.cc
 	)
-add_executable(test_observables_host ../test_main.cpp ${sources})
-target_link_libraries(test_observables_host pthread)
-target_link_libraries(test_observables_host gmock)
-target_link_libraries(test_observables_host gtest)
+add_library(lib_observables_host  ${sources})
+target_link_libraries(lib_observables_host pthread)
+target_link_libraries(lib_observables_host gmock)
+target_link_libraries(lib_observables_host gtest)
 
-if( DEFINED allsources )
-addWithDirectory( observables "${sources}" )
-endif()
+add_executable( test_observables_host ../test_main.cpp )
+target_link_libraries_whole_archive( test_observables_host lib_observables_host )
 
 
 
@@ -25,22 +22,20 @@ set(sources_cuda
 	test_PlaquetteAverage.cu
 	)
 
-cuda_add_executable(test_observables_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
-target_link_libraries(test_observables_cuda pthread)
-target_link_libraries(test_observables_cuda gmock)
-target_link_libraries(test_observables_cuda gtest)
-target_link_libraries(test_observables_cuda cudart)
+cuda_add_library(lib_observables_cuda ${sources_cuda} )
+target_link_libraries(lib_observables_cuda pthread)
+target_link_libraries(lib_observables_cuda gmock)
+target_link_libraries(lib_observables_cuda gtest)
+target_link_libraries(lib_observables_cuda culgt_cudacommon )
 
-if( DEFINED allsources )
-addWithDirectory( observables "${sources_cuda}"  )
-endif()
-
+cuda_add_executable(test_observables_cuda ../test_main.cpp )
+target_link_libraries_whole_archive( test_observables_cuda lib_observables_cuda )
 
 
-cuda_add_executable(test_observables ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
-target_link_libraries(test_observables pthread)
-target_link_libraries(test_observables gmock)
-target_link_libraries(test_observables gtest)
+
+cuda_add_executable(test_observables ../test_main.cpp )
+target_link_libraries_whole_archive( test_observables lib_observables_host )
+target_link_libraries_whole_archive( test_observables lib_observables_cuda )
 
 
 

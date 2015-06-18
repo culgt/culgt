@@ -1,0 +1,2 @@
+IMPORTANT: This demonstrates the use of the cuda_test code. For demonstration some tests fail. Therefore
+we do not include this subdirectory in the full test.

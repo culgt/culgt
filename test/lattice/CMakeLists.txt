@@ -2,13 +2,19 @@ project(test_lattice)
 
 cmake_minimum_required(VERSION 2.8)
 
-include_directories(../../include)
 include( ../commonsettings.cmake )
 
-set( CMAKE_VERBOSE_MAKEFILE on )
+
 
 set(sources 
 	test_LocalLink.cc
+	test_GlobalLink.cc 
+	test_GlobalLinkWithPatterns.cc
+	test_LocalGlobalLinkCompatibility.cc
+	test_LinkFileVogt.cc
+	test_LinkFileVogtWithPattern.cc
+	test_LinkFile.cc
+	test_LinkToGaugefieldConverter.cc
 	parameterization_types/test_ParameterizationMediatorSU3_Real12_Real18.cc 
 	parameterization_types/test_ParameterizationMediatorSU2_Real4_Real8.cc 
 	parameterization_types/test_ParameterizationMediatorSU3_Vector4_Complex9.cc 
@@ -19,28 +25,21 @@ set(sources
 	configuration_patterns/test_GPUPatternTimeslice.cc
 	configuration_patterns/test_GPUPatternTimesliceParityPriority.cc
 	configuration_patterns/test_GPUPatternParityPriority.cc
-	test_GlobalLink.cc 
-	test_GlobalLinkWithPatterns.cc
-	test_LocalGlobalLinkCompatibility.cc
-	test_LinkFileVogt.cc
-	test_LinkFileVogtWithPattern.cc
-	test_LinkFile.cc
-	test_LinkToGaugefieldConverter.cc
 	filetypes/test_limereader.cc
 	site_indexing/test_SiteIndex.cc
 	site_indexing/test_SiteCoord.cc
 	site_indexing/test_SiteCompatibilityWithConfigurationPatterns.cc
 	site_indexing/test_SiteIndexSiteCoordCompatibility.cc
 	)
-add_executable(test_lattice_host ../test_main.cpp ${sources} $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
-target_link_libraries(test_lattice_host pthread)
-target_link_libraries(test_lattice_host gmock)
-target_link_libraries(test_lattice_host gtest)
-target_link_libraries(test_lattice_host liblime.a)
+	
+add_library( lib_lattice_host ${sources} )
+target_link_libraries( lib_lattice_host pthread)
+target_link_libraries( lib_lattice_host gmock)
+target_link_libraries( lib_lattice_host gtest)
+target_link_libraries( lib_lattice_host liblime.a)
 
-if( DEFINED allsources )
-addWithDirectory( lattice "${sources}" )
-endif()
+add_executable( test_lattice_host ../test_main.cpp)
+target_link_libraries_whole_archive( test_lattice_host lib_lattice_host )
 
 
 
@@ -57,28 +56,18 @@ set(sources_cuda
 	site_indexing/test_SiteNeighbourTableManager.cu
 	)
 
-cuda_add_executable(test_lattice_cuda ../test_main.cpp ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu )
-target_link_libraries(test_lattice_cuda pthread)
-target_link_libraries(test_lattice_cuda gmock)
-target_link_libraries(test_lattice_cuda gtest)
-target_link_libraries(test_lattice_cuda cudart)
+cuda_add_library( lib_lattice_cuda ${sources_cuda} )
+target_link_libraries(lib_lattice_cuda culgt_cudacommon )
+target_link_libraries(lib_lattice_cuda pthread)
+target_link_libraries(lib_lattice_cuda gmock)
+target_link_libraries(lib_lattice_cuda gtest)
 
-if( DEFINED allsources )
-addWithDirectory( lattice "${sources_cuda}"  )
-endif()
-
+cuda_add_executable( test_lattice_cuda ../test_main.cpp)
+target_link_libraries_whole_archive( test_lattice_cuda lib_lattice_cuda )
 
 
-cuda_add_executable(test_lattice ../test_main.cpp ${sources} ${sources_cuda} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
-target_link_libraries(test_lattice pthread)
-target_link_libraries(test_lattice gmock)
-target_link_libraries(test_lattice gtest)
-target_link_libraries(test_lattice liblime.a)
 
-#set(sourcesSpecial 
-#	test_GlobalLinkWithPatterns.cc
-#	)
-#add_executable(test_lattice_special ../test_main.cpp ${sourcesSpecial} $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
-#target_link_libraries(test_lattice_special pthread)
-#target_link_libraries(test_lattice_special gmock)
-#target_link_libraries(test_lattice_special gtest)
+cuda_add_executable(test_lattice ../test_main.cpp )
+target_link_libraries_whole_archive( test_lattice lib_lattice_cuda )
+target_link_libraries_whole_archive( test_lattice lib_lattice_host )
+

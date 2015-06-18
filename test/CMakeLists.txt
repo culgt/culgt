@@ -1,28 +1,51 @@
-project(test_main)
+project(test)
 cmake_minimum_required(VERSION 2.8)
 
 include( commonsettings.cmake )
-include( addWithDirectory.cmake )
 
-include_directories( ../include )
-
-set( allsources "" )
 
 add_subdirectory( application )
 add_subdirectory( cudacommon )
 add_subdirectory( eigensolver )
-add_subdirectory( gaugefixing )
 add_subdirectory( lattice )
 add_subdirectory( math )
 add_subdirectory( observables )
 add_subdirectory( util )
 
-message( "allsources = ${allsources}" )
 
-CUDA_ADD_EXECUTABLE(test test_main.cpp ${allsources} $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu)
-target_link_libraries(test pthread)
-target_link_libraries(test gmock)
-target_link_libraries(test gtest)
-target_link_libraries(test cufft)
-target_link_libraries(test boost_program_options)
-target_link_libraries(test liblime.a )
+add_executable( test_host test_main.cpp )
+target_link_libraries_whole_archive( test_host lib_application_host )
+#target_link_libraries_whole_archive( test_host lib_cudacommon_host )
+target_link_libraries_whole_archive( test_host lib_eigensolver_host )
+target_link_libraries_whole_archive( test_host lib_lattice_host )
+#target_link_libraries_whole_archive( test_host lib_math_host )
+target_link_libraries_whole_archive( test_host lib_observables_host )
+target_link_libraries_whole_archive( test_host lib_util_host )
+
+
+
+cuda_add_executable( test_cuda test_main.cpp )
+target_link_libraries_whole_archive( test_cuda lib_application_cuda )
+target_link_libraries_whole_archive( test_cuda lib_cudacommon_cuda )
+target_link_libraries_whole_archive( test_cuda lib_eigensolver_cuda )
+target_link_libraries_whole_archive( test_cuda lib_lattice_cuda )
+target_link_libraries_whole_archive( test_cuda lib_math_cuda )
+target_link_libraries_whole_archive( test_cuda lib_observables_cuda )
+target_link_libraries_whole_archive( test_cuda lib_util_cuda )
+
+
+
+cuda_add_executable( test test_main.cpp )
+target_link_libraries_whole_archive( test lib_application_host )
+target_link_libraries_whole_archive( test lib_application_cuda )
+target_link_libraries_whole_archive( test lib_cudacommon_cuda )
+target_link_libraries_whole_archive( test lib_eigensolver_host )
+target_link_libraries_whole_archive( test lib_eigensolver_cuda )
+target_link_libraries_whole_archive( test lib_lattice_host )
+target_link_libraries_whole_archive( test lib_lattice_cuda )
+target_link_libraries_whole_archive( test lib_math_cuda )
+target_link_libraries_whole_archive( test lib_observables_host )
+target_link_libraries_whole_archive( test lib_observables_cuda )
+target_link_libraries_whole_archive( test lib_util_host )
+target_link_libraries_whole_archive( test lib_util_cuda )
+
