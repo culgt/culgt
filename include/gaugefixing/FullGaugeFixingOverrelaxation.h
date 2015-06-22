@@ -154,19 +154,31 @@ public:
 		}
 	};
 
-	// setup options for the autotuner
+	typedef FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro> thisClass;
+	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
+
+#ifdef CULGT_NO_AUTOTUNE
+#warning "NOT using autotune for FullGaugeFixingOverrelaxation!"
+	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,6> > launchBoundsSequence;
+	typedef boost::mpl::vector_c< int, 4 > threadsPerSiteSequence;
+	typedef boost::mpl::vector_c< int, 1 > useTextureSequence;
+	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
+
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter), runner( RUN_FIRST_CHOICE )
+	{
+		Chooser::object = this;
+	}
+#else
 	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<32,5>, GaugefixingLaunchBounds<32,6>, GaugefixingLaunchBounds<32,7>, GaugefixingLaunchBounds<32,8>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<64,5>, GaugefixingLaunchBounds<64,6>, GaugefixingLaunchBounds<128,1>, GaugefixingLaunchBounds<128,2>, GaugefixingLaunchBounds<128,3> > launchBoundsSequence;
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
-
-	typedef FullGaugeFixingOverrelaxation<GPUPatternParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro> thisClass;
-	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
 	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}
+#endif
 
 	template<int ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor, bool UseTexture> inline void step()
 	{
@@ -313,19 +325,34 @@ public:
 		}
 	};
 
-	// setup options for the autotuner
+
+	typedef FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro> thisClass;
+	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
+
+#ifdef CULGT_NO_AUTOTUNE
+#warning "NOT using autotune for FullGaugeFixingOverrelaxation-TimeslicePattern!"
+	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,6> > launchBoundsSequence;
+	typedef boost::mpl::vector_c< int, 4 > threadsPerSiteSequence;
+	typedef boost::mpl::vector_c< int, 1 > useTextureSequence;
+
+	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
+
+	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter), runner(RUN_FIRST_CHOICE)
+	{
+		Chooser::object = this;
+	}
+#else
 	typedef boost::mpl::vector< GaugefixingLaunchBounds<32,1>, GaugefixingLaunchBounds<32,2>, GaugefixingLaunchBounds<32,3>, GaugefixingLaunchBounds<32,4>, GaugefixingLaunchBounds<32,5>, GaugefixingLaunchBounds<32,6>, GaugefixingLaunchBounds<32,7>, GaugefixingLaunchBounds<32,8>, GaugefixingLaunchBounds<64,1>, GaugefixingLaunchBounds<64,2>, GaugefixingLaunchBounds<64,3>, GaugefixingLaunchBounds<64,4>, GaugefixingLaunchBounds<64,5>, GaugefixingLaunchBounds<64,6>, GaugefixingLaunchBounds<128,1>, GaugefixingLaunchBounds<128,2>, GaugefixingLaunchBounds<128,3> > launchBoundsSequence;
 	typedef boost::mpl::vector_c< int, 4, 8 > threadsPerSiteSequence;
 	typedef boost::mpl::vector_c< int, 0, 1 > useTextureSequence;
 
-	typedef FullGaugeFixingOverrelaxation<GPUPatternTimesliceParityPriority<SiteType,ParamType>, LocalLinkType, GaugeType, DoMicro> thisClass;
-	typedef RuntimeChooser<thisClass, Step<_,_,_> > Chooser;
 	SequenceRunnerFrontend<Chooser,launchBoundsSequence,threadsPerSiteSequence,useTextureSequence> runner;
 
 	FullGaugeFixingOverrelaxation( T** U, LatticeDimension<SiteType::NDIM> dim, long seed, float orParameter = 1.0 ) : FullGaugeTunableObject<GlobalLinkType,LocalLinkType>( U, dim, seed ), orParameter(orParameter)
 	{
 		Chooser::object = this;
 	}
+#endif
 
 	template<int ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor, bool UseTexture> inline void step()
 	{

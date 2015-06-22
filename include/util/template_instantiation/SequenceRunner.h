@@ -29,6 +29,7 @@ using namespace mpl::placeholders;
 #warning cannot use variadic templates: RuntimeChooser limited to 4 arguments
 #endif
 
+static const bool RUN_FIRST_CHOICE = true;
 
 struct NIL
 {
@@ -101,7 +102,7 @@ template<typename Chooser, typename T, typename... Ts> class SequenceRunnerFront
 public:
 	typedef mpl::vector<> Seq;
 
-	SequenceRunnerFrontend()
+	SequenceRunnerFrontend( bool runFirstChoice = false ): runFirstChoice(runFirstChoice)
 	{
 		init();
 	}
@@ -109,7 +110,11 @@ public:
 
 	void run( size_t id )
 	{
-		if( Chooser::id != id )
+		if( runFirstChoice )
+		{
+			set( Chooser::options[0].id );
+		}
+		else if( Chooser::id != id )
 		{
 			set( id );
 		}
@@ -123,6 +128,7 @@ public:
 	}
 
 private:
+	bool runFirstChoice;
 	void init()
 	{
 		Chooser::options.clear();
@@ -143,7 +149,7 @@ template<typename Chooser, typename T0, typename T1=NIL, typename T2=NIL, typena
 public:
 	typedef mpl::vector<> Seq;
 
-	SequenceRunnerFrontend()
+	SequenceRunnerFrontend( bool runFirstChoice = false ): runFirstChoice(runFirstChoice)
 	{
 		init();
 	}
@@ -151,7 +157,11 @@ public:
 
 	void run( size_t id )
 	{
-		if( Chooser::id != id )
+		if( runFirstChoice )
+		{
+			set( Chooser::options[0].id );
+		}
+		else if( Chooser::id != id )
 		{
 			set( id );
 		}
@@ -165,6 +175,7 @@ public:
 	}
 
 private:
+	bool runFirstChoice;
 	void init()
 	{
 		Chooser::options.clear();

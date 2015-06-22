@@ -8,6 +8,7 @@ option( MIXED_PRECISION "switch on mixed precision (in the SP application)" OFF 
 option( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
 option( PRINT_KERNEL_INFO "print kernel infos" OFF )
 option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
+option( DISABLE_AUTOTUNE "disables the autotuner (for debugging purpose)" OFF )
 
 #========================================================
 
@@ -32,6 +33,10 @@ if( ${USE_TIMESLICEPATTERN} )
 endif()
 
 set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_SUN=${SUN}" ) 
+
+if( ${DISABLE_AUTOTUNE} )
+    set( CULGT_OPTIONS "${CULGT_OPTIONS} -DCULGT_NO_AUTOTUNE" ) 
+endif()
 
 if( ${CUDA_VERSION} VERSION_LESS 6.5 OR NOT CULGT_ALLOW_C++11 )
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=${CUDA_ARCHITECTURE} -Xptxas -dlcm=cg --use_fast_math")
