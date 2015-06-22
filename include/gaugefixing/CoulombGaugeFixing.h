@@ -151,10 +151,10 @@ public:
 		GlobalLinkType2::bindTexture( UtDown, GlobalLinkType2::getArraySize( dimTimeslice ) );
 	}
 
-	GaugeStats getGaugeStats( GaugeFieldDefinition defintion = GAUGEFIELD_STANDARD )
+	GaugeStats getGaugeStats( GaugeFieldDefinition definition = GAUGEFIELD_STANDARD )
 	{
 		KernelSetup<GlobalLinkType::PATTERNTYPE::SITETYPE::NDIM> setupNoSplit( dimTimeslice, false );
-		if( defintion == GAUGEFIELD_STANDARD )
+		if( definition == GAUGEFIELD_STANDARD )
 		{
 			CoulombGaugefixingKernel::generateGaugeQualityPerSite<GlobalLinkType,LocalLinkType><<<setupNoSplit.getGridSize(),setupNoSplit.getBlockSize()>>>( Ut, dimTimeslice, SiteNeighbourTableManager<typename GlobalLinkType::PATTERNTYPE::SITETYPE>::getDevicePointer( dimTimeslice ), dGff, dA );
 		}
