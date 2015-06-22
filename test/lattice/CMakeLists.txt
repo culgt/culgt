@@ -11,9 +11,6 @@ set(sources
 	test_GlobalLink.cc 
 	test_GlobalLinkWithPatterns.cc
 	test_LocalGlobalLinkCompatibility.cc
-	test_LinkFileVogt.cc
-	test_LinkFileVogtWithPattern.cc
-	test_LinkFile.cc
 	test_LinkToGaugefieldConverter.cc
 	parameterization_types/test_ParameterizationMediatorSU3_Real12_Real18.cc 
 	parameterization_types/test_ParameterizationMediatorSU2_Real4_Real8.cc 
@@ -26,6 +23,9 @@ set(sources
 	configuration_patterns/test_GPUPatternTimesliceParityPriority.cc
 	configuration_patterns/test_GPUPatternParityPriority.cc
 	filetypes/test_limereader.cc
+	filetypes/test_LinkFileVogt.cc
+	filetypes/test_LinkFileVogtWithPattern.cc
+	filetypes/test_LinkFile.cc
 	site_indexing/test_SiteIndex.cc
 	site_indexing/test_SiteCoord.cc
 	site_indexing/test_SiteCompatibilityWithConfigurationPatterns.cc

@@ -1,6 +1,6 @@
 
 #include "gmock/gmock.h"
-#include "testhelper_pattern_stub.h"
+#include "../testhelper_pattern_stub.h"
 #include "lattice/filetypes/LinkFileVogt.h"
 #include "lattice/LocalLink.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
