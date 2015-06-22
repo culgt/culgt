@@ -129,9 +129,9 @@ public:
 private:
 	static const int threadsPerSite = 8;
 	Algorithm algorithm;
-	const short id;
-	const short mu;
-	const bool updown;
+	const int id;
+	const int mu;
+	bool updown;
 	LocalLinkType localLink;
 
 	__device__ inline void initializeSharedMemory( typename LocalLinkType::PARAMTYPE::REALTYPE* shA, int sharedArraySize )

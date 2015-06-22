@@ -126,8 +126,8 @@ public:
 	}
 private:
 	static const int threadsPerSite = 4;
-	const short id;
-	const short mu;
+	const int id;
+	const int mu;
 	Algorithm algorithm;
 	LocalLinkType localLinkUp;
 	LocalLinkType localLinkDown;

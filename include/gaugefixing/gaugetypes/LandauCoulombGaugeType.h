@@ -18,7 +18,7 @@ public:
 	static const int LinksInvolved = (gaugetype==LANDAU)?(8):(6);
 	static const int SharedArraySize = 4;
 
-	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& q, const short id, const short mu, const bool updown, const int NSB )
+	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& q, const int id, const int mu, const bool updown, const int NSB )
 	{
 		if( gaugetype==LANDAU || mu > 0 )
 		{
@@ -39,7 +39,7 @@ public:
 			}
 		}
 	}
-	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& qUp, typename Real4<T>::VECTORTYPE& qDown, const short id, const short mu, const int NSB )
+	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& qUp, typename Real4<T>::VECTORTYPE& qDown, const int id, const int mu, const int NSB )
 	{
 		if( gaugetype==LANDAU || mu > 0 )
 		{
@@ -50,7 +50,7 @@ public:
 		}
 	}
 
-	__device__ static inline void gatherInfo( double* shA, typename Real4<double>::VECTORTYPE& q, const short id, const short mu, const bool updown, const int NSB )
+	__device__ static inline void gatherInfo( double* shA, typename Real4<double>::VECTORTYPE& q, const int id, const int mu, const bool updown, const int NSB )
 	{
 		if( updown == 0 && mu == 0)
 		{
@@ -95,7 +95,7 @@ public:
 		}
 	}
 
-	__device__ static inline void gatherInfo( double* shA, typename Real4<double>::VECTORTYPE& qUp, typename Real4<double>::VECTORTYPE& qDown, const short id, const short mu, const int NSB )
+	__device__ static inline void gatherInfo( double* shA, typename Real4<double>::VECTORTYPE& qUp, typename Real4<double>::VECTORTYPE& qDown, const int id, const int mu, const int NSB )
 	{
 		if( mu == 0)
 		{
@@ -120,11 +120,11 @@ public:
 	}
 
 
-	template<typename T> __device__ static inline void prepareUpdate( T* shA, const short id, const int NSB )
+	template<typename T> __device__ static inline void prepareUpdate( T* shA, const int id, const int NSB )
 	{
 	}
 
-	template<typename T> __device__ static inline void collectUpdate( T* shA, typename Real4<T>::VECTORTYPE& q, const short id, const short mu, const bool updown, const int NSB )
+	template<typename T> __device__ static inline void collectUpdate( T* shA, typename Real4<T>::VECTORTYPE& q, const int id, const int mu, const bool updown, const int NSB )
 	{
 		q.x = shA[id];
 		q.y = shA[id+NSB];
@@ -133,7 +133,7 @@ public:
 	}
 
 private:
-	template<typename T> __device__ static inline void add( T* shA, typename Real4<T>::VECTORTYPE& q, const short id, const short mu, const bool updown, const int NSB )
+	template<typename T> __device__ static inline void add( T* shA, typename Real4<T>::VECTORTYPE& q, const int id, const int mu, const bool updown, const int NSB )
 	{
 		if( updown == 0 )
 		{
@@ -151,7 +151,7 @@ private:
 		}
 	}
 
-	__device__ static inline void add( double* shA, typename Real4<double>::VECTORTYPE& qUp, typename Real4<double>::VECTORTYPE& qDown, const short id, const short mu, const int NSB )
+	__device__ static inline void add( double* shA, typename Real4<double>::VECTORTYPE& qUp, typename Real4<double>::VECTORTYPE& qDown, const int id, const int mu, const int NSB )
 	{
 		shA[id] += qDown.x +qUp.x;
 		shA[id+NSB] +=qDown.y +-qUp.y;
