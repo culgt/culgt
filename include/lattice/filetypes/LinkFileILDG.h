@@ -13,9 +13,10 @@
 #include <fstream>
 #include <sstream>
 #include "LinkFile.h"
+#include "lattice/site_indexing/SiteCoord.h"
+#include "lattice/parameterization_types/SUNRealFull.h"
 #include "lattice/LocalLink.h"
 #include "lattice/GlobalLink.h"
-#include "lattice/parameterization_types/SUNRealFull.h"
 #include "common/culgt_typedefs.h"
 
 #ifdef __cplusplus
@@ -29,7 +30,7 @@ extern "C" {
 namespace culgt
 {
 
-template<typename MemoryConfigurationPattern, typename TFloatFile> class LinkFileILDG: public LinkFile<MemoryConfigurationPattern>
+template<typename MemoryConfigurationPattern, typename TFloatFile = typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE> class LinkFileILDG: public LinkFile<MemoryConfigurationPattern>
 {
 private:
 	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::NDIM;

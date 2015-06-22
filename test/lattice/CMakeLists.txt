@@ -26,6 +26,7 @@ set(sources
 	filetypes/test_LinkFileVogt.cc
 	filetypes/test_LinkFileVogtWithPattern.cc
 	filetypes/test_LinkFile.cc
+	filetypes/test_LinkFileManager.cc
 	site_indexing/test_SiteIndex.cc
 	site_indexing/test_SiteCoord.cc
 	site_indexing/test_SiteCompatibilityWithConfigurationPatterns.cc

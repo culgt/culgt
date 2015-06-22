@@ -25,7 +25,7 @@ using std::ios;
 namespace culgt
 {
 
-template<typename MemoryConfigurationPattern, typename TFloatFile> class LinkFileHeaderOnly: public LinkFile<MemoryConfigurationPattern>
+template<typename MemoryConfigurationPattern, typename TFloatFile = typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE> class LinkFileHeaderOnly: public LinkFile<MemoryConfigurationPattern>
 {
 private:
 	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::NDIM;

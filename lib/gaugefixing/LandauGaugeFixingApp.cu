@@ -70,33 +70,14 @@ typedef GPUPatternParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
 typedef PhiloxWrapper<REAL> RNG;
 
-#ifdef CULGT_FILETYPE_VOGT
-typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPE;
-#elif CULGT_FILETYPE_HIREP
-typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPE;
-#elif CULGT_FILETYPE_ILDG
-typedef LinkFileILDG<PATTERNTYPE,REAL> FILETYPE;
-#else
-typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
-#endif
-
-#ifdef CULGT_FILETYPE_VOGT_OUT
-typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPEOUT;
-#elif CULGT_FILETYPE_HIREP_OUT
-typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPEOUT;
-#elif CULGT_FILETYPE_HEADERONLY_OUT
-typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPEOUT;
-#else
-typedef FILETYPE FILETYPEOUT;
-#endif
 
 /*
  *
  */
-class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE,FILETYPEOUT>
+class LandauGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE>
 {
 public:
-	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::NDIM> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE,FILETYPEOUT>(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
+	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::NDIM> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE>(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
 

@@ -13,7 +13,8 @@
 #include "FileIterator.h"
 #include "ProgramOptions.h"
 #include <typeinfo>
-#include "../cudacommon/DeviceHelper.h"
+#include "cudacommon/DeviceHelper.h"
+#include "lattice/filetypes/LinkFileManager.h"
 
 using std::type_info;
 
@@ -21,7 +22,7 @@ namespace culgt
 {
 
 
-template<typename PatternType, typename LinkFileType, typename LinkFileTypeOut=LinkFileType> class GaugeConfigurationIteratingApplication
+template<typename PatternType> class GaugeConfigurationIteratingApplication
 {
 public:
 	GaugeConfigurationIteratingApplication( const LatticeDimension<PatternType::SITETYPE::NDIM> dimension, FileIterator fileiterator, ProgramOptions* programOptions ): dimension(dimension), configuration(dimension), fileiterator(fileiterator), programOptions(programOptions)
@@ -52,11 +53,11 @@ public:
 
 	bool load()
 	{
-		linkFile->setFilename( fileiterator.getFilename() );
+		linkFileManager->getLinkFile()->setFilename( fileiterator.getFilename() );
 		std::cout << fileiterator.getFilename() ;
 		try
 		{
-			linkFile->load( configuration.getHostPointer() );
+			linkFileManager->getLinkFile()->load( configuration.getHostPointer() );
 			std::cout << " loaded!" << std::endl;
 			return true;
 		}
@@ -80,9 +81,9 @@ public:
 
 	void save( string appendix )
 	{
-		linkFileOut->setFilename( fileiterator.getFilename( appendix ) );
+		linkFileManagerOut->getLinkFile()->setFilename( fileiterator.getFilename( appendix ) );
 		std::cout << fileiterator.getFilename( appendix )  << " saved!" << std::endl;
-		linkFileOut->save( configuration.getHostPointer() );
+		linkFileManagerOut->getLinkFile()->save( configuration.getHostPointer() );
 	}
 
 	void saveFromDevice( string appendix )
@@ -99,7 +100,6 @@ public:
 	{
 		// do the command line interpretation here.
 		ProgramOptions* po = new ProgramOptions();
-//		ConcreteApplicationType::addProgramOptions( po );
 		po->parseOptions( argc, argv, true );
 
 		if( po->getDevicenumber() >= 0 )
@@ -127,21 +127,24 @@ public:
 		FileIterator fileiterator( po->getFileBasename(), po->getFileEnding(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd, po->getFileNumberStep() );
 
 
-		LatticeDimension<PatternType::SITETYPE::NDIM> dimtest(po->getNt(),po->getNx(),po->getNy(),po->getNz());
-
 		// TODO in principle we could read the sizes from the gaugeconfig file!
 		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::NDIM>(po->getNt(),po->getNx(),po->getNy(),po->getNz()), fileiterator, po );
 
-		APP->linkFile = new LinkFileType( APP->dimension, po->getReinterpretReal() );
-		if( typeid(LinkFileType) == typeid(LinkFileTypeOut) )
-			APP->linkFileOut = APP->linkFile;
-		else
-			APP->linkFileOut = new LinkFileTypeOut( APP->dimension, po->getReinterpretReal() );
+		initLinkFiles( po );
 
 		// parse again for options that where added in the constructor
 		po->parseOptions( argc, argv );
 
 		return dynamic_cast<ConcreteApplicationType*>(APP);
+	}
+
+	static void initLinkFiles( ProgramOptions* po )
+	{
+		APP->linkFileManager = new LinkFileManager<PatternType>( po->getFiletype(), APP->dimension, po->getReinterpretReal() );
+		if( po->getFiletype() == po->getFiletypeOut() )
+			APP->linkFileManagerOut = APP->linkFileManager;
+		else
+			APP->linkFileManagerOut = new LinkFileManager<PatternType>( po->getFiletypeOut(), APP->dimension, po->getReinterpretReal() );
 	}
 
 	static void destroy()
@@ -151,7 +154,7 @@ public:
 
 	LinkFileType& getLinkFile()
 	{
-		return *linkFile;
+		return *linkFileManager->getLinkFile();
 	}
 
 	const LatticeDimension<PatternType::SITETYPE::NDIM>& getDimension() const
@@ -172,17 +175,19 @@ public:
 
 protected:
 	LatticeDimension<PatternType::SITETYPE::NDIM> dimension;
-	LinkFileType* linkFile;
-	LinkFileTypeOut* linkFileOut;
+//	LinkFileType* linkFile;
+//	LinkFileTypeOut* linkFileOut;
 	GaugeConfiguration<PatternType> configuration;
+	LinkFileManager<PatternType>* linkFileManager;
+	LinkFileManager<PatternType>* linkFileManagerOut;
 	FileIterator fileiterator;
 	ProgramOptions* programOptions;
 
 private:
-	static GaugeConfigurationIteratingApplication<PatternType, LinkFileType, LinkFileTypeOut>* APP;
+	static GaugeConfigurationIteratingApplication<PatternType>* APP;
 };
 
-template<typename PatternType, typename LinkFileType, typename LinkFileTypeOut> GaugeConfigurationIteratingApplication<PatternType,LinkFileType,LinkFileTypeOut>* GaugeConfigurationIteratingApplication<PatternType,LinkFileType,LinkFileTypeOut>::APP = NULL;
+template<typename PatternType> GaugeConfigurationIteratingApplication<PatternType>* GaugeConfigurationIteratingApplication<PatternType>::APP = NULL;
 
 }
 

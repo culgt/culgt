@@ -22,7 +22,6 @@
 #include "util/rng/PhiloxWrapper.h"
 #include "gaugefixing/RandomGaugeTrafo.h"
 #include "gaugefixing/GaugeSettings.h"
-//#include "lattice/parameterization_types/SUNRealFull.h"
 #include "version.h"
 
 #if __cplusplus >= 201103L
@@ -63,36 +62,18 @@ typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 typedef SiteIndex<4,TIMESLICE_SPLIT> SITE;
 typedef GPUPatternTimesliceParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
-//typedef GlobalLink<PATTERNTYPE::TIMESLICE_PATTERNTYPE,true> GLOBALLINKTIMESLICE;
 typedef PhiloxWrapper<REAL> RNG;
 
-#ifdef CULGT_FILETYPE_VOGT
-typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPE;
-#elif CULGT_FILETYPE_HIREP
-typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPE;
-#elif CULGT_FILETYPE_ILDG
-typedef LinkFileILDG<PATTERNTYPE,REAL> FILETYPE;
-#else
-typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPE;
-#endif
-
-#ifdef CULGT_FILETYPE_VOGT_OUT
-typedef LinkFileVogt<PATTERNTYPE,REAL> FILETYPEOUT;
-#elif CULGT_FILETYPE_HIREP_OUT
-typedef LinkFileHirep<PATTERNTYPE,REAL> FILETYPEOUT;
-#elif CULGT_FILETYPE_HEADERONLY_OUT
-typedef LinkFileHeaderOnly<PATTERNTYPE,REAL> FILETYPEOUT;
-#else
-typedef FILETYPE FILETYPEOUT;
-#endif
 
 /*
  *
  */
-class CoulombGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE,FILETYPEOUT>
+class CoulombGaugeFixingApp: public GaugeConfigurationIteratingApplication<PATTERNTYPE>
 {
 public:
-	CoulombGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::NDIM> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE,FILETYPE,FILETYPEOUT>(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
+	CoulombGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::NDIM> dim, FileIterator fileiterator, ProgramOptions* programOptions )
+		: GaugeConfigurationIteratingApplication<PATTERNTYPE>(  dim, fileiterator, programOptions ),
+		  plaquette( configuration.getDevicePointer(), dimension )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
 
@@ -113,7 +94,6 @@ private:
 	void setup()
 	{
 		coulomb->orstepsAutoTune<RNG>(1.5, 200);
-//		coulomb->cornellAutoTune<RNG>(.5, 200);
 		coulomb->sastepsAutoTune<RNG>(.5, 200);
 		coulomb->microcanonicalAutoTune<RNG>( 200 );
 	}
@@ -158,40 +138,6 @@ private:
 	void fix()
 	{
 		std::cout << "Plaquette before: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
-//
-//		int t = 0;
-//		int tDown = (t == 0)?(dimension.getDimension(0)-1):t-1;
-//		std::cout << "Timeslice t = " << t << " (" << tDown << ")"<< std::endl;
-//		coulomb->setTimeslice( configuration.getDevicePointer( t ), configuration.getDevicePointer(tDown) );
-//
-//		GaugeStats stats = coulomb->getGaugeStats();
-//		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-////		stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
-////		std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-//
-//		coulomb->randomTrafo();
-//
-//		coulomb->fix( settings );
-////		for( int j = 0; j < 10000; j++ )
-////		{
-////			int iter = 100;
-////			for( int i = 0; i < iter; i++ )
-////			{
-////				coulomb->runCornell( .1, 5 );
-//////				coulomb->runOverrelaxation( 1.5 );
-////				CUDA_LAST_ERROR( "Cornell ");
-////			}
-////				coulomb->reproject();
-////
-////
-////			stats = coulomb->getGaugeStats();
-////			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-////			if( stats.getPrecision() < settings.getPrecision() ) break;
-////			stats = coulomb->getGaugeStats( GAUGEFIELD_LOGARITHMIC );
-////			std::cout << 0 << " \t" << stats.getGff() << " \t" << stats.getPrecision() << std::endl;
-////		}
-//		std::cout << "Plaquette: " << std::setprecision(12) << plaquette.getPlaquette() << std::endl;
-//		exit( 1 );
 
 		RunInfo info;
 
