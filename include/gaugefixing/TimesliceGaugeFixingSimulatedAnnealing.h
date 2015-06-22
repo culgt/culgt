@@ -100,11 +100,6 @@ public:
 		return &Chooser::options;
 	}
 
-	void runNew( size_t id )
-	{
-		runner.run( id );
-	}
-
 	void run()
 	{
 		run( super::optimalId.id );
@@ -112,7 +107,7 @@ public:
 
 	void run( size_t id )
 	{
-		runNew( id );
+		runner.run( id );
 	}
 
 	void setTemperature(float temperature)
