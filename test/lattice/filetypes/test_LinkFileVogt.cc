@@ -14,7 +14,7 @@ using namespace ::testing;
 class ALinkFileVogtWithSampleConfiguration: public Test
 {
 public:
-	LinkFileVogt<PatternStub<float,4,2>,float> linkfile;
+	LinkFileVogt<PatternStub<float,4,2> > linkfile;
 
 	void SetUp()
 	{
@@ -77,7 +77,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongNdim )
 {
 	const int Nc = 2;
 	const int WrongNDIM = 3;
-	LinkFileVogt<PatternStub<float,WrongNDIM,Nc>,float> linkfile;
+	LinkFileVogt<PatternStub<float,WrongNDIM,Nc> > linkfile;
 
 	readSampleFileHeader( linkfile );
 
@@ -96,7 +96,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongNc )
 {
 	const int NDIM = 4;
 	const int WrongNc = 3;
-	LinkFileVogt<PatternStub<float,NDIM, WrongNc>,float> linkfile;
+	LinkFileVogt<PatternStub<float,NDIM, WrongNc> > linkfile;
 
 	readSampleFileHeader( linkfile );
 
@@ -115,7 +115,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongSizeOfReal)
 {
 	const int NDIM = 4;
 	const int Nc = 2;
-	LinkFileVogt<PatternStub<double,NDIM,Nc>,double> linkfile;
+	LinkFileVogt<PatternStub<double,NDIM,Nc> > linkfile;
 
 	readSampleFileHeader( linkfile );
 
@@ -135,7 +135,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongLatticeSize)
 	const int NDIM = 4;
 	const int Nc = 2;
 	const int size[4] = {7,4,4,4};
-	LinkFileVogt<PatternStub<float,NDIM,Nc>,float> linkfile( size );
+	LinkFileVogt<PatternStub<float,NDIM,Nc> > linkfile( size );
 
 	readSampleFileHeader( linkfile );
 
@@ -159,7 +159,7 @@ TEST( ALinkFileVogtWithWrongSettings, LoadThrowsExceptionIfWrongNdim )
 	float* U;
 	U = new float[1];
 
-	linkfile = new LinkFileVogt<PatternStub<float,WrongNDIM,Nc>,float>(size);
+	linkfile = new LinkFileVogt<PatternStub<float,WrongNDIM,Nc> >(size);
 	linkfile->setFilename( "test_configSU2N4T8SP.vogt" );
 
 	ASSERT_THROW( linkfile->load( U ), LinkFileVogtException );

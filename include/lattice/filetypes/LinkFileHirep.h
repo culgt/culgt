@@ -23,13 +23,15 @@ public:
 	LinkFileHirepException( std::string msg ) : IOException(msg){};
 };
 
-template<typename MemoryConfigurationPattern, typename TFloatFile = typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE> class LinkFileHirep: public LinkFile<MemoryConfigurationPattern>
+template<typename MemoryConfigurationPattern> class LinkFileHirep: public LinkFile<MemoryConfigurationPattern>
 {
 private:
+	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::NDIM;
+	typedef typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE REALTYPE;
+
 	int ndim;
 	int nc;
 	double plaquette;
-	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::NDIM;
 	int size[memoryNdim];
 	int sizeOfReal;
 
@@ -142,9 +144,9 @@ public:
 		writeDouble(plaquette);
 	}
 
-	LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > getNextLink()
+	LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> > getNextLink()
 	{
-		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> LocalLinkParamType;
+		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> LocalLinkParamType;
 		typedef LocalLink<LocalLinkParamType> LocalLink;
 		LocalLink link;
 
@@ -158,9 +160,9 @@ public:
 		return link;
 	}
 
-	void writeNextLink( LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > link )
+	void writeNextLink( LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> > link )
 	{
-		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> LocalLinkParamType;
+		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> LocalLinkParamType;
 
 		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
 		{
@@ -181,7 +183,7 @@ public:
 
 				GlobalLink<MemoryConfigurationPattern> dest( this->getPointerToU(), site, mu );
 
-				LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > src;
+				LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> > src;
 				src = getNextLink();
 
 				dest = src;
@@ -200,7 +202,7 @@ public:
 
 				GlobalLink<MemoryConfigurationPattern> src( this->getPointerToU(), site, mu );
 
-				LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,TFloatFile> > dest;
+				LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> > dest;
 
 				dest = src;
 

@@ -14,11 +14,11 @@ public:
 	MOCK_METHOD0(saveImplementation,void());
 };
 
-class GaugeConfigurationIteratingApplicationMock: public GaugeConfigurationIteratingApplication<PatternStub<float>, LinkFileStub<PatternStub<float> > >
+class GaugeConfigurationIteratingApplicationMock: public GaugeConfigurationIteratingApplication<PatternStub<float> >
 {
 public:
-	GaugeConfigurationIteratingApplicationMock( LatticeDimension<4> dim, FileIterator fileiterator ) : 									GaugeConfigurationIteratingApplication<PatternStub<float>, LinkFileStub<PatternStub<float> > >( dim, fileiterator, NULL ){}
-	GaugeConfigurationIteratingApplicationMock( LatticeDimension<4> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : 	GaugeConfigurationIteratingApplication<PatternStub<float>, LinkFileStub<PatternStub<float> > >( dim, fileiterator, programOptions ){}
+	GaugeConfigurationIteratingApplicationMock( LatticeDimension<4> dim, FileIterator fileiterator ) : 									GaugeConfigurationIteratingApplication<PatternStub<float> >( dim, fileiterator, NULL ){}
+	GaugeConfigurationIteratingApplicationMock( LatticeDimension<4> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : 	GaugeConfigurationIteratingApplication<PatternStub<float> >( dim, fileiterator, programOptions ){}
 	MOCK_METHOD0(iterate,void());
 	MOCK_METHOD0(setup,void());
 	MOCK_METHOD0(teardown,void());

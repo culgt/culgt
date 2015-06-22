@@ -21,12 +21,12 @@ class ALinkFileVogtWithPatternLoadingSampleBody: public Test
 {
 public:
 	float* U = new float[8*4*4*4*4*8];
-	LinkFileVogt<GPUPattern<SiteIndex<4,NO_SPLIT>, SU2Real4<float> >, float >* linkfile;
+	LinkFileVogt<GPUPattern<SiteIndex<4,NO_SPLIT>, SU2Real4<float> > >* linkfile;
 
 	void SetUp()
 	{
 		LatticeDimension<4> dim(8,4,4,4);
-		linkfile = new LinkFileVogt<GPUPattern<SiteIndex<4,NO_SPLIT>, SU2Real4<float> >, float >( dim );
+		linkfile = new LinkFileVogt<GPUPattern<SiteIndex<4,NO_SPLIT>, SU2Real4<float> > >( dim );
 		linkfile->setFilename( "test_configSU2N4T8SP.vogt" );
 		linkfile->openFile();
 
@@ -67,7 +67,7 @@ TEST( ALinkFileVogtWithPatternLoadingSample, LoadViaAbstractLoadReadsCorrectFirs
 	float* U = new float[8*4*4*4*4*8];
 	LatticeDimension<4> dim(8,4,4,4);
 	LinkFile<MyPattern>* aLinkFileVogt;
-	aLinkFileVogt = new LinkFileVogt<MyPattern,float>( dim );
+	aLinkFileVogt = new LinkFileVogt<MyPattern>( dim );
 	aLinkFileVogt->setFilename( "test_configSU2N4T8SP.vogt" );
 
 	aLinkFileVogt->load( U );
@@ -83,7 +83,7 @@ TEST( ALinkFileVogtWithPatternSavingSample, LoadAfterSaveWorks )
 	float* U = new float[8*4*4*4*4*8];
 	LatticeDimension<4> dim(8,4,4,4);
 	LinkFile<MyPattern>* aLinkFileVogt;
-	aLinkFileVogt = new LinkFileVogt<MyPattern,float>( dim );
+	aLinkFileVogt = new LinkFileVogt<MyPattern>( dim );
 
 	U[0] = someValue;
 
