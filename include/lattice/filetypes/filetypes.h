@@ -14,9 +14,12 @@ using boost::algorithm::iequals;
 namespace culgt
 {
 
-enum LinkFileType {HEADERONLY, VOGT, HIREP, ILDG };
+namespace LinkFileType
+{
 
-inline std::istream& operator>>(std::istream& in, LinkFileType& t)
+enum FileType {DEFAULT,HEADERONLY, VOGT, HIREP, ILDG};
+
+inline std::istream& operator>>(std::istream& in, FileType& t)
 {
     std::string token;
     in >> token;
@@ -28,10 +31,12 @@ inline std::istream& operator>>(std::istream& in, LinkFileType& t)
     	t = HIREP;
     else if (boost::iequals(token, "ILDG" ) )
     	t = ILDG;
+    else if (boost::iequals(token, "DEFAULT" ) )
+    	t = DEFAULT;
     return in;
 }
 
-inline std::ostream& operator<<(std::ostream& out, LinkFileType t)
+inline std::ostream& operator<<(std::ostream& out, FileType t)
 {
     std::string token;
     if (t == HEADERONLY)
@@ -42,11 +47,13 @@ inline std::ostream& operator<<(std::ostream& out, LinkFileType t)
     	token = "HIREP";
     else if (t == ILDG )
     	token = "ILDG";
+    else if (t == DEFAULT )
+    	token = "DEFAULT";
     out << token;
     return out;
 }
 
-
+}
 
 }
 

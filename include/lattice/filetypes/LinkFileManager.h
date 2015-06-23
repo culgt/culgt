@@ -15,6 +15,8 @@
 #include "LinkFileHirep.h"
 #include "LinkFileHeaderOnly.h"
 
+using namespace culgt::LinkFileType;
+
 namespace culgt
 {
 
@@ -24,10 +26,11 @@ private:
 	static const lat_dim_t memoryNdim = MemoryPattern::SITETYPE::NDIM;
 	LinkFile<MemoryPattern>* linkFile;
 public:
-	LinkFileManager( LinkFileType filetype, const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret )
+	LinkFileManager( FileType filetype, const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret )
 	{
 		switch( filetype )
 		{
+		case DEFAULT:
 		case HEADERONLY:
 			linkFile = new LinkFileHeaderOnly<MemoryPattern>( size, reinterpret );
 			break;

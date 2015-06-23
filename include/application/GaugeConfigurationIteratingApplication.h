@@ -141,7 +141,7 @@ public:
 	static void initLinkFiles( ProgramOptions* po )
 	{
 		APP->linkFileManager = new LinkFileManager<PatternType>( po->getFiletype(), APP->dimension, po->getReinterpretReal() );
-		if( po->getFiletype() == po->getFiletypeOut() )
+		if( po->getFiletypeOut() == LinkFileType::DEFAULT || po->getFiletype() == po->getFiletypeOut() )
 			APP->linkFileManagerOut = APP->linkFileManager;
 		else
 			APP->linkFileManagerOut = new LinkFileManager<PatternType>( po->getFiletypeOut(), APP->dimension, po->getReinterpretReal() );
@@ -152,7 +152,7 @@ public:
 		delete APP;
 	}
 
-	LinkFileType& getLinkFile()
+	LinkFileType::FileType& getLinkFile()
 	{
 		return *linkFileManager->getLinkFile();
 	}

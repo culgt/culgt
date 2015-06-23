@@ -43,8 +43,8 @@ public:
 		("ny", boost::program_options::value<int>(&ny)->default_value(-1), "size in y direction (-1 = same as x direction)" )
 		("nz", boost::program_options::value<int>(&nz)->default_value(-1), "size in z direction (-1 = same as x direction)" )
 
-		("filetype", boost::program_options::value<LinkFileType>(&filetype)->default_value(HEADERONLY), "file type of gauge configuration files (HEADERONLY, VOGT, ILDG, HIREP)")
-		("filetypeout", boost::program_options::value<LinkFileType>(&filetypeOut)->default_value(HEADERONLY), "file type of gauge configuration files used when saving (HEADERONLY, VOGT, ILDG, HIREP)")
+		("filetype", boost::program_options::value<LinkFileType::FileType>(&filetype)->default_value(LinkFileType::HEADERONLY), "file type of gauge configuration files (HEADERONLY, VOGT, ILDG, HIREP)")
+		("filetypeout", boost::program_options::value<LinkFileType::FileType>(&filetypeOut)->default_value(LinkFileType::DEFAULT), "file type of gauge configuration files used when saving (HEADERONLY, VOGT, ILDG, HIREP, DEFAULT=same as input)")
 		("fbasename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
 		("fending", boost::program_options::value<string>(&fileEnding)->default_value(".dat"), "file ending to append to basename (default: .vogt)")
 		("fnumberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(4), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
@@ -52,7 +52,6 @@ public:
 		("fstepnumber", boost::program_options::value<int>(&fileNumberStep)->default_value(1), "load every <fstepnumber>-th file")
 		("nconf,m", boost::program_options::value<int>(&nConf)->default_value(1), "how many files to iterate")
 		("reinterpret", boost::program_options::value<ReinterpretReal>(&reinterpretReal)->default_value(STANDARD), "interprets the real values in file as <arg>")
-
 
 		("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
 		;
@@ -69,33 +68,6 @@ public:
 
 			if( beQuiet )
 			{
-
-	//			boost::program_options::command_line_parser clp(argc, argv);
-	////			clp.options(options_desc).allow_unregistered();
-	//			clp.positional(options_p).options(options_desc.add(hiddenCatchAll)).allow_unregistered();
-	//
-	//			boost::program_options::parsed_options parsed = clp.run();
-	//
-	//			boost::program_options::store( parsed, options_vm );
-	//
-	//			std::vector<std::string> unrecognized = boost::program_options::collect_unrecognized( parsed.options, boost::program_options::exclude_positional );
-	//
-	//			if (!unrecognized.empty())
-	//			{
-	//				std::cout << "Got " << unrecognized.size() << " unrecognized option(s):" << std::endl;
-	//				for( int i = 0; i < unrecognized.size(); i++ )
-	//					std::cout << '\t' << unrecognized[i] << std::endl;
-	//			}
-	//
-	////			if (!catchAll.empty())
-	//			{
-	//				std::cout << "Got " << catchAll.size() << " catchAll option(s):" << std::endl;
-	//				for( int i = 0; i < catchAll.size(); i++ )
-	//					std::cout << '\t' << catchAll[i] << std::endl;
-	//			}
-	//
-
-
 				boost::program_options::store(boost::program_options::command_line_parser(argc, argv).
 						options(options_desc).allow_unregistered().run(), options_vm);
 			}
@@ -220,12 +192,12 @@ public:
 		return devicenumber;
 	}
 
-	LinkFileType getFiletype() const
+	LinkFileType::FileType getFiletype() const
 	{
 		return filetype;
 	}
 
-	LinkFileType getFiletypeOut() const
+	LinkFileType::FileType getFiletypeOut() const
 	{
 		return filetypeOut;
 	}
@@ -238,8 +210,8 @@ private:
 
 	int devicenumber;
 
-	LinkFileType filetype;
-	LinkFileType filetypeOut;
+	LinkFileType::FileType filetype;
+	LinkFileType::FileType filetypeOut;
 
 	string fileBasename;
 	string fileEnding;
