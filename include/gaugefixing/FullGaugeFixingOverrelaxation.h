@@ -102,7 +102,7 @@ public:
 
 #if CUDART_VERSION >= 6050
 			int numBlocks;
-			size_t sharedMemorySize = 0; // TODO
+			size_t sharedMemorySize = GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT);
 
 			cudaError_t err;
 			if( DoMicro )
@@ -244,7 +244,7 @@ public:
 			}
 #if CUDART_VERSION >= 6050
 			int numBlocks;
-			size_t sharedMemorySize = 0; // TODO
+			size_t sharedMemorySize = GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT);
 
 			cudaError_t err;
 			if( DoMicro )

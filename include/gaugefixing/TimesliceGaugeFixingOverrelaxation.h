@@ -2,11 +2,6 @@
  *  Created on: Apr 29, 2014
  *      Author: vogt
  *
- *
- * TODO this should be used by Coulomb gauge and by spatial maximal center gauge
- *
- * GaugeType = DirectMaximalCenterGaugeType<MCG_SPATIAL>
- * GaugeType = LandauCoulombGaugeType<COULOMB>
  */
 
 #ifndef TIMESLICEGAUGEFIXINGOVERRELAXATION_H_
@@ -51,7 +46,7 @@ public:
 
 #if CUDART_VERSION >= 6050
 			int numBlocks;
-			size_t sharedMemorySize = 0; // TODO
+			size_t sharedMemorySize = GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT);
 
 
 			if( DoMicro )

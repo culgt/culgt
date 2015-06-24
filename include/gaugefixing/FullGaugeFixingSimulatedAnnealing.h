@@ -74,7 +74,7 @@ public:
 
 #if CUDART_VERSION >= 6050
 			int numBlocks;
-			size_t sharedMemorySize = 0; // TODO
+			size_t sharedMemorySize = GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT);
 			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, FullGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeInStep,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
 			if( numBlocks == 0 || err != cudaSuccess ) throw InvalidKernelSetupException();
 
@@ -186,7 +186,7 @@ public:
 
 #if CUDART_VERSION >= 6050
 			int numBlocks;
-			size_t sharedMemorySize = 0; // TODO
+			size_t sharedMemorySize = GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT);
 			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, TimesliceGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeTimeslice,GlobalLinkTypeTimeslice2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
 			if( numBlocks == 0 || err != cudaSuccess ) throw InvalidKernelSetupException();
 

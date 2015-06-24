@@ -2,11 +2,6 @@
  *  Created on: Apr 29, 2014
  *      Author: vogt
  *
- *
- * TODO this should be used by Coulomb gauge and by spatial maximal center gauge
- *
- * GaugeType = DirectMaximalCenterGaugeType<MCG_SPATIAL>
- * GaugeType = LandauCoulombGaugeType<COULOMB>
  */
 
 #ifndef TIMESLICEGAUGEFIXINGSIMULATEDANNEALING_H_
@@ -49,7 +44,7 @@ public:
 
 #if CUDART_VERSION >= 6050
 			int numBlocks;
-			size_t sharedMemorySize = 0; // TODO
+			size_t sharedMemorySize = GaugeType::SharedArraySize*setupSplit.getBlockSize()*sizeof(REALT);
 			cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor( &numBlocks, TimesliceGaugeFixingSimulatedAnnealingKernel::kernelSaStep<GlobalLinkTypeInStep,GlobalLinkTypeInStep2,LocalLinkType,GaugeType,ThreadsPerSite::value,GFLaunchBounds::SitesPerBlock,GFLaunchBounds::MinBlocksPerMultiprocessor>, GFLaunchBounds::SitesPerBlock*ThreadsPerSite::value, sharedMemorySize );
 			if( numBlocks == 0 || err != cudaSuccess ) throw InvalidKernelSetupException();
 
