@@ -51,7 +51,7 @@ public:
 
 const int  SiteIndexCompatibilityFullSplitNoSplit::size[] = {4,4,4,4};
 
-// TODO: This is currently not implemented for SiteIndex
+// TODO: To compare the coordinates we need FullSplit getCoord()
 TEST_F( SiteIndexCompatibilityFullSplitNoSplit, DISABLED_IndexIsDifferent )
 {
 	siteNoSplit.setIndex( latticeIndex );

@@ -109,7 +109,6 @@ public:
 	}
 
 	/**
-	 * TODO
 	 * Returns the i-coordinate of the current site.
 	 */
 	CUDA_HOST_DEVICE inline lat_coord_t operator[](const lat_dim_t i) const
@@ -264,7 +263,6 @@ public:
 	}
 
 	/**
-	 * // TODO
 	 * If par == true this simply sets the given index, if par == false the index has to be converted to the non-split index.
 	 */
 	CUDA_HOST_DEVICE inline void setIndexFromParitySplitOrder( lat_index_t latticeIndex )
@@ -274,7 +272,6 @@ public:
 	}
 
 	/**
-	 * // TODO
 	 * If par == false this simpliy sets the given index, if par == true the index has to be converted to the split index.
 	 */
 	CUDA_HOST_DEVICE inline void setIndexFromNonParitySplitOrder( lat_index_t latticeIndex )
@@ -312,7 +309,6 @@ public:
 
 
 	/**
-	 * TODO
 	 * Returns the index within a timeslice
 	 * @return lattice index in timeslice
 	 */

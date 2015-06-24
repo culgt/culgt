@@ -4,8 +4,6 @@
  * The pattern is as follows (slowest running index first):
  * mu, paramIndex, site (where paramIndex for float18 parameterization is a value from 0..17)
  *
- * TODO Test difference to paramIndex,mu,site
- *
  *  Created on: Feb 19, 2014
  *      Author: vogt
  */

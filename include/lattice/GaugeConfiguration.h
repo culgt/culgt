@@ -26,10 +26,6 @@ private:
 	std::string msg;
 };
 
-/**
- * TODO Maybe it would be good to have a method where you can pass in GaugeConfiguration with other pattern.
- */
-
 template<typename PatternType> class GaugeConfiguration
 {
 public:
@@ -174,7 +170,6 @@ public:
 	{
 		if( UdeviceIsAllocated )
 		{
-			// TODO this is an ugly construct...
 			GaugeConfigurationCudaHelper<T>::template setLink<PatternType>( Udevice, site, mu, link );
 		}
 		else
@@ -188,7 +183,9 @@ public:
 			return GaugeConfigurationCudaHelper<T>::template getLink<PatternType,LocalLink<PARAMTYPE> >( Udevice, site, mu );;
 		}
 		else
+		{
 			throw MemoryException( "No device memory allocated!" );
+		}
 	}
 
 	LatticeDimension<Ndim> getLatticeDimension() const
@@ -213,7 +210,7 @@ public:
 
 	T* getDevicePointer( lat_coord_t timeslice )
 	{
-		// TODO assert we have a timeslice split pattern.
+		BOOST_MPL_ASSERT_RELATION( SITETYPE::PARITYTYPE, ==, TIMESLICE_SPLIT );
 		lat_array_index_t configurationSizeTimeslice = Ndim*dim.getSizeTimeslice()*LinkSize;
 		return &Udevice[timeslice*configurationSizeTimeslice];
 	}

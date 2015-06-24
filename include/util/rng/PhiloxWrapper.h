@@ -23,8 +23,6 @@
  * I don't want to do this implicitly to avoid mixing of host and device variables.
  *
  *
- * TODO: get rid of the preprocessor statements: float/double has to be template argument (in all classes).
- * 		Because now there is no code possible that uses both single and double precision random numbers.
  * TODO: A lot of stack-frame is used (at least in in CUDA5.0) when Philox is involved (~ 200 bytes for the single precision SA kernel)
  */
 

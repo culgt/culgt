@@ -1,11 +1,5 @@
 /************************************************************************
- *
- *
- *
- *
  * Wraps the reduction kernel of the CUDA samples, parts of reduction.cpp are copied...
- * TODO: check license before publishing!!!
- *
  */
 
 #ifndef REDUCTION_H_

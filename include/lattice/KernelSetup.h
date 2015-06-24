@@ -41,40 +41,6 @@ public:
 			this->blockSize = -1;
 		}
 
-
-//		if( blockSize == -1 )
-//		{
-//			int smallestBlockSize = getSmallestBlockSize( paritySplit );
-//			if( smallestBlockSize > 0 )
-//				initSetup( paritySplit, smallestBlockSize );
-//			else
-//			{
-//				// TODO ugly style: print message and let the kernel call die...
-//				std::cout << "No suitable KernelSetup found (problem too large). Need to upgrade KernelSetup to deal with that..." << std::endl;
-//				this->gridSize = -1;
-//				this->blockSize = -1;
-//
-//
-////				throw KernelSetupException( "No suitable KernelSetup found (problem too large). Need to upgrade KernelSetup to deal with that..." );
-//			}
-//		}
-//		else
-//		{
-//			if( !initSetup( paritySplit, blockSize ) )
-//			{
-//				// TODO ugly style: print message and let the kernel call die...
-//				std::cout << "No suitable KernelSetup possible with BlockSize = "  << blockSize << std::endl;
-//				this->gridSize = -1;
-//				this->blockSize = -1;
-//
-////				stringstream temp;
-////				temp << "No suitable KernelSetup possible with BlockSize = ";
-////				temp << blockSize;
-////				throw KernelSetupException( temp.str() );
-//			}
-//		}
-
-//		std::cout << "KernelSetup: " << this->gridSize << "/" << this->blockSize << std::endl;
 	}
 	int getBlockSize() const
 	{

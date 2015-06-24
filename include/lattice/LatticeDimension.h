@@ -61,7 +61,7 @@ public:
 	}
 
 	/**
-	 * TODO:
+	 * TODO use variadic templates:
 	 * - should use variadic templates to ensure correct size constructor (but not supported in CUDA 6.0RC)
 	 * - naive code raises a warning "subscript out of range" if Ndim < 4, SetSizeHelper avoids this but i don't like it (and not well tested)
 	 * @param dir0

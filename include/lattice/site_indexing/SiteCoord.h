@@ -93,7 +93,7 @@ public:
 		return size[i];
 	}
 
-	CUDA_HOST_DEVICE inline lat_index_t getIndex() const // TODO parity ordering
+	CUDA_HOST_DEVICE inline lat_index_t getIndex() const
 	{
 		if( par == FULL_SPLIT )
 		{
@@ -157,7 +157,7 @@ public:
 		}
 	}
 
-	CUDA_HOST_DEVICE inline lat_index_t getIndexNonSplit() const // TODO parity ordering
+	CUDA_HOST_DEVICE inline lat_index_t getIndexNonSplit() const
 	{
 		lat_index_t index = 0;
 		for( lat_dim_t i = 0; i < Nd; i++ )
@@ -294,7 +294,7 @@ public:
 			// maybe this is good for backward compatibility.
 			// as I see it atm CoulombGauge should use TIMESLICE_SPLIT but uses this
 			// OR BETTER: REMOVE THIS and check that all apps use the intuitive TIMESLICE_SPLIT!!!
-			//		assert(false);
+//					assert(false);
 
 			lat_index_t parity = 0;
 			for(  lat_dim_t i = 1; i < Nd; i++ )

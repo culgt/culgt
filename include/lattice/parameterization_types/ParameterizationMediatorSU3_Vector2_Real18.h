@@ -79,7 +79,7 @@ public:
 		T a17 = -l1.get(0)*l1.get(9)-l1.get(1)*l1.get(8) + l1.get(2)*l1.get(7)+l1.get(3)*l1.get(6);
 
 		T norm = a12*a12+a13*a13+a14*a14+a15*a15+a16*a16+a17*a17;
-		norm = 1./::sqrt( norm ); // TODO replace by rsqrt and make compatible with non-cuda compiler
+		norm = rsqrt( norm );
 
 		l1.set(12, a12*norm );
 		l1.set(13, a13*norm );

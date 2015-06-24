@@ -15,7 +15,7 @@ template<typename Site1, typename Site2> bool coordinatesAreEqual( Site1& s1, Si
 	assert(  s1.NDIM == s2.NDIM );
 	for( int i = 0; i < s1.NDIM; i++ )
 	{
-		if( s1[i] != s2[i] ) return false;
+		if( s1.getCoord(i) != s2.getCoord(i) ) return false;
 	}
 	return true;
 }

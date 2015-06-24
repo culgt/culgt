@@ -22,6 +22,7 @@
 #include "parameterization_types/SUNRealFull.h"
 #include "KernelSetup.h"
 #include "cudacommon/DeviceMemoryManager.h"
+#include <boost/mpl/assert.hpp>
 
 namespace culgt
 {
@@ -160,7 +161,7 @@ namespace GaugeConfigurationCudaHelperKernel
 	}
 
 	/**
-	 * TODO: why not use the same template parameters as reproject??
+	 * FIXME: why not use the same template parameters as reproject??
 	 * @param pointer
 	 * @param dim
 	 * @param rngSeed
@@ -194,10 +195,13 @@ namespace GaugeConfigurationCudaHelperKernel
 	}
 
 	/**
-	 * TODO this is only Z(2)
+	 *
 	 */
 	template<typename T, typename ConfigurationPattern, typename RNG> __global__ void setRandomZN( T* pointer, LatticeDimension<ConfigurationPattern::SITETYPE::NDIM> dim, int rngSeed, int rngCounter, float percentage )
 	{
+		// TODO this is only Z(2)
+		BOOST_MPL_ASSERT_RELATION( ConfigurationPattern::PARAMTYPE::NC, ==, 2 );
+
 		typedef culgt::LocalLink<culgt::SUNRealFull<ConfigurationPattern::PARAMTYPE::NC, typename ConfigurationPattern::PARAMTYPE::REALTYPE> > LocalLinkType;
 
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
