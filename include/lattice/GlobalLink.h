@@ -84,7 +84,7 @@ public:
 #if __CUDA_ARCH__ >= 350
 			return __ldg( &pointerToStore[ConfigurationPattern::getIndex(site,mu,i)] );
 #else
-			return Tex1DFetcher<typename PARAMTYPE::TYPE>::fetch( TextureManager<typename PARAMTYPE::TYPE>::getTexture( TextureID ), ConfigurationPattern::getIndex(site,mu,i) );;
+			return Tex1DFetcher<typename PARAMTYPE::TYPE>::fetch( TextureManager<typename PARAMTYPE::TYPE>::getTexture( TextureID ), ConfigurationPattern::getIndex(site,mu,i) );
 #endif
 		}
 		else

@@ -86,7 +86,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongNdim )
 		linkfile.verify();
 		FAIL();
 	}
-	catch( LinkFileVogtException e )
+	catch( LinkFileVogtException& e )
 	{
 		ASSERT_THAT( e.what(), StartsWith("Wrong lattice dimension") );
 	}
@@ -105,7 +105,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongNc )
 		linkfile.verify();
 		FAIL();
 	}
-	catch( LinkFileVogtException e )
+	catch( LinkFileVogtException& e )
 	{
 		ASSERT_THAT( e.what(), StartsWith("Wrong gauge group") );
 	}
@@ -124,7 +124,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongSizeOfReal)
 		linkfile.verify();
 		FAIL();
 	}
-	catch( LinkFileVogtException e )
+	catch( LinkFileVogtException& e )
 	{
 		ASSERT_THAT( e.what(), StartsWith("Wrong size of real") );
 	}
@@ -144,7 +144,7 @@ TEST( ALinkFileVogtWithWrongSettings, VerifyThrowsExceptionIfWrongLatticeSize)
 		linkfile.verify();
 		FAIL();
 	}
-	catch( LinkFileVogtException e )
+	catch( LinkFileVogtException& e )
 	{
 		ASSERT_THAT( e.what(), StartsWith("Wrong lattice size in 0 direction") );
 	}

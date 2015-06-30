@@ -22,11 +22,6 @@ class Chronotimer {
 		timeval end;
 		double savedTime;
 
-#ifdef __CUDACC__
-		cudaEvent_t cudastart; // this is for the ChronotimerCuda hack
-		cudaEvent_t cudastop; // this is for the ChronotimerCuda hack
-		float cudatime;
-#endif
 		double getElapsedSeconds();
 };
 

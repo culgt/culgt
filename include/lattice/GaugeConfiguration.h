@@ -37,7 +37,7 @@ public:
 	static const int Ndim = PatternType::SITETYPE::NDIM;
 	static const int LinkSize = PatternType::PARAMTYPE::SIZE;
 
-	GaugeConfiguration( const LatticeDimension<Ndim> dim ) : UhostIsAllocated(false), UdeviceIsAllocated(false), dim(dim)
+	GaugeConfiguration( const LatticeDimension<Ndim> dim ) : Uhost(NULL), Udevice(NULL), UhostIsAllocated(false), UdeviceIsAllocated(false), dim(dim)
 	{
 		configurationSize = Ndim*dim.getSize()*LinkSize;
 	};
@@ -180,7 +180,7 @@ public:
 	{
 		if( UdeviceIsAllocated )
 		{
-			return GaugeConfigurationCudaHelper<T>::template getLink<PatternType,LocalLink<PARAMTYPE> >( Udevice, site, mu );;
+			return GaugeConfigurationCudaHelper<T>::template getLink<PatternType,LocalLink<PARAMTYPE> >( Udevice, site, mu );
 		}
 		else
 		{

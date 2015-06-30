@@ -38,11 +38,6 @@ private:
 	T *h_odata;
 };
 
-template<class T> Reduction<T>::Reduction()
-{
-
-}
-
 template<class T> Reduction<T>::Reduction(int size) : size(size)
 {
 	cpuFinalThreshold = 1; // const for testing...
