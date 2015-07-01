@@ -17,13 +17,6 @@
 namespace culgt
 {
 
-
-class LinkFileHirepException: public IOException
-{
-public:
-	LinkFileHirepException( std::string msg ) : IOException(msg){};
-};
-
 template<typename MemoryConfigurationPattern> class LinkFileHirep: public LinkFile<MemoryConfigurationPattern>
 {
 private:
@@ -82,17 +75,6 @@ private:
 		}
 	}
 
-	void throwException( std::string msg, short expected, short inFile )
-	{
-		std::stringstream message;
-		message << msg;
-		message << ": Expected ";
-		message << expected;
-		message << " in file, got ";
-		message << inFile;
-		throw LinkFileHirepException( message.str() );
-	}
-
 public:
 	typedef LinkFile<MemoryConfigurationPattern> super;
 
@@ -116,7 +98,7 @@ public:
 
 	virtual void loadImplementation() CULGT_OVERRIDE
 	{
-		if( memoryNdim != 4 ) throwException( "Only Ndim = 4 supported", memoryNdim, 4 );
+		if( memoryNdim != 4 ) super::throwException( "Only Ndim = 4 supported", memoryNdim, 4 );
 		loadHeader();
 		verify();
 		loadBody();
@@ -208,7 +190,7 @@ public:
 	{
 		if( MemoryConfigurationPattern::PARAMTYPE::NC != nc )
 		{
-			throwException( "Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
+			super::throwException( "Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
 		}
 
 
@@ -230,7 +212,7 @@ public:
 				msg << "Wrong lattice size in ";
 				msg << i;
 				msg << " direction";
-				throwException( msg.str(), this->getLatticeDimension().getDimension(i), size[i] );
+				super::throwException( msg.str(), this->getLatticeDimension().getDimension(i), size[i] );
 			}
 		}
 	}

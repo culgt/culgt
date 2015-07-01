@@ -21,13 +21,6 @@
 namespace culgt
 {
 
-
-class LinkFileVogtException: public IOException
-{
-public:
-	LinkFileVogtException( std::string msg ) : IOException(msg){};
-};
-
 template<typename MemoryConfigurationPattern> class LinkFileVogt: public LinkFile<MemoryConfigurationPattern>
 {
 private:
@@ -53,17 +46,6 @@ private:
 			short mySize = this->getLatticeDimension().getDimension(i);
 			LinkFile<MemoryConfigurationPattern>::file.write( (char*)&mySize, sizeof(short) );
 		}
-	}
-
-	void throwException( std::string msg, short expected, short inFile )
-	{
-		std::stringstream message;
-		message << msg;
-		message << ": Expected ";
-		message << expected;
-		message << " in file, got ";
-		message << inFile;
-		throw LinkFileVogtException( message.str() );
 	}
 
 public:
@@ -210,12 +192,12 @@ public:
 	{
 		if( memoryNdim != ndim )
 		{
-			throwException( "Wrong lattice dimension", (short)memoryNdim, ndim );
+			super::throwException( "Wrong lattice dimension", (short)memoryNdim, ndim );
 		}
 
 		if( MemoryConfigurationPattern::PARAMTYPE::NC != nc )
 		{
-			throwException( "Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
+			super::throwException( "Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
 		}
 
 
@@ -226,7 +208,7 @@ public:
 
 		if( mySizeOfReal != sizeOfReal )
 		{
-			throwException( "Wrong size of real", sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE ), sizeOfReal );
+			super::throwException( "Wrong size of real", sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE ), sizeOfReal );
 		}
 
 		for( int i = 0; i < memoryNdim; i++ )
@@ -237,7 +219,7 @@ public:
 				msg << "Wrong lattice size in ";
 				msg << i;
 				msg << " direction";
-				throwException( msg.str(), this->getLatticeDimension().getDimension(i), size[i] );
+				super::throwException( msg.str(), this->getLatticeDimension().getDimension(i), size[i] );
 			}
 		}
 	}

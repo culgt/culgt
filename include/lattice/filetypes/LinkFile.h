@@ -19,6 +19,8 @@ namespace culgt
 {
 
 
+
+
 class IOException: public std::exception
 {
 public:
@@ -30,6 +32,12 @@ public:
 	}
 protected:
 	std::string msg;
+};
+
+class LinkFileException: public IOException
+{
+public:
+	LinkFileException( std::string msg ) : IOException(msg){};
 };
 
 class FileNotFoundException: IOException
@@ -153,6 +161,17 @@ protected:
 	ReinterpretReal reinterpretReal;
 	virtual void loadImplementation(){};
 	virtual void saveImplementation(){};
+
+	void throwException( std::string msg, int expected, int inFile )
+	{
+		std::stringstream message;
+		message << msg;
+		message << ": Expected ";
+		message << expected;
+		message << " in file, got ";
+		message << inFile;
+		throw LinkFileException( message.str() );
+	}
 
 private:
 	bool fileIsOpen;
