@@ -18,6 +18,7 @@
 #include "lattice/LocalLink.h"
 #include "lattice/GlobalLink.h"
 #include "common/culgt_typedefs.h"
+#include "common/culgt_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,22 +62,14 @@ public:
 		allocatedFooterSize = 0;
 	}
 
-#if __cplusplus == 201103L
-	virtual void saveImplementation() override
-#else
-	void saveImplementation()
-#endif
+	virtual void saveImplementation() CULGT_OVERRIDE
 	{
 		saveHeader();
 		saveBody();
 		saveFooter();
 	}
 
-#if __cplusplus == 201103L
-	virtual void loadImplementation() override
-#else
-	void loadImplementation()
-#endif
+	virtual void loadImplementation() CULGT_OVERRIDE
 	{
 		// get the lime record information
 

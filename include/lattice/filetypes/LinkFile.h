@@ -12,7 +12,7 @@
 #include <fstream>
 #include "lattice/LatticeDimension.h"
 #include "common/culgt_typedefs.h"
-
+#include "common/culgt_compat.h"
 #include "filetype_typedefs.h"
 
 namespace culgt
@@ -54,11 +54,6 @@ public:
 	{
 	};
 
-//	LinkFile( const LinkFile<MemoryConfigurationPattern>& copy ) : fileIsOpen( false ), filenameIsSet( false ), latticeDimension(copy.getLatticeDimension() )
-//	{
-//		U = copy.getPointerToU();
-//	};
-
 	LinkFile( const int size[MemoryConfigurationPattern::SITETYPE::NDIM], ReinterpretReal reinterpret ) :reinterpretReal(reinterpret), fileIsOpen( false ), filenameIsSet( false ), latticeDimension( size )
 	{
 	};
@@ -67,11 +62,7 @@ public:
 	{
 	};
 
-#if __cplusplus == 201103L
-	virtual void load( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) final
-#else
-	void load( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U )
-#endif
+	virtual void load( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) CULGT_FINAL
 	{
 		this->U = U;
 		this->openFile();
@@ -79,11 +70,7 @@ public:
 		this->closeFile();
 	};
 
-#if __cplusplus == 201103L
-	virtual void save( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) final
-#else
-	void save( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U )
-#endif
+	virtual void save( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) CULGT_FINAL
 	{
 		this->U = U;
 		this->openFileWrite();
@@ -160,16 +147,6 @@ public:
 	{
 		return latticeDimension;
 	}
-
-//	void setReinterpretReal(ReinterpretReal reinterpretReal)
-//	{
-//		this->reinterpretReal = reinterpretReal;
-//	}
-//
-//	ReinterpretReal getReinterpretReal()
-//	{
-//		return reinterpretReal;
-//	}
 
 protected:
 	std::fstream file;
