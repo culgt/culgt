@@ -14,6 +14,7 @@
 #include "LinkFileVogt.h"
 #include "LinkFileHirep.h"
 #include "LinkFileHeaderOnly.h"
+#include "LinkFileNERSC.h"
 
 using namespace culgt::LinkFileType;
 
@@ -42,6 +43,9 @@ public:
 			break;
 		case ILDG:
 			linkFile = new LinkFileILDG<MemoryPattern>( size, reinterpret );
+			break;
+		case NERSC:
+			linkFile = new LinkFileNERSC<MemoryPattern>( size, reinterpret );
 			break;
 		}
 	}

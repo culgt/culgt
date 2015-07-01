@@ -17,7 +17,7 @@ namespace culgt
 namespace LinkFileType
 {
 
-enum FileType {DEFAULT,HEADERONLY, VOGT, HIREP, ILDG};
+enum FileType {DEFAULT,HEADERONLY, VOGT, HIREP, ILDG, NERSC};
 
 inline std::istream& operator>>(std::istream& in, FileType& t)
 {
@@ -31,6 +31,8 @@ inline std::istream& operator>>(std::istream& in, FileType& t)
     	t = HIREP;
     else if (boost::iequals(token, "ILDG" ) )
     	t = ILDG;
+    else if (boost::iequals(token, "NERSC" ) )
+    	t = NERSC;
     else if (boost::iequals(token, "DEFAULT" ) )
     	t = DEFAULT;
     return in;
@@ -47,6 +49,8 @@ inline std::ostream& operator<<(std::ostream& out, FileType t)
     	token = "HIREP";
     else if (t == ILDG )
     	token = "ILDG";
+    else if (t == NERSC )
+    	token = "NERSC";
     else if (t == DEFAULT )
     	token = "DEFAULT";
     out << token;
