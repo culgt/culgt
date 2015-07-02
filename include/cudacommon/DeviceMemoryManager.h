@@ -75,10 +75,6 @@ private:
 	static double getFreeMemoryMB();
 	static size_t getTotalAllocatedMemory();
 };
-//
-//size_t DeviceMemoryManager::allocatedMemory = 0;
-//bool DeviceMemoryManager::verbose = true;
-//std::map<void*, MemoryStruct> DeviceMemoryManager::info;
 
 }
 

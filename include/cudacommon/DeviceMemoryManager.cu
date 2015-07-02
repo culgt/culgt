@@ -136,7 +136,7 @@ size_t DeviceMemoryManager::getTotalAllocatedMemory()
 }
 
 size_t DeviceMemoryManager::allocatedMemory = 0;
-bool DeviceMemoryManager::verbose = true;
+bool DeviceMemoryManager::verbose = false;
 std::map<void*, MemoryStruct> DeviceMemoryManager::info;
 
 }
