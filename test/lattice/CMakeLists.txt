@@ -27,6 +27,7 @@ set(sources
 	filetypes/test_LinkFileVogtWithPattern.cc
 	filetypes/test_LinkFile.cc
 	filetypes/test_LinkFileManager.cc
+	filetypes/test_LinkFileCompatibility.cc
 	site_indexing/test_SiteIndex.cc
 	site_indexing/test_SiteCoord.cc
 	site_indexing/test_SiteCompatibilityWithConfigurationPatterns.cc
@@ -49,7 +50,7 @@ set(sources_cuda
 	site_indexing/test_SiteIndex.cu
 	test_LocalLinkWithSU2Vector4.cu
 	test_GlobalLinkWithPatterns.cu
-	test_GaugeConfiguration.cc
+	test_GaugeConfiguration.cu
 	test_GaugeConfigurationWithPattern.cu
 	test_LatticeDimension.cu
 	test_KernelSetup.cu

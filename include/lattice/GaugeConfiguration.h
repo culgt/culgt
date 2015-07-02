@@ -51,7 +51,9 @@ public:
 	void allocateMemory()
 	{
 		allocateMemoryOnHost();
+#ifdef __CUDACC__
 		allocateMemoryOnDevice();
+#endif
 	}
 
 	void allocateMemoryOnHost()
@@ -63,19 +65,12 @@ public:
 		}
 	}
 
-	void allocateMemoryOnDevice()
-	{
-		if( !UdeviceIsAllocated )
-		{
-			GaugeConfigurationCudaHelper<T>::allocateMemory( &Udevice, configurationSize );
-			UdeviceIsAllocated = true;
-		}
-	}
-
 	void freeMemory()
 	{
 		freeMemoryOnHost();
+#ifdef __CUDACC__
 		freeMemoryOnDevice();
+#endif
 	}
 
 	void freeMemoryOnHost()
@@ -86,28 +81,6 @@ public:
 			Uhost = NULL;
 			UhostIsAllocated = false;
 		}
-	}
-
-	void freeMemoryOnDevice()
-	{
-		if( UdeviceIsAllocated )
-		{
-			GaugeConfigurationCudaHelper<T>::freeMemory( Udevice );
-			Udevice = NULL;
-			UdeviceIsAllocated = false;
-		}
-	}
-
-	void copyToDevice()
-	{
-		checkMemoryIsAllocated();
-		GaugeConfigurationCudaHelper<T>::copyToDevice( Udevice, Uhost, configurationSize );
-	}
-
-	void copyToHost()
-	{
-		checkMemoryIsAllocated();
-		GaugeConfigurationCudaHelper<T>::copyToHost( Uhost, Udevice, configurationSize );
 	}
 
 	T getElementFromHost( int i ) const
@@ -150,6 +123,83 @@ public:
 			throw MemoryException( "No host memory allocated!" );
 	}
 
+
+	LatticeDimension<Ndim> getLatticeDimension() const
+	{
+		return dim;
+	}
+
+	int getConfigurationSize() const
+	{
+		return configurationSize;
+	}
+
+	void loadFile( LinkFile<PatternType>& linkfile )
+	{
+		linkfile.load( Uhost );
+	}
+
+
+	T* getHostPointer() const
+	{
+		return Uhost;
+	}
+
+#ifdef __CUDACC__
+	void allocateMemoryOnDevice()
+	{
+		if( !UdeviceIsAllocated )
+		{
+			GaugeConfigurationCudaHelper<T>::allocateMemory( &Udevice, configurationSize );
+			UdeviceIsAllocated = true;
+		}
+	}
+
+	void copyToHost()
+	{
+		checkMemoryIsAllocated();
+		GaugeConfigurationCudaHelper<T>::copyToHost( Uhost, Udevice, configurationSize );
+	}
+
+	void freeMemoryOnDevice()
+	{
+		if( UdeviceIsAllocated )
+		{
+			GaugeConfigurationCudaHelper<T>::freeMemory( Udevice );
+			Udevice = NULL;
+			UdeviceIsAllocated = false;
+		}
+	}
+
+	void copyToDevice()
+	{
+		checkMemoryIsAllocated();
+		GaugeConfigurationCudaHelper<T>::copyToDevice( Udevice, Uhost, configurationSize );
+	}
+
+	T* getDevicePointer() const
+	{
+		return Udevice;
+	}
+
+	T* getDevicePointer( lat_coord_t timeslice )
+	{
+		BOOST_MPL_ASSERT_RELATION( SITETYPE::PARITYTYPE, ==, TIMESLICE_SPLIT );
+		lat_array_index_t configurationSizeTimeslice = Ndim*dim.getSizeTimeslice()*LinkSize;
+		return &Udevice[timeslice*configurationSizeTimeslice];
+	}
+
+	void setDevicePointer( T* U, bool assumeAllocated = false )
+	{
+		Udevice = U;
+		UdeviceIsAllocated = assumeAllocated;
+	}
+
+	void takeCopyDeviceToDevice( GaugeConfiguration<PatternType>& src )
+	{
+		GaugeConfigurationCudaHelper<T>::copyDeviceToDevice( Udevice, src.getDevicePointer(), configurationSize );
+	}
+
 	T getElementFromDevice( int i ) const
 	{
 		if( UdeviceIsAllocated )
@@ -188,51 +238,6 @@ public:
 		}
 	}
 
-	LatticeDimension<Ndim> getLatticeDimension() const
-	{
-		return dim;
-	}
-
-	int getConfigurationSize() const
-	{
-		return configurationSize;
-	}
-
-	void loadFile( LinkFile<PatternType>& linkfile )
-	{
-		linkfile.load( Uhost );
-	}
-
-	T* getDevicePointer() const
-	{
-		return Udevice;
-	}
-
-	T* getDevicePointer( lat_coord_t timeslice )
-	{
-		BOOST_MPL_ASSERT_RELATION( SITETYPE::PARITYTYPE, ==, TIMESLICE_SPLIT );
-		lat_array_index_t configurationSizeTimeslice = Ndim*dim.getSizeTimeslice()*LinkSize;
-		return &Udevice[timeslice*configurationSizeTimeslice];
-	}
-
-	void setDevicePointer( T* U, bool assumeAllocated = false )
-	{
-		Udevice = U;
-		UdeviceIsAllocated = assumeAllocated;
-	}
-
-	T* getHostPointer() const
-	{
-		return Uhost;
-	}
-
-
-	void takeCopyDeviceToDevice( GaugeConfiguration<PatternType>& src )
-	{
-		GaugeConfigurationCudaHelper<T>::copyDeviceToDevice( Udevice, src.getDevicePointer(), configurationSize );
-	}
-
-#ifdef __CUDACC__
 	template<typename RNG> void setHotOnDevice( int rngSeed, int rngCounter )
 	{
 		GaugeConfigurationCudaHelper<T>::template setHot<PatternType,RNG>(Udevice, dim, rngSeed, rngCounter );
