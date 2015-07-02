@@ -59,6 +59,7 @@ target_link_libraries(GaugeFixingLibrary pthread)
 target_link_libraries(GaugeFixingLibrary cudart)
 target_link_libraries(GaugeFixingLibrary cufft)
 target_link_libraries(GaugeFixingLibrary boost_program_options)
+target_link_libraries(GaugeFixingLibrary tinyxml)
     
 
 cuda_add_executable(CoulombGaugeSP

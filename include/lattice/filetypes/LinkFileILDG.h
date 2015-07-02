@@ -19,11 +19,14 @@
 #include "lattice/GlobalLink.h"
 #include "common/culgt_typedefs.h"
 #include "common/culgt_compat.h"
+#include <tinyxml.h>
+using std::istringstream;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "lime_reader.h"
+
 #ifdef __cplusplus
 }
 #endif
@@ -44,6 +47,10 @@ private:
 
 	char* header;
 	char* footer;
+
+	bool isDouble;
+	int latticeSizeInFile[memoryNdim];
+
 	n_uint64_t allocatedHeaderSize;
 	n_uint64_t allocatedFooterSize;
 
@@ -62,6 +69,10 @@ public:
 		allocatedFooterSize = 0;
 	}
 
+	~LinkFileILDG()
+	{
+	}
+
 	virtual void saveImplementation() CULGT_OVERRIDE
 	{
 		saveHeader();
@@ -71,15 +82,13 @@ public:
 
 	virtual void loadImplementation() CULGT_OVERRIDE
 	{
-		// get the lime record information
-
 		readLimeRecords();
 
 		loadHeader();
 		loadBody();
 		loadFooter();
 
-//		verify();
+		verify();
 	}
 
 	double readDouble()
@@ -112,6 +121,44 @@ public:
 		int32_t* temp = reinterpret_cast<int32_t*>(&out);
 		int32_t result = __builtin_bswap32( *temp );
 		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&result, sizeof(int32_t) );
+	}
+
+	int getIntFromElement( TiXmlElement* elem )
+	{
+		if( elem != NULL )
+		{
+			int val;
+			istringstream( elem->FirstChild()->ToText()->Value() ) >> val;
+			return val;
+		}
+		else
+		{
+			throw LinkFileException( "Error while reading ILDG format header.");
+		}
+	}
+
+	void parseILDGformatXML( LimeReader* reader, n_uint64_t nbytes )
+	{
+		char* ildgformatxml;
+		ildgformatxml = new char[nbytes];
+		limeReaderReadData( ildgformatxml, &nbytes, reader );
+		std::cout << ildgformatxml << std::endl;
+
+		TiXmlDocument doc;
+		doc.Parse( ildgformatxml );
+
+		TiXmlHandle docHandle( &doc );
+
+		TiXmlElement* root = doc.FirstChildElement();
+
+		int precision = getIntFromElement( root->FirstChildElement("precision") );
+		if( precision == 32 ) isDouble = false;
+		else isDouble = true;
+
+		latticeSizeInFile[0] = getIntFromElement( root->FirstChildElement("lt") );
+		latticeSizeInFile[1] = getIntFromElement( root->FirstChildElement("lx") );
+		latticeSizeInFile[2] = getIntFromElement( root->FirstChildElement("ly") );
+		latticeSizeInFile[3] = getIntFromElement( root->FirstChildElement("lz") );
 	}
 
 	void readLimeRecords()
@@ -148,6 +195,10 @@ public:
 				n_uint64_t fileSize = ftell(fp);
 				footerSize = fileSize - footerStart;
 				break;
+			}
+			else if( strcmp( lime_type, "ildg-format" ) == 0 )
+			{
+				parseILDGformatXML( reader, nbytes );
 			}
 		}
 		printf("\n");
@@ -213,20 +264,14 @@ public:
 			typename LocalLinkParamType::TYPE value;
 			if( super::reinterpretReal == STANDARD )
 			{
-//				float tempValue;
-//				LinkFile<MemoryConfigurationPattern>::file.read( (char*)&tempValue, sizeof(float) );
 				value = (typename LocalLinkParamType::TYPE) readFloat();
 			}
 			else if( super::reinterpretReal == FLOAT )
 			{
-//				float tempValue;
-//				LinkFile<MemoryConfigurationPattern>::file.read( (char*)&tempValue, sizeof(float) );
 				value = (typename LocalLinkParamType::TYPE) readFloat();
 			}
-			else// if( super::reinterpretReal == DOUBLE )
+			else
 			{
-//				double tempValue;
-//				LinkFile<MemoryConfigurationPattern>::file.read( (char*)&tempValue, sizeof(double) );
 				value = (typename LocalLinkParamType::TYPE) readDouble();
 			}
 			link.set( i, value );
@@ -342,6 +387,39 @@ public:
 						}
 					}
 				}
+			}
+		}
+	}
+
+	int getSizeOfReal()
+	{
+		if( super::reinterpretReal == FLOAT ) return sizeof( float );
+		else if( super::reinterpretReal == DOUBLE ) return sizeof( double );
+		else return sizeof( typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE );
+	}
+
+	void verify()
+	{
+		int mySizeOfReal = getSizeOfReal();
+
+		int fileSizeOfReal;
+		if( isDouble ) fileSizeOfReal = 8;
+		else fileSizeOfReal = 4;
+
+		if( mySizeOfReal != fileSizeOfReal )
+		{
+			super::throwException( "Wrong size of real", mySizeOfReal, fileSizeOfReal );
+		}
+
+		for( int i = 0; i < 4; i++ )
+		{
+			if( this->getLatticeDimension().getDimension(i) != latticeSizeInFile[i] )
+			{
+				std::stringstream msg;
+				msg << "Wrong lattice size in ";
+				msg << i;
+				msg << " direction";
+				super::throwException( msg.str(), this->getLatticeDimension().getDimension(i), latticeSizeInFile[i] );
 			}
 		}
 	}

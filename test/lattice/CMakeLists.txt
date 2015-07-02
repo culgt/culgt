@@ -27,7 +27,6 @@ set(sources
 	filetypes/test_LinkFileVogtWithPattern.cc
 	filetypes/test_LinkFile.cc
 	filetypes/test_LinkFileManager.cc
-	filetypes/test_LinkFileCompatibility.cc
 	site_indexing/test_SiteIndex.cc
 	site_indexing/test_SiteCoord.cc
 	site_indexing/test_SiteCompatibilityWithConfigurationPatterns.cc
@@ -35,12 +34,13 @@ set(sources
 	)
 	
 add_library( lib_lattice_host ${sources} )
-target_link_libraries( lib_lattice_host pthread)
-target_link_libraries( lib_lattice_host gmock)
-target_link_libraries( lib_lattice_host gtest)
-target_link_libraries( lib_lattice_host liblime.a)
+target_link_libraries( lib_lattice_host pthread )
+target_link_libraries( lib_lattice_host gmock )
+target_link_libraries( lib_lattice_host gtest )
+target_link_libraries( lib_lattice_host liblime.a )
+target_link_libraries( lib_lattice_host tinyxml )
 
-add_executable( test_lattice_host ../test_main.cpp)
+add_executable( test_lattice_host ../test_main.cpp )
 target_link_libraries_whole_archive( test_lattice_host lib_lattice_host )
 
 
@@ -53,18 +53,21 @@ set(sources_cuda
 	test_GaugeConfiguration.cu
 	test_GaugeConfigurationWithPattern.cu
 	test_LatticeDimension.cu
+	filetypes/test_LinkFileCompatibility.cu
 	test_KernelSetup.cu
 	parameterization_types/test_SU2Vector4.cu
 	site_indexing/test_SiteNeighbourTableManager.cu
 	)
 
 cuda_add_library( lib_lattice_cuda ${sources_cuda} )
-target_link_libraries(lib_lattice_cuda culgt_cudacommon )
-target_link_libraries(lib_lattice_cuda pthread)
-target_link_libraries(lib_lattice_cuda gmock)
-target_link_libraries(lib_lattice_cuda gtest)
+target_link_libraries( lib_lattice_cuda culgt_cudacommon )
+target_link_libraries( lib_lattice_cuda pthread )
+target_link_libraries( lib_lattice_cuda gmock )
+target_link_libraries( lib_lattice_cuda gtest )
+target_link_libraries( lib_lattice_cuda liblime.a )
+target_link_libraries( lib_lattice_cuda tinyxml )
 
-cuda_add_executable( test_lattice_cuda ../test_main.cpp)
+cuda_add_executable( test_lattice_cuda ../test_main.cpp )
 target_link_libraries_whole_archive( test_lattice_cuda lib_lattice_cuda )
 
 
