@@ -46,7 +46,7 @@ public:
 		("filetype", boost::program_options::value<LinkFileType::FileType>(&filetype)->default_value(LinkFileType::HEADERONLY), "file type of gauge configuration files (HEADERONLY, VOGT, ILDG, HIREP)")
 		("filetypeout", boost::program_options::value<LinkFileType::FileType>(&filetypeOut)->default_value(LinkFileType::DEFAULT), "file type of gauge configuration files used when saving (HEADERONLY, VOGT, ILDG, HIREP, DEFAULT=same as input)")
 		("fbasename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
-		("fending", boost::program_options::value<string>(&fileEnding)->default_value(".dat"), "file ending to append to basename (default: .vogt)")
+		("fextension", boost::program_options::value<string>(&fileExtension)->default_value(".dat"), "file extension")
 		("fnumberformat", boost::program_options::value<int>(&fileNumberformat)->default_value(4), "number format for file index: 1 = (0,1,2,...,10,11), 2 = (00,01,...), 3 = (000,001,...),...")
 		("fstartnumber", boost::program_options::value<int>(&fileNumberStart)->default_value(0), "file index number to start from (startnumber, ..., startnumber+nconf-1")
 		("fstepnumber", boost::program_options::value<int>(&fileNumberStep)->default_value(1), "load every <fstepnumber>-th file")
@@ -116,9 +116,9 @@ public:
 		return fileBasename;
 	}
 
-	const string& getFileEnding() const
+	const string& getFileExtension() const
 	{
-		return fileEnding;
+		return fileExtension;
 	}
 
 	int getFileNumberformat() const
@@ -214,7 +214,7 @@ private:
 	LinkFileType::FileType filetypeOut;
 
 	string fileBasename;
-	string fileEnding;
+	string fileExtension;
 
 	int fileNumberformat;
 

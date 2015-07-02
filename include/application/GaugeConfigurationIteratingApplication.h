@@ -124,7 +124,7 @@ public:
 		std::cout << "Using device: " << DeviceProperties::getName() << "(" << DeviceProperties::getDeviceNumber() << ")" << std::endl;
 
 		int fileNumberEnd = po->getFileNumberStart()+(po->getNConf()-1)*po->getFileNumberStep();
-		FileIterator fileiterator( po->getFileBasename(), po->getFileEnding(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd, po->getFileNumberStep() );
+		FileIterator fileiterator( po->getFileBasename(), po->getFileExtension(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd, po->getFileNumberStep() );
 
 
 		// TODO in principle we could read the sizes from the gaugeconfig file!
