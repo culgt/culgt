@@ -31,6 +31,7 @@ target_link_libraries(lib_application_cuda gtest)
 target_link_libraries(lib_application_cuda boost_program_options)
 target_link_libraries(lib_application_cuda culgt_cudacommon )
 target_link_libraries( lib_application_cuda liblime.a)
+target_link_libraries( lib_application_cuda tinyxml)
 
 cuda_add_executable( test_application_cuda ../test_main.cpp )
 target_link_libraries_whole_archive( test_application_cuda lib_application_cuda )
