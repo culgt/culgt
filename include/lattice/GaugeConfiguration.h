@@ -139,6 +139,11 @@ public:
 		linkfile.load( Uhost );
 	}
 
+	void saveFile( LinkFile<PatternType>& linkfile )
+	{
+		linkfile.save( Uhost );
+	}
+
 
 	T* getHostPointer() const
 	{
