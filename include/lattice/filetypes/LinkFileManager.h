@@ -45,7 +45,12 @@ public:
 			linkFile = new LinkFileILDG<MemoryPattern>( size, reinterpret );
 			break;
 		case NERSC:
-			linkFile = new LinkFileNERSC<MemoryPattern>( size, reinterpret );
+			if( MemoryPattern::PARAMTYPE::NC == 3 )
+			{
+				linkFile = new LinkFileNERSC<MemoryPattern>( size, reinterpret );
+			}
+			else
+				throw LinkFileException( "NERSC supported for SU(3) only" );
 			break;
 		}
 	}

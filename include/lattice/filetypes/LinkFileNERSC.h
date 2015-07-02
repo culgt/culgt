@@ -14,6 +14,8 @@
 #include "lattice/LocalLink.h"
 #include "lattice/GlobalLink.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
+#include "lattice/parameterization_types/SU3Real12.h"
+#include "lattice/parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
 #include "common/culgt_typedefs.h"
 #include "common/culgt_compat.h"
 #include <string>
@@ -305,9 +307,7 @@ public:
 
 	void writeNextLink( LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> > link, int parametersToWrite )
 	{
-		typedef SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> LocalLinkParamType;
-
-		for( int i = 0; i < 12; i++ )
+		for( int i = 0; i < parametersToWrite; i++ )
 		{
 			if( getSizeOfReal() == 8 )
 			{
