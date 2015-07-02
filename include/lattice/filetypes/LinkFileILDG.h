@@ -344,25 +344,6 @@ public:
 				}
 			}
 		}
-
-
-
-		for( int i = 0; i < this->getLatticeDimension().getSize(); i++ )
-		{
-			for( int mu = 0; mu < memoryNdim; mu++ )
-			{
-				typename MemoryConfigurationPattern::SITETYPE site( this->getLatticeDimension(), NULL );
-				site.setIndexFromNonParitySplitOrder( i );
-
-				GlobalLink<MemoryConfigurationPattern> src( this->getPointerToU(), site, mu );
-
-				LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> > dest;
-
-				dest = src;
-
-				writeNextLink( dest );
-			}
-		}
 	}
 
 };
