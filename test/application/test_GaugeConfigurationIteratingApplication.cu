@@ -42,7 +42,7 @@ TEST( AGaugeConfigurationIteratingApplication, RunCallsSetup_IterateNTimes_Teard
 TEST( AGaugeConfigurationIteratingApplication, ConstructorWithCommandLineParametersAndBoostProgramOptions )
 {
 	const int argc_test = 7;
-	const char* argv_test[argc_test] = {"NameOfProgram","--fbasename","test_","--fending",".test", "--nconf", "10"};
+	const char* argv_test[argc_test] = {"NameOfProgram","--fbasename","test_","--fextension",".test", "--nconf", "10"};
 
 	GaugeConfigurationIteratingApplicationMock* app = GaugeConfigurationIteratingApplicationMock::init<GaugeConfigurationIteratingApplicationMock>( argc_test, argv_test );
 
