@@ -17,8 +17,6 @@ class ADeviceCommunicator: public Test
 {
 public:
 	float* cudaMemory;
-//	static constexpr float someValue = 1.523;
-//	static constexpr int someIndex = 4;
 	const float someValue = 1.523;
 	const int someIndex = 4;
 
