@@ -193,11 +193,13 @@ public:
 		return latticeDimension;
 	}
 
+
 protected:
 	std::fstream file;
 	ReinterpretReal reinterpretReal;
-	virtual void loadImplementation(){};
-	virtual void saveImplementation(){};
+	virtual void loadImplementation() = 0;
+	virtual void saveImplementation() = 0;
+//	virtual std::string getPreferredExtension() = 0;
 
 	void throwException( std::string msg, int expected, int inFile )
 	{

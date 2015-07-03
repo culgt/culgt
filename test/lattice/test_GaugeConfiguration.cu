@@ -139,6 +139,7 @@ class LinkFileMock: public LinkFile<PatternStub<float> >
 {
 public:
 	MOCK_METHOD0(loadImplementation, void() );
+	MOCK_METHOD0(saveImplementation, void() );
 };
 
 class GaugeConfigurationFileLoad: public testing::Test
