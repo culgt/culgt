@@ -85,6 +85,16 @@ public:
 		return *result;
 	}
 
+	int32_t readInt( bool convertBigEndian = true )
+	{
+		int32_t temp;
+		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&temp, sizeof(int32_t) );
+		if( convertBigEndian )
+			return  __builtin_bswap32( temp );
+		else
+			return temp;
+	}
+
 	void writeDouble( double out, bool convertBigEndian = true  )
 	{
 		int64_t* temp = reinterpret_cast<int64_t*>(&out);
@@ -105,6 +115,16 @@ public:
 		else
 			result = *temp;
 		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&result, sizeof(int32_t) );
+	}
+
+	void writeInt( int32_t out, bool convertBigEndian = true )
+	{
+		int32_t temp;
+		if( convertBigEndian )
+			temp = __builtin_bswap32( out );
+		else
+			temp = out;
+		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&temp, sizeof(int32_t) );
 	}
 
 	virtual void load( typename MemoryConfigurationPattern::PARAMTYPE::TYPE* U ) CULGT_FINAL

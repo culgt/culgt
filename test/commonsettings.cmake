@@ -59,6 +59,8 @@ set( commonsettings "")
     file( COPY ${CULGT_HOME}/test/testdata/lat.sample.l4444.ildg DESTINATION "." )
     file( COPY ${CULGT_HOME}/test/testdata/lat.sample.l4444.vogt DESTINATION "." )
     file( COPY ${CULGT_HOME}/test/testdata/lat.sample.l4444.nersc DESTINATION "." )
+    file( COPY ${CULGT_HOME}/test/testdata/sample_16x8x8x8_su2.orig.hirep DESTINATION "." )
+    file( COPY ${CULGT_HOME}/test/testdata/sample_16x8x8x8_su2.vogt DESTINATION "." )
     file( WRITE ${CMAKE_BINARY_DIR}/tune_optimalid "0 0" )
 
 endif()

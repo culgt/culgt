@@ -29,40 +29,11 @@ private:
 	int size[memoryNdim];
 	int sizeOfReal;
 
-	int32_t readInt()
-	{
-		int32_t temp;
-		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&temp, sizeof(int32_t) );
-		return  __builtin_bswap32( temp );
-	}
-
-	double readDouble()
-	{
-		int64_t temp;
-		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&temp, sizeof(int64_t) );
-		temp =  __builtin_bswap64( temp );
-		double* result = reinterpret_cast<double*>( &temp );
-		return *result;
-	}
-
-	void writeInt( int32_t out )
-	{
-		int32_t temp = __builtin_bswap32( out );
-		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&temp, sizeof(int32_t) );
-	}
-
-	void writeDouble( double out )
-	{
-		int64_t* temp = reinterpret_cast<int64_t*>(&out);
-		int64_t result = __builtin_bswap64( *temp );
-		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&result, sizeof(int64_t) );
-	}
-
 	void readSize()
 	{
 		for( int i = 0; i < memoryNdim; i++ )
 		{
-			size[i] = readInt();
+			size[i] = super::readInt();
 		}
 	}
 
@@ -71,7 +42,7 @@ private:
 	{
 		for( int i = 0; i < memoryNdim; i++ )
 		{
-			writeInt( size[i] );
+			super::writeInt( this->getLatticeDimension().getDimension(i) );
 		}
 	}
 
@@ -111,17 +82,16 @@ public:
 
 	void loadHeader()
 	{
-		nc = readInt();
+		nc = super::readInt();
 		readSize();
-		plaquette = readDouble();
-		std::cout << std::endl << "Plaquette: " << plaquette << std::endl;
+		plaquette = super::readDouble();
 	}
 
 	void saveHeader()
 	{
-		writeInt( nc );
+		super::writeInt( MemoryConfigurationPattern::PARAMTYPE::NC );
 		writeSize();
-		writeDouble(plaquette);
+		super::writeDouble(plaquette);
 	}
 
 	LocalLink<SUNRealFull<MemoryConfigurationPattern::PARAMTYPE::NC,REALTYPE> > getNextLink()
@@ -133,7 +103,7 @@ public:
 		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
 		{
 			typename LocalLinkParamType::TYPE value;
-			value = (typename LocalLinkParamType::TYPE) readDouble();
+			value = (typename LocalLinkParamType::TYPE) super::readDouble();
 
 			link.set( i, value );
 		}
@@ -147,7 +117,7 @@ public:
 		for( int i = 0; i < LocalLinkParamType::SIZE; i++ )
 		{
 			typename LocalLinkParamType::TYPE value = link.get( i );
-			writeDouble( (double) value );
+			super::writeDouble( (double) value );
 		}
 	}
 
@@ -195,7 +165,7 @@ public:
 	{
 		if( MemoryConfigurationPattern::PARAMTYPE::NC != nc )
 		{
-			super::throwException( "Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
+			super::throwException( "Hirep: Wrong gauge group", MemoryConfigurationPattern::PARAMTYPE::NC, nc );
 		}
 
 
@@ -214,7 +184,7 @@ public:
 			if( this->getLatticeDimension().getDimension(i) != size[i] )
 			{
 				std::stringstream msg;
-				msg << "Wrong lattice size in ";
+				msg << "Hirep: Wrong lattice size in ";
 				msg << i;
 				msg << " direction";
 				super::throwException( msg.str(), this->getLatticeDimension().getDimension(i), size[i] );

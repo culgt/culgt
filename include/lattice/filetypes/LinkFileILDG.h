@@ -96,38 +96,6 @@ public:
 		return ".ildg";
 	}
 
-	double readDouble()
-	{
-		int64_t temp;
-		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&temp, sizeof(int64_t) );
-		temp =  __builtin_bswap64( temp );
-		double* result = reinterpret_cast<double*>( &temp );
-		return *result;
-	}
-
-	float readFloat()
-	{
-		int32_t temp;
-		LinkFile<MemoryConfigurationPattern>::file.read( (char*)&temp, sizeof(int32_t) );
-		temp =  __builtin_bswap32( temp );
-		float* result = reinterpret_cast<float*>( &temp );
-		return *result;
-	}
-
-	void writeDouble( double out )
-	{
-		int64_t* temp = reinterpret_cast<int64_t*>(&out);
-		int64_t result = __builtin_bswap64( *temp );
-		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&result, sizeof(int64_t) );
-	}
-
-	void writeFloat( float out )
-	{
-		int32_t* temp = reinterpret_cast<int32_t*>(&out);
-		int32_t result = __builtin_bswap32( *temp );
-		LinkFile<MemoryConfigurationPattern>::file.write( (char*)&result, sizeof(int32_t) );
-	}
-
 	int getIntFromElement( TiXmlElement* elem )
 	{
 		if( elem != NULL )
@@ -147,7 +115,6 @@ public:
 		char* ildgformatxml;
 		ildgformatxml = new char[nbytes];
 		limeReaderReadData( ildgformatxml, &nbytes, reader );
-		std::cout << ildgformatxml << std::endl;
 
 		TiXmlDocument doc;
 		doc.Parse( ildgformatxml );
@@ -206,22 +173,16 @@ public:
 				parseILDGformatXML( reader, nbytes );
 			}
 		}
-		printf("\n");
-		printf("headerSize:    %llu\n", (unsigned long long)headerSize);
-		printf("footerStart:    %llu\n", (unsigned long long)footerStart);
-		printf("footerSize:    %llu\n", (unsigned long long)footerSize);
 	}
 
 	void allocateHeader( n_uint64_t size )
 	{
-		std::cout << "allocate header memory ...";
 		if( size > allocatedHeaderSize )
 		{
 			if( allocatedHeaderSize > 0 ) free( header );
 			header = (char*) malloc( size );
 			allocatedHeaderSize = size;
 		}
-		std::cout << "done!" << std::endl;
 	}
 
 	void allocateFooter( n_uint64_t size )
@@ -238,14 +199,12 @@ public:
 	{
 		allocateHeader( headerSize );
 		LinkFile<MemoryConfigurationPattern>::file.read( header,  headerSize );
-		std::cout << "header loaded" << std::endl;
 	}
 
 	void loadFooter()
 	{
 		allocateFooter( footerSize );
 		LinkFile<MemoryConfigurationPattern>::file.read( footer,  footerSize );
-		std::cout << "footer loaded" << std::endl;
 	}
 
 	void saveHeader()
@@ -269,15 +228,15 @@ public:
 			typename LocalLinkParamType::TYPE value;
 			if( super::reinterpretReal == STANDARD )
 			{
-				value = (typename LocalLinkParamType::TYPE) readFloat();
+				value = (typename LocalLinkParamType::TYPE) super::readFloat();
 			}
 			else if( super::reinterpretReal == FLOAT )
 			{
-				value = (typename LocalLinkParamType::TYPE) readFloat();
+				value = (typename LocalLinkParamType::TYPE) super::readFloat();
 			}
 			else
 			{
-				value = (typename LocalLinkParamType::TYPE) readDouble();
+				value = (typename LocalLinkParamType::TYPE) super::readDouble();
 			}
 			link.set( i, value );
 		}
@@ -293,17 +252,17 @@ public:
 			if( super::reinterpretReal == STANDARD )
 			{
 				float value = (float)link.get(i);
-				writeFloat( value );
+				super::writeFloat( value );
 			}
 			else if( super::reinterpretReal == FLOAT )
 			{
 				float value = (float)link.get(i);
-				writeFloat( value );
+				super::writeFloat( value );
 			}
 			else// if( super::reinterpretReal == DOUBLE )
 			{
 				double value = (double)link.get(i);
-				writeDouble( value );
+				super::writeDouble( value );
 			}
 		}
 	}
