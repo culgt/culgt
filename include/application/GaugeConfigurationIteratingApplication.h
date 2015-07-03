@@ -39,8 +39,6 @@ public:
 	virtual void setup() = 0;
 	virtual void teardown() = 0;
 
-//	virtual void addProgramOptions() = 0;
-
 	void run()
 	{
 		setup();
@@ -53,6 +51,7 @@ public:
 
 	bool load()
 	{
+		fileiterator.setFileExtension( makeFileExtension( programOptions->getFileExtension(), linkFileManager->getLinkFile()->getPreferredExtension() ) );
 		linkFileManager->getLinkFile()->setFilename( fileiterator.getFilename() );
 		std::cout << fileiterator.getFilename() ;
 		try
@@ -81,8 +80,8 @@ public:
 
 	void save( string appendix )
 	{
-		linkFileManagerOut->getLinkFile()->setFilename( fileiterator.getFilename( appendix ) );
-		std::cout << fileiterator.getFilename( appendix )  << " saved!" << std::endl;
+		std::cout << fileiterator.getFilenameWithExtension( appendix, makeFileExtension( programOptions->getFileExtensionOut(), linkFileManagerOut->getLinkFile()->getPreferredExtension() ) )  << " saved!" << std::endl;
+		linkFileManagerOut->getLinkFile()->setFilename( fileiterator.getFilenameWithExtension( appendix, makeFileExtension( programOptions->getFileExtensionOut(), linkFileManagerOut->getLinkFile()->getPreferredExtension() ) ) );
 		linkFileManagerOut->getLinkFile()->save( configuration.getHostPointer() );
 	}
 
@@ -124,9 +123,9 @@ public:
 		std::cout << "Using device: " << DeviceProperties::getName() << "(" << DeviceProperties::getDeviceNumber() << ")" << std::endl;
 
 		int fileNumberEnd = po->getFileNumberStart()+(po->getNConf()-1)*po->getFileNumberStep();
+
+
 		FileIterator fileiterator( po->getFileBasename(), po->getFileExtension(), po->getFileNumberformat(), po->getFileNumberStart(), fileNumberEnd, po->getFileNumberStep() );
-
-
 		// TODO in principle we could read the sizes from the gaugeconfig file!
 		APP = new ConcreteApplicationType( LatticeDimension<PatternType::SITETYPE::NDIM>(po->getNt(),po->getNx(),po->getNy(),po->getNz()), fileiterator, po );
 
@@ -162,6 +161,18 @@ public:
 		return dimension;
 	}
 
+	std::string makeFileExtension( string poFileExtension, string filetypeFileExtension )
+	{
+		if( poFileExtension.size() > 0 )
+		{
+			return poFileExtension;
+		}
+		else
+		{
+			return filetypeFileExtension;
+		}
+	}
+
 #if BOOST_VERSION < 105300
 	template<typename ConcreteApplicationType> static void main( int argc, char* argv[] )
 #else
@@ -175,8 +186,6 @@ public:
 
 protected:
 	LatticeDimension<PatternType::SITETYPE::NDIM> dimension;
-//	LinkFileType* linkFile;
-//	LinkFileTypeOut* linkFileOut;
 	GaugeConfiguration<PatternType> configuration;
 	LinkFileManager<PatternType>* linkFileManager;
 	LinkFileManager<PatternType>* linkFileManagerOut;

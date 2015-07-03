@@ -78,6 +78,12 @@ public:
 	{
 		currentFileNumber = fileNumberStart;
 	}
+
+	void setFileExtension(const std::string& fileExtension)
+	{
+		this->fileExtension = fileExtension;
+	}
+
 private:
 	std::string fileBasename;
 	std::string fileExtension;
