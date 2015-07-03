@@ -26,6 +26,7 @@ template<typename MemoryConfigurationPattern> class LinkFileVogt: public LinkFil
 private:
 	typedef typename MemoryConfigurationPattern::PARAMTYPE::REALTYPE REALTYPE;
 	static const lat_dim_t memoryNdim = MemoryConfigurationPattern::SITETYPE::NDIM;
+
 	short ndim;
 	short nc;
 	short size[memoryNdim];
@@ -70,6 +71,11 @@ public:
 		loadHeader();
 		verify();
 		loadBody();
+	}
+
+	virtual std::string getPreferredExtension() CULGT_OVERRIDE
+	{
+		return ".vogt";
 	}
 
 	void loadHeader()

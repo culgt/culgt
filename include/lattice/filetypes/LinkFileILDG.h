@@ -91,6 +91,11 @@ public:
 		verify();
 	}
 
+	virtual std::string getPreferredExtension() CULGT_OVERRIDE
+	{
+		return ".ildg";
+	}
+
 	double readDouble()
 	{
 		int64_t temp;

@@ -73,6 +73,11 @@ public:
 		loadBody();
 	}
 
+	virtual std::string getPreferredExtension() CULGT_OVERRIDE
+	{
+		return "";
+	}
+
 	std::vector<string> readHeaderLines()
 	{
 		std::vector<string> headerLines;

@@ -81,6 +81,11 @@ public:
 		loadBody();
 	}
 
+	virtual std::string getPreferredExtension() CULGT_OVERRIDE
+	{
+		return "";
+	}
+
 	void loadHeader()
 	{
 		//what's the offset (the header length)?

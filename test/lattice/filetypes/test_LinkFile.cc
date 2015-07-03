@@ -4,27 +4,22 @@
 #include "gmock/gmock.h"
 #include "lattice/filetypes/LinkFile.h"
 #include "../testhelper_pattern_stub.h"
+#include "testhelper_linkfile_stub.h"
 
 using namespace culgt;
 using namespace ::testing;
 
-template<typename MemoryConfigurationPattern> class LinkFileStub: public LinkFile<MemoryConfigurationPattern>
-{
-public:
-	MOCK_METHOD0( loadImplementation, void() );
-	MOCK_METHOD0( saveImplementation, void() );
-};
 
 TEST( ALinkFile, OpenFileThrowsExceptionIfNoFilenameSet )
 {
-	LinkFileStub<PatternStub<float> > linkfile;
+	LinkFileStubDefault linkfile;
 
 	ASSERT_THROW( linkfile.openFile(), IOException );
 }
 
 TEST( ALinkFile, OpenFileThrowsExceptionIfFileDoesNotExist )
 {
-	LinkFileStub<PatternStub<float> > linkfile;
+	LinkFileStubDefault linkfile;
 
 	linkfile.setFilename( "fileDoesNotExist.txt" );
 
@@ -34,7 +29,7 @@ TEST( ALinkFile, OpenFileThrowsExceptionIfFileDoesNotExist )
 
 TEST( ALinkFile, OpenFileDoesNotThrowExceptionIfFileExists )
 {
-	LinkFileStub<PatternStub<float> > linkfile;
+	LinkFileStubDefault linkfile;
 
 	linkfile.setFilename( "/dev/random" ); // File that exists
 
@@ -46,7 +41,7 @@ TEST( ALinkFile, OpenFileDoesNotThrowExceptionIfFileExists )
 class ALinkFileWithDestination: public Test
 {
 public:
-	LinkFileStub<PatternStub<float> > linkfile;
+	LinkFileStubDefault linkfile;
 	float* U;
 
 	void SetUp()
@@ -58,7 +53,7 @@ public:
 
 TEST_F( ALinkFileWithDestination, LoadThrowsIOExceptionBecauseItCallsOpen )
 {
-	LinkFileStub<PatternStub<float> > linkfile;
+	LinkFileStubDefault linkfile;
 
 	ASSERT_THROW( linkfile.load( U ), IOException );
 }

@@ -2,7 +2,11 @@
 #include "lattice/GaugeConfiguration.h"
 #include "lattice/filetypes/LinkFile.h"
 #include "testhelper_pattern_stub.h"
+#include <string>
+#include "filetypes/testhelper_linkfile_stub.h"
+
 using namespace culgt;
+using std::string;
 
 
 
@@ -133,21 +137,12 @@ TEST_F( GaugeConfigurationDoubleFixedSize, CopyConfigToHost )
 	ASSERT_DOUBLE_EQ( someValue, gaugeconfig->getElementFromHost( someIndex ) );
 }
 
-
-
-class LinkFileMock: public LinkFile<PatternStub<float> >
-{
-public:
-	MOCK_METHOD0(loadImplementation, void() );
-	MOCK_METHOD0(saveImplementation, void() );
-};
-
 class GaugeConfigurationFileLoad: public testing::Test
 {
 public:
 	static const int size[4];
 	GaugeConfiguration<PatternStub<float> > gaugeconfig;
-	LinkFileMock linkfile;
+	LinkFileStub<PatternStub<float> > linkfile;
 
 	GaugeConfigurationFileLoad() : gaugeconfig(size)
 	{

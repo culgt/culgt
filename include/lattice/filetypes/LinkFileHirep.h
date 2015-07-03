@@ -104,6 +104,11 @@ public:
 		loadBody();
 	}
 
+	virtual std::string getPreferredExtension() CULGT_OVERRIDE
+	{
+		return "";
+	}
+
 	void loadHeader()
 	{
 		nc = readInt();
