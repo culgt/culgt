@@ -28,6 +28,9 @@ using std::istringstream;
 namespace culgt
 {
 
+
+
+
 enum NerscDatatype { NERSC_4D_SU3_GAUGE_3x3, NERSC_4D_SU3_GAUGE };
 
 template<typename MemoryConfigurationPattern> class LinkFileNERSC: public LinkFile<MemoryConfigurationPattern>
@@ -41,18 +44,19 @@ private:
 	bool bigendian;
 	bool isDouble;
 	int latticeSizeInFile[4];
-	NerscDatatype datatype = NERSC_4D_SU3_GAUGE;
+	NerscDatatype datatype;
 
-	bool fullHeaderIsAvailable = false;
+	bool fullHeaderIsAvailable;
 
 public:
 	typedef LinkFile<MemoryConfigurationPattern> super;
 
-	LinkFileNERSC(){};
-	LinkFileNERSC( const int size[memoryNdim], ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
+	LinkFileNERSC(): datatype(NERSC_4D_SU3_GAUGE), fullHeaderIsAvailable(false)
+	{};
+	LinkFileNERSC( const int size[memoryNdim], ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret ), datatype(NERSC_4D_SU3_GAUGE), fullHeaderIsAvailable(false)
 	{
 	}
-	LinkFileNERSC( const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
+	LinkFileNERSC( const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret ), datatype(NERSC_4D_SU3_GAUGE), fullHeaderIsAvailable(false)
 	{
 	}
 
@@ -203,10 +207,10 @@ public:
 		{
 			headerData["DATATYPE"] = "4D_SU3_GAUGE_3x3";
 		}
-		headerData["DIMENSION_1"] = std::to_string( this->getLatticeDimension().getDimension(1) );
-		headerData["DIMENSION_2"] = std::to_string( this->getLatticeDimension().getDimension(2) );
-		headerData["DIMENSION_3"] = std::to_string( this->getLatticeDimension().getDimension(3) );
-		headerData["DIMENSION_4"] = std::to_string( this->getLatticeDimension().getDimension(0) );
+		headerData["DIMENSION_1"] = to_string( this->getLatticeDimension().getDimension(1) );
+		headerData["DIMENSION_2"] = to_string( this->getLatticeDimension().getDimension(2) );
+		headerData["DIMENSION_3"] = to_string( this->getLatticeDimension().getDimension(3) );
+		headerData["DIMENSION_4"] = to_string( this->getLatticeDimension().getDimension(0) );
 
 
 		headerData["FLOATING_POINT"] = getFloatingPointString();

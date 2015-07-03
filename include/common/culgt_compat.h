@@ -16,5 +16,21 @@
 #define CULGT_FINAL
 #endif
 
+#include <string>
+#include <sstream>
+namespace culgt
+{
+	inline std::string to_string( int val )
+	{
+#if __cplusplus >= 201103L
+		return std::to_string( val );
+#else
+		std::ostringstream oss;
+		oss << val;
+		return oss.str();
+#endif
+	}
+}
+
 
 #endif /* CULGT_COMPAT_H_ */
