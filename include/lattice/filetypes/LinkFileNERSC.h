@@ -41,7 +41,7 @@ private:
 
 	std::map<string,string> headerData;
 
-	bool bigendian;
+	const bool bigendian = true; // nersc files are always big endian
 	bool isDouble;
 	int latticeSizeInFile[4];
 	NerscDatatype datatype;
@@ -98,26 +98,13 @@ public:
 	void parseFloatType()
 	{
 		string floatingPoint = headerData["FLOATING_POINT"];
-		if( floatingPoint.compare( "IEEE32" ) == 0 )
+		if( floatingPoint.compare( "IEEE32" ) == 0 || floatingPoint.compare( "IEEE32BIG" ) == 0 )
 		{
 			isDouble = false;
-			bigendian = false;
 		}
-		else if( floatingPoint.compare( "IEEE32BIG" ) == 0 )
-		{
-			isDouble = false;
-			bigendian = true;
-		}
-		else if( floatingPoint.compare( "IEEE64" ) == 0 )
+		else if( floatingPoint.compare( "IEEE64" ) == 0 || floatingPoint.compare( "IEEE64BIG" ) == 0 )
 		{
 			isDouble = true;
-			bigendian = false;
-		}
-		else if( floatingPoint.compare( "IEEE64BIG" ) == 0 )
-		{
-			isDouble = true;
-			bigendian = true;
-
 		}
 		else
 		{
@@ -129,17 +116,11 @@ public:
 	{
 		if( getSizeOfReal() == 8 )
 		{
-			if( bigendian )
-				return "IEEE64BIG";
-			else
-				return "IEEE64";
+			return "IEEE64BIG";
 		}
 		else
 		{
-			if( bigendian )
-				return "IEEE32BIG";
-			else
-				return "IEEE32";
+			return "IEEE32BIG";
 		}
 	}
 
