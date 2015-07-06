@@ -51,19 +51,21 @@ private:
 	bool isDouble;
 	int latticeSizeInFile[memoryNdim];
 
+	bool wasRead;
+
 	n_uint64_t allocatedHeaderSize;
 	n_uint64_t allocatedFooterSize;
 
 public:
 	typedef LinkFile<MemoryConfigurationPattern> super;
 
-	LinkFileILDG(){};
-	LinkFileILDG( const int size[memoryNdim], ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
+	LinkFileILDG(): wasRead(false) {};
+	LinkFileILDG( const int size[memoryNdim], ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret ), wasRead(false)
 	{
 		allocatedHeaderSize = 0;
 		allocatedFooterSize = 0;
 	}
-	LinkFileILDG( const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret )
+	LinkFileILDG( const LatticeDimension<memoryNdim> size, ReinterpretReal reinterpret = STANDARD ) : LinkFile<MemoryConfigurationPattern>( size, reinterpret ), wasRead(false)
 	{
 		allocatedHeaderSize = 0;
 		allocatedFooterSize = 0;
@@ -75,9 +77,16 @@ public:
 
 	virtual void saveImplementation() CULGT_OVERRIDE
 	{
-		saveHeader();
-		saveBody();
-		saveFooter();
+		if( wasRead )
+		{
+			saveHeader();
+			saveBody();
+			saveFooter();
+		}
+		else
+		{
+			throw LinkFileException( "Creation of c-lime data not supported, need to read ildg file to extract header before writting" );
+		}
 	}
 
 	virtual void loadImplementation() CULGT_OVERRIDE
@@ -89,6 +98,8 @@ public:
 		loadFooter();
 
 		verify();
+
+		wasRead = true;
 	}
 
 	virtual std::string getPreferredExtension() CULGT_OVERRIDE

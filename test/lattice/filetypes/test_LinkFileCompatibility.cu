@@ -128,23 +128,35 @@ TEST_F( LinkFileCompatibilitySU3, NERSCWriteReadFromVogt )
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
 
-TEST_F( LinkFileCompatibilitySU3, DISABLED_ILDGWriteReadFromNERSC )
+
+
+TEST_F( LinkFileCompatibilitySU3, ILDGReadWriteReadWithSameLinkFileWorks )
 {
-	LinkFileNERSC<PATTERNTYPE> linkfileIn( dim );
-	linkfileIn.setFilename( "lat.sample.l4444.nersc" );
-	config2.loadFile( linkfileIn );
+	LinkFileILDG<PATTERNTYPE> linkfileInOut( dim );
+	linkfileInOut.setFilename( "lat.sample.l4444.ildg" );
+	config2.loadFile( linkfileInOut );
 
-
-	LinkFileILDG<PATTERNTYPE> linkfileOut( dim );
-	linkfileOut.setFilename( "tempNERSC2ILDG.ildg" );
-	config2.saveFile( linkfileOut );
+	linkfileInOut.setFilename( "tempILDG2ILDG.ildg" );
+	config2.saveFile( linkfileInOut );
 
 	LinkFileILDG<PATTERNTYPE> linkfileCheck( dim );
-	linkfileCheck.setFilename( "tempNERSC2ILDG.ildg" );
+	linkfileCheck.setFilename( "tempILDG2ILDG.ildg" );
 	config.loadFile( linkfileCheck );
 	config.copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
+}
+
+TEST_F( LinkFileCompatibilitySU3, ILDGReadWriteReadWithDifferentLinkFileThrowsException )
+{
+	LinkFileILDG<PATTERNTYPE> linkfileIn( dim );
+	linkfileIn.setFilename( "lat.sample.l4444.ildg" );
+	config2.loadFile( linkfileIn );
+
+	LinkFileILDG<PATTERNTYPE> linkfileOut( dim );
+	linkfileOut.setFilename( "tempILDG2ILDG2.ildg" );
+
+	ASSERT_THROW( config2.saveFile( linkfileOut ), LinkFileException );
 }
 
 typedef LinkFileCompatibilitySU3Template<5> LinkFileCompatibilitySU3WrongSize;
