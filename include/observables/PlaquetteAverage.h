@@ -8,6 +8,7 @@
 #ifndef PLAQUETTEAVERAGE_H_
 #define PLAQUETTEAVERAGE_H_
 
+#include "cudacommon/DeviceMemoryManager.h"
 #include "lattice/LatticeDimension.h"
 #include "lattice/LocalLink.h"
 #include "lattice/parameterization_types/SUNRealFull.h"
@@ -25,8 +26,8 @@ public:
 
 	PlaquetteAverage( T* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim ) : dim(dim), U(U)
 	{
-		cudaMalloc( (void**)&devPtr, sizeof( REALT )*dim.getSize() );
-	};
+		DeviceMemoryManager::malloc( &devPtr, sizeof( REALT )*dim.getSize(), "local plaquette" );
+	}
 
 	void calculatePlaquettes()
 	{
@@ -48,7 +49,7 @@ public:
 
 	~PlaquetteAverage()
 	{
-		cudaFree( devPtr );
+		DeviceMemoryManager::free( devPtr );
 	}
 
 private:

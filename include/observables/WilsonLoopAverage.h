@@ -23,7 +23,7 @@ public:
 
 	WilsonLoopAverage( T* U, LatticeDimension<PatternType::SITETYPE::NDIM> dim ) : dim(dim), U(U), reducer( dim.getSize() )
 	{
-		cudaMalloc( (void**)&devPtr, sizeof( REALT )*dim.getSize() );
+		DeviceMemoryManager::malloc( &devPtr, sizeof( REALT )*dim.getSize(), "local wilson loop" );
 	};
 
 	void calculateWilsonLoops( int dir1, int length1, int dir2, int length2 )
@@ -68,7 +68,7 @@ public:
 
 	~WilsonLoopAverage()
 	{
-		cudaFree( devPtr );
+		DeviceMemoryManager::free( devPtr );
 	}
 
 	void setU( T* u ) {
