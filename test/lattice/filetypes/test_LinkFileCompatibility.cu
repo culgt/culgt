@@ -7,11 +7,15 @@
 #include "lattice/parameterization_types/SU3Vector4.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Vector4_Real18.h"
 #include "lattice/configuration_patterns/GPUPatternParityPriority.h"
-#include "lattice/filetypes/LinkFileILDG.h"
+#include "lattice/filetypes/filetype_config.h"
 #include "lattice/filetypes/LinkFileVogt.h"
 #include "lattice/filetypes/LinkFileNERSC.h"
 #include "lattice/filetypes/LinkFileHirep.h"
 #include "observables/PlaquetteAverage.h"
+
+#ifdef CULGT_HAVE_LINKFILE_ILDG
+#include "lattice/filetypes/LinkFileILDG.h"
+#endif
 
 using namespace culgt;
 using namespace ::testing;
@@ -57,6 +61,7 @@ public:
 
 typedef LinkFileCompatibilitySU3Template<4> LinkFileCompatibilitySU3;
 
+#ifdef CULGT_HAVE_LINKFILE_ILDG
 TEST_F( LinkFileCompatibilitySU3, CheckILDGPlaquette )
 {
 	LinkFileILDG<PATTERNTYPE> linkfile( dim );
@@ -67,6 +72,7 @@ TEST_F( LinkFileCompatibilitySU3, CheckILDGPlaquette )
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
+#endif
 
 TEST_F( LinkFileCompatibilitySU3, CheckVogtPlaquette )
 {
@@ -90,10 +96,10 @@ TEST_F( LinkFileCompatibilitySU3, CheckNERSCPlaquette )
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
 
-TEST_F( LinkFileCompatibilitySU3, VogtWriteReadFromILDG )
+TEST_F( LinkFileCompatibilitySU3, VogtWriteReadFromNERSC )
 {
-	LinkFileILDG<PATTERNTYPE> linkfileIn( dim );
-	linkfileIn.setFilename( "lat.sample.l4444.ildg" );
+	LinkFileNERSC<PATTERNTYPE> linkfileIn( dim );
+	linkfileIn.setFilename( "lat.sample.l4444.nersc" );
 	config2.loadFile( linkfileIn );
 
 
@@ -129,7 +135,7 @@ TEST_F( LinkFileCompatibilitySU3, NERSCWriteReadFromVogt )
 }
 
 
-
+#ifdef CULGT_HAVE_LINKFILE_ILDG
 TEST_F( LinkFileCompatibilitySU3, ILDGReadWriteReadWithSameLinkFileWorks )
 {
 	LinkFileILDG<PATTERNTYPE> linkfileInOut( dim );
@@ -158,9 +164,11 @@ TEST_F( LinkFileCompatibilitySU3, ILDGReadWriteReadWithDifferentLinkFileThrowsEx
 
 	ASSERT_THROW( config2.saveFile( linkfileOut ), LinkFileException );
 }
+#endif
 
 typedef LinkFileCompatibilitySU3Template<5> LinkFileCompatibilitySU3WrongSize;
 
+#ifdef CULGT_HAVE_LINKFILE_ILDG
 TEST_F( LinkFileCompatibilitySU3WrongSize, ILDGThrowsException )
 {
 	LinkFileILDG<PATTERNTYPE> linkfile( dim );
@@ -168,6 +176,7 @@ TEST_F( LinkFileCompatibilitySU3WrongSize, ILDGThrowsException )
 
 	ASSERT_THROW( config.loadFile( linkfile ), LinkFileException );
 }
+#endif
 
 TEST_F( LinkFileCompatibilitySU3WrongSize, VogtThrowsException )
 {

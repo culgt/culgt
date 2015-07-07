@@ -21,5 +21,7 @@ TEST( ALinkFileManager, AllocationForDifferentFileTypes )
 	LinkFileManager<MEMORYPATTERN> filemanagerVogt( VOGT, dim, STANDARD );
 	LinkFileManager<MEMORYPATTERN> filemanagerHeaderonly( HEADERONLY, dim, STANDARD );
 	LinkFileManager<MEMORYPATTERN> filemanagerHirep( HIREP, dim, STANDARD );
+#ifdef CULGT_HAVE_LINKFILE_ILDG
 	LinkFileManager<MEMORYPATTERN> filemanagerILDG( ILDG, dim, STANDARD );
+#endif
 }

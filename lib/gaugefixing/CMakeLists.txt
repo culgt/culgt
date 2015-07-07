@@ -12,13 +12,19 @@ option( DISABLE_AUTOTUNE "disables the autotuner (for debugging purpose)" OFF )
 
 #========================================================
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} $ENV{CULGT_HOME}/cmake/ )
+
 include_directories( $ENV{CULGT_HOME}/include )
 link_directories( /usr/local/cuda/lib64)
 add_definitions(-std=c++11)
 set(CMAKE_CXX_FLAGS "-Wall -O3")
 
 find_package(CUDA)
-include(FindCUDA)
+
+find_package( Boost COMPONENTS program_options REQUIRED )
+
+include( CheckHaveILDG )
+#set( CULGT_OPTIONS "${CULGT_OPTIONS} ${HAVE_ILDG}" )
 
 if( ${PRINT_KERNEL_INFO} )
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xptxas -v" )
@@ -54,13 +60,11 @@ cuda_add_library( GaugeFixingLibrary
     $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu
     $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc
     )
-target_link_libraries(GaugeFixingLibrary liblime.a )
 target_link_libraries(GaugeFixingLibrary pthread)
-target_link_libraries(GaugeFixingLibrary cudart)
-target_link_libraries(GaugeFixingLibrary cufft)
-target_link_libraries(GaugeFixingLibrary boost_program_options)
-target_link_libraries(GaugeFixingLibrary tinyxml)
-    
+target_link_libraries(GaugeFixingLibrary ${Boost_LIBRARIES} )
+target_link_libraries(GaugeFixingLibrary ${CUDA_LIBRARIES} )
+target_link_libraries(GaugeFixingLibrary ${lime_LIBRARIES} )
+target_link_libraries(GaugeFixingLibrary ${tinyxml_LIBRARIES})
 
 cuda_add_executable(CoulombGaugeSP
     CoulombGaugeFixingApp.cu

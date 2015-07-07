@@ -6,16 +6,17 @@ set( commonsettings "")
         message( FATAL_ERROR "Please set CULGT_HOME (in cmake or as environmental variable)" )
     endif()
     
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} $ENV{CULGT_HOME}/cmake/ )
+    
     include( ${CULGT_HOME}/test/gmock_setup.cmake )
     include( ${CULGT_HOME}/cmake/target_link_libraries_whole_archive.cmake )
+
+    include( CheckHaveILDG )  
 
     set( CUDA_ARCH "sm_35" CACHE STRING "CUDA architecture to compile for" )
     option( PRINT_KERNEL_INFO "print kernel infos" OFF )
     option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
     
-
-
-
 #    set( CMAKE_VERBOSE_MAKEFILE on )
     
 	include_directories(

@@ -16,6 +16,7 @@
 #include "lattice/parameterization_types/SUNRealFull.h"
 #include "lattice/parameterization_types/SU3Real12.h"
 #include "lattice/parameterization_types/ParameterizationMediatorSU3_Real12_Real18.h"
+#include "lattice/site_indexing/SiteCoord.h"
 #include "common/culgt_typedefs.h"
 #include "common/culgt_compat.h"
 #include <string>

@@ -8,13 +8,17 @@
 #ifndef LINKFILEMANAGER_H_
 #define LINKFILEMANAGER_H_
 
+#include "filetype_config.h"
 #include "filetypes.h"
 #include "LinkFile.h"
-#include "LinkFileILDG.h"
 #include "LinkFileVogt.h"
 #include "LinkFileHirep.h"
 #include "LinkFileHeaderOnly.h"
 #include "LinkFileNERSC.h"
+
+#ifdef CULGT_HAVE_LINKFILE_ILDG
+#include "LinkFileILDG.h"
+#endif
 
 using namespace culgt::LinkFileType;
 
@@ -42,8 +46,12 @@ public:
 			linkFile = new LinkFileVogt<MemoryPattern>( size, reinterpret );
 			break;
 		case ILDG:
+#ifdef CULGT_HAVE_LINKFILE_ILDG
 			linkFile = new LinkFileILDG<MemoryPattern>( size, reinterpret );
 			break;
+#else
+			throw LinkFileException( "ILDG file format not supported (recompile with required libraries)");
+#endif
 		case NERSC:
 			if( MemoryPattern::PARAMTYPE::NC == 3 )
 			{
