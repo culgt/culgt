@@ -20,6 +20,14 @@ using std::ios;
 namespace culgt
 {
 
+__global__ void clearKernel( void* ptr, size_t size )
+{
+	for( size_t i = 0; i < size/sizeof(char); ++i )
+	{
+		((char*)ptr)[i] = '0';
+	}
+}
+
 bad_alloc_cuda::bad_alloc_cuda( std::string str ) throw() :str(str) { }
 bad_alloc_cuda::~bad_alloc_cuda() throw(){};
 const char* bad_alloc_cuda::what() const throw()
@@ -30,6 +38,9 @@ const char* bad_alloc_cuda::what() const throw()
 MemoryStruct::MemoryStruct( size_t size, std::string info ): size(size), info(info)
 {
 }
+//MemoryStruct::MemoryStruct( const MemoryStruct& m ): size(m.getSize()), info(m.getInfo())
+//{
+//}
 
 std::string MemoryStruct::getInfo() const
 {

@@ -13,9 +13,12 @@
 #include <iomanip>
 #include <string>
 #include <map>
+#include <iostream>
 
 namespace culgt
 {
+
+__global__ void clearKernel( void* ptr, size_t size );
 
 class bad_alloc_cuda : public std::bad_alloc
 {
@@ -38,7 +41,6 @@ private:
 	std::string info;
 };
 
-
 class DeviceMemoryManager
 {
 public:
@@ -59,6 +61,12 @@ public:
 		registerFree( pointer );
 	}
 
+	template<typename T> static inline void clear( T* pointer )
+	{
+		std::map<void*, MemoryStruct>::iterator it = info.find( pointer );
+		clearKernel<<<1,1>>>((void*)pointer, it->second.getSize() );
+	}
+
 	static void registerMalloc( void* pointer, size_t size, std::string description );
 	static void registerFree( void* pointer );
 	static size_t getMemoryUsage();
@@ -66,6 +74,7 @@ public:
 	static double getUnregisteredMemoryMB();
 	static void setVerbose();
 	static void unsetVerbose();
+
 
 	static bool verbose;
 private:
