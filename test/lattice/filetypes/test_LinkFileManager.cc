@@ -15,7 +15,7 @@ using namespace ::testing;
 
 TEST( ALinkFileManager, AllocationForDifferentFileTypes )
 {
-	typedef PatternStub<float,4,2> MEMORYPATTERN;
+	typedef PatternStub<> MEMORYPATTERN;
 	LatticeDimension<4> dim;
 
 	LinkFileManager<MEMORYPATTERN> filemanagerVogt( VOGT, dim, STANDARD );
@@ -24,4 +24,6 @@ TEST( ALinkFileManager, AllocationForDifferentFileTypes )
 #ifdef CULGT_HAVE_LINKFILE_ILDG
 	LinkFileManager<MEMORYPATTERN> filemanagerILDG( ILDG, dim, STANDARD );
 #endif
+	LinkFileManager<MEMORYPATTERN> filemanagerNERSC( NERSC, dim, STANDARD );
+	LinkFileManager<MEMORYPATTERN> filemanagerMDP( HIREP, dim, STANDARD );
 }

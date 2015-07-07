@@ -15,6 +15,7 @@
 #include "LinkFileHirep.h"
 #include "LinkFileHeaderOnly.h"
 #include "LinkFileNERSC.h"
+#include "LinkFileMDP.h"
 
 #ifdef CULGT_HAVE_LINKFILE_ILDG
 #include "LinkFileILDG.h"
@@ -38,6 +39,9 @@ public:
 		case DEFAULT:
 		case HEADERONLY:
 			linkFile = new LinkFileHeaderOnly<MemoryPattern>( size, reinterpret );
+			break;
+		case MDP:
+			linkFile = new LinkFileMDP<MemoryPattern>( size, reinterpret );
 			break;
 		case HIREP:
 			linkFile = new LinkFileHirep<MemoryPattern>( size, reinterpret );

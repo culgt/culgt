@@ -54,6 +54,7 @@ set(sources_cuda
 	test_GaugeConfigurationWithPattern.cu
 	test_LatticeDimension.cu
 	filetypes/test_LinkFileCompatibility.cu
+	filetypes/test_LinkFileMDP.cu
 	test_KernelSetup.cu
 	parameterization_types/test_SU2Vector4.cu
 	site_indexing/test_SiteNeighbourTableManager.cu

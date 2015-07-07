@@ -43,8 +43,8 @@ public:
 		("ny", boost::program_options::value<int>(&ny)->default_value(-1), "size in y direction (-1 = same as x direction)" )
 		("nz", boost::program_options::value<int>(&nz)->default_value(-1), "size in z direction (-1 = same as x direction)" )
 
-		("filetype", boost::program_options::value<LinkFileType::FileType>(&filetype)->default_value(LinkFileType::HEADERONLY), "file type of gauge configuration files (HEADERONLY, VOGT, ILDG, HIREP)")
-		("filetypeout", boost::program_options::value<LinkFileType::FileType>(&filetypeOut)->default_value(LinkFileType::DEFAULT), "file type of gauge configuration files used when saving (HEADERONLY, VOGT, ILDG, HIREP, DEFAULT=same as input)")
+		("filetype", boost::program_options::value<LinkFileType::FileType>(&filetype)->default_value(LinkFileType::MDP), "file type of gauge configuration files (HEADERONLY, VOGT, ILDG, HIREP, MDP, NERSC)")
+		("filetypeout", boost::program_options::value<LinkFileType::FileType>(&filetypeOut)->default_value(LinkFileType::DEFAULT), "file type of gauge configuration files used when saving (HEADERONLY, VOGT, ILDG, HIREP, MDP, NERSC, DEFAULT=same as input)")
 		("fbasename", boost::program_options::value<string>(&fileBasename), "file basename (part before numbering starts)")
 		("fextension", boost::program_options::value<string>(&fileExtension)->default_value(""), "file extension (if no extension is set it will be set to the filetype default")
 		("fextensionout", boost::program_options::value<string>(&fileExtensionOut)->default_value(""), "file extension for output file (if no extension is set it will be set to the filetype default")

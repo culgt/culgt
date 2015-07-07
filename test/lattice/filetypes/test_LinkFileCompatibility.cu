@@ -10,6 +10,7 @@
 #include "lattice/filetypes/filetype_config.h"
 #include "lattice/filetypes/LinkFileVogt.h"
 #include "lattice/filetypes/LinkFileNERSC.h"
+#include "lattice/filetypes/LinkFileMDP.h"
 #include "lattice/filetypes/LinkFileHirep.h"
 #include "observables/PlaquetteAverage.h"
 
@@ -39,6 +40,7 @@ public:
 	void SetUp()
 	{
 		config.allocateMemory();
+		DeviceMemoryManager::clear( config.getDevicePointer() );
 		config2.allocateMemory();
 		plaquetteCalculator = new PlaquetteAverage<PATTERNTYPE,LOCALLINK>( config.getDevicePointer(), dim );
 	}
@@ -102,7 +104,6 @@ TEST_F( LinkFileCompatibilitySU3, VogtWriteReadFromNERSC )
 	linkfileIn.setFilename( "lat.sample.l4444.nersc" );
 	config2.loadFile( linkfileIn );
 
-
 	LinkFileVogt<PATTERNTYPE> linkfileOut( dim );
 	linkfileOut.setFilename( "tempILDG2Vogt.vogt" );
 	config2.saveFile( linkfileOut );
@@ -128,6 +129,24 @@ TEST_F( LinkFileCompatibilitySU3, NERSCWriteReadFromVogt )
 
 	LinkFileNERSC<PATTERNTYPE> linkfileCheck( dim );
 	linkfileCheck.setFilename( "tempVogt2NERSC.nersc" );
+	config.loadFile( linkfileCheck );
+	config.copyToDevice();
+
+	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
+}
+
+TEST_F( LinkFileCompatibilitySU3, MDPWriteReadFromVogt )
+{
+	LinkFileVogt<PATTERNTYPE> linkfileIn( dim );
+	linkfileIn.setFilename( "lat.sample.l4444.vogt" );
+	config2.loadFile( linkfileIn );
+
+	LinkFileMDP<PATTERNTYPE> linkfileOut( dim );
+	linkfileOut.setFilename( "tempVogt2MDP.mdp" );
+	config2.saveFile( linkfileOut );
+
+	LinkFileMDP<PATTERNTYPE> linkfileCheck( dim );
+	linkfileCheck.setFilename( "tempVogt2MDP.mdp" );
 	config.loadFile( linkfileCheck );
 	config.copyToDevice();
 
@@ -214,6 +233,7 @@ public:
 	void SetUp()
 	{
 		config.allocateMemory();
+		DeviceMemoryManager::clear( config.getDevicePointer() );
 		config2.allocateMemory();
 		plaquetteCalculator = new PlaquetteAverage<PATTERNTYPE,LOCALLINK>( config.getDevicePointer(), dim );
 	}
