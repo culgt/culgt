@@ -24,7 +24,6 @@ find_package(CUDA)
 find_package( Boost COMPONENTS program_options REQUIRED )
 
 include( CheckHaveILDG )
-#set( CULGT_OPTIONS "${CULGT_OPTIONS} ${HAVE_ILDG}" )
 
 if( ${PRINT_KERNEL_INFO} )
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xptxas -v" )
