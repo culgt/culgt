@@ -1,0 +1,7 @@
+The runtimechooser is now kept in a separate repository.
+To update the runtimechooser (in cuLGT) copy the files from
+the runtimechooser repo to this directory and commit.
+
+Examples are in the runtimechooser repository.
+
+IMPORTANT: Do not change the runtimechooser files in this repository!
