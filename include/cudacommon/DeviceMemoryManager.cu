@@ -9,11 +9,6 @@
 
 #include "DeviceMemoryManager.h"
 
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <map>
-#include <iosfwd>
 
 using std::ios;
 

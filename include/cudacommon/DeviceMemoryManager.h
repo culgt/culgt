@@ -14,6 +14,9 @@
 #include <string>
 #include <map>
 #include <iostream>
+#include <iosfwd>
+
+#include "cudacommon/cuda_error.h"
 
 namespace culgt
 {
