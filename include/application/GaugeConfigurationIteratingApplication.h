@@ -163,7 +163,7 @@ public:
 
 	std::string makeFileExtension( string poFileExtension, string filetypeFileExtension )
 	{
-		if( poFileExtension.size() > 0 )
+		if( poFileExtension.compare( "DEFAULT" ) != 0 )
 		{
 			return poFileExtension;
 		}
