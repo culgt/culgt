@@ -8,6 +8,8 @@
 #ifndef TEST_PATTERNMOCKS_H_
 #define TEST_PATTERNMOCKS_H_
 #include "lattice/site_indexing/ParityType.h"
+#include "cudacommon/cuda_host_device.h"
+#include "common/culgt_typedefs.h"
 
 using namespace culgt;
 
@@ -18,29 +20,29 @@ public:
 	static const int NDIM = TNdim;
 	const int size;
 	const int sizeTimeslice;
-	int index;
-	int indexTimeslice;
-	SiteTypeMock( int size, int sizeTimeslice, int index, int indexTimeslice ) : size(size), sizeTimeslice(sizeTimeslice), index(index), indexTimeslice(indexTimeslice) {};
-	SiteTypeMock( int size, int index ) : size(size), sizeTimeslice(0), index(index), indexTimeslice(0) {};
-	SiteTypeMock( int index ) : size(0), sizeTimeslice(0), index(index), indexTimeslice(0) {};
-	SiteTypeMock() : size(0), sizeTimeslice(0), index(0), indexTimeslice(0) {};
-	void setIndex( int index )
+	lat_index_t index;
+	lat_index_t indexTimeslice;
+	CUDA_HOST_DEVICE SiteTypeMock( int size, int sizeTimeslice, int index, int indexTimeslice ) : size(size), sizeTimeslice(sizeTimeslice), index(index), indexTimeslice(indexTimeslice) {};
+	CUDA_HOST_DEVICE SiteTypeMock( int size, int index ) : size(size), sizeTimeslice(0), index(index), indexTimeslice(0) {};
+	CUDA_HOST_DEVICE SiteTypeMock( int index ) : size(0), sizeTimeslice(0), index(index), indexTimeslice(0) {};
+	CUDA_HOST_DEVICE SiteTypeMock() : size(0), sizeTimeslice(0), index(0), indexTimeslice(0) {};
+	CUDA_HOST_DEVICE void setIndex( int index )
 	{
 		this->index = index;
 	}
-	int getIndex() const
+	CUDA_HOST_DEVICE lat_index_t getIndex() const
  	{
 		return index;
 	}
-	int getIndexTimeslice() const
+	CUDA_HOST_DEVICE lat_index_t getIndexTimeslice() const
 	{
 		return indexTimeslice;
 	}
-	int getSize() const
+	CUDA_HOST_DEVICE lat_index_t getSize() const
 	{
 		return size;
 	}
-	int getSizeTimeslice() const
+	CUDA_HOST_DEVICE lat_index_t getSizeTimeslice() const
 	{
 		return sizeTimeslice;
 	}
@@ -50,11 +52,11 @@ public:
 	 * @param mu
 	 * @return
 	 */
-	int getCoord( const int mu) const
+	CUDA_HOST_DEVICE int getCoord( const int mu) const
 	{
 		return index/sizeTimeslice;
 	}
-	int operator[]( const int mu ) const
+	CUDA_HOST_DEVICE int operator[]( const int mu ) const
 	{
 		return index/sizeTimeslice;
 	}
