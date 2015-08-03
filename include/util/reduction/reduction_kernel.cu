@@ -21,6 +21,8 @@
 
 namespace culgt
 {
+namespace reduction
+{
 
 // Utility class used to avoid linker errors with extern
 // unsized shared memory arrays with templated type
@@ -1476,5 +1478,6 @@ reducemax(int size, int threads, int blocks,
 //reducedot<double>(int size, int threads, int blocks,
 //               int whichKernel, double *d_idata, double *d_idata2, double *d_odata);
 
+}
 }
 #endif // #ifndef _REDUCE_KERNEL_H_

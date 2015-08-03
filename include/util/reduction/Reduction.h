@@ -38,7 +38,7 @@ private:
 	T *h_odata;
 };
 
-template<class T> Reduction<T>::Reduction(int size) : size(size)
+template<class T> culgt::Reduction<T>::Reduction(int size) : size(size)
 {
 	cpuFinalThreshold = 1; // const for testing...
 	whichKernel = 6;
@@ -50,7 +50,7 @@ template<class T> Reduction<T>::Reduction(int size) : size(size)
 	init();
 }
 
-template<class T> void Reduction<T>::init()
+template<class T> void culgt::Reduction<T>::init()
 {
 	numBlocks = 0;
 	numThreads = 0;
@@ -65,16 +65,16 @@ template<class T> void Reduction<T>::init()
 	h_odata = (T *) malloc(numBlocks*sizeof(T));
 }
 
-template<class T> void Reduction<T>::getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThreads, int &blocks, int &threads)
+template<class T> void culgt::Reduction<T>::getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThreads, int &blocks, int &threads)
 {
 	if (whichKernel < 3)
 	{
-		threads = (n < maxThreads) ? nextPow2(n) : maxThreads;
+		threads = (n < maxThreads) ? reduction::nextPow2(n) : maxThreads;
 		blocks = (n + threads - 1) / threads;
 	}
 	else
 	{
-		threads = (n < maxThreads*2) ? nextPow2((n + 1)/ 2) : maxThreads;
+		threads = (n < maxThreads*2) ? reduction::nextPow2((n + 1)/ 2) : maxThreads;
 		blocks = (n + (threads * 2 - 1)) / (threads * 2);
 	}
 
@@ -85,21 +85,21 @@ template<class T> void Reduction<T>::getNumBlocksAndThreads(int whichKernel, int
 	}
 }
 
-template<class T> T Reduction<T>::reduceAll( T* d_idata )
+template<class T> T culgt::Reduction<T>::reduceAll( T* d_idata )
 {
 	int s=numBlocks;
 	int kernel = whichKernel;
 	T gpu_result = 0.;
 	bool needReadBack = true;
 
-	reduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+	reduction::reduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
 
 	while (s > cpuFinalThreshold )
 	{
 		int threads = 0, blocks = 0;
 		getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
 
-		reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+		reduction::reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
 
 		if (kernel < 3)
 		{
@@ -133,21 +133,21 @@ template<class T> T Reduction<T>::reduceAll( T* d_idata )
 }
 
 
-template<class T> T Reduction<T>::reduceAllDot( T* d_idata, T* d_idata2 )
+template<class T> T culgt::Reduction<T>::reduceAllDot( T* d_idata, T* d_idata2 )
 {
 	int s=numBlocks;
 	int kernel = whichKernel;
 	T gpu_result = 0.;
 	bool needReadBack = true;
 
-	reducedot<T,false>(size, numThreads, numBlocks, whichKernel, d_idata, d_idata2, d_odata);
+	reduction::reducedot<T,false>(size, numThreads, numBlocks, whichKernel, d_idata, d_idata2, d_odata);
 
 	while (s > cpuFinalThreshold )
 	{
 		int threads = 0, blocks = 0;
 		getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
 
-		reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+		reduction::reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
 
 		if (kernel < 3)
 		{
@@ -180,21 +180,21 @@ template<class T> T Reduction<T>::reduceAllDot( T* d_idata, T* d_idata2 )
 	return gpu_result;
 }
 
-template<class T> T Reduction<T>::reduceAllDotConjugate( T* d_idata, T* d_idata2 )
+template<class T> T culgt::Reduction<T>::reduceAllDotConjugate( T* d_idata, T* d_idata2 )
 {
 	int s=numBlocks;
 	int kernel = whichKernel;
 	T gpu_result = 0.;
 	bool needReadBack = true;
 
-	reducedot<T,true>(size, numThreads, numBlocks, whichKernel, d_idata, d_idata2, d_odata);
+	reduction::reducedot<T,true>(size, numThreads, numBlocks, whichKernel, d_idata, d_idata2, d_odata);
 
 	while (s > cpuFinalThreshold )
 	{
 		int threads = 0, blocks = 0;
 		getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
 
-		reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+		reduction::reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
 
 		if (kernel < 3)
 		{
@@ -227,21 +227,21 @@ template<class T> T Reduction<T>::reduceAllDotConjugate( T* d_idata, T* d_idata2
 	return gpu_result;
 }
 
-template<class T> T Reduction<T>::reduceAllAbs( T* d_idata )
+template<class T> T culgt::Reduction<T>::reduceAllAbs( T* d_idata )
 {
 	int s=numBlocks;
 	int kernel = whichKernel;
 	T gpu_result = 0;
 	bool needReadBack = true;
 
-	reduceabs<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+	reduction::reduceabs<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
 
 	while (s > cpuFinalThreshold )
 	{
 		int threads = 0, blocks = 0;
 		getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
 
-		reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+		reduction::reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
 
 		if (kernel < 3)
 		{
@@ -274,21 +274,21 @@ template<class T> T Reduction<T>::reduceAllAbs( T* d_idata )
 	return gpu_result;
 }
 
-template<class T> T Reduction<T>::reduceAllMax( T* d_idata )
+template<class T> T culgt::Reduction<T>::reduceAllMax( T* d_idata )
 {
 	int s=numBlocks;
 	int kernel = whichKernel;
 	T gpu_result = 0;
 	bool needReadBack = true;
 
-	reducemax<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+	reduction::reducemax<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
 
 	while (s > cpuFinalThreshold )
 	{
 		int threads = 0, blocks = 0;
 		getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
 
-		reducemax<T>(s, threads, blocks, kernel, d_odata, d_odata);
+		reduction::reducemax<T>(s, threads, blocks, kernel, d_odata, d_odata);
 
 		if (kernel < 3)
 		{
