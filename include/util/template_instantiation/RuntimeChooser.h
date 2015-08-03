@@ -51,7 +51,7 @@ public:
 		{
 			RuntimeChooserOption option;
 			option.id = hashed;
-			option.name = culgt::mpl::ListToString<T>::getString();
+			option.name = culgt::mplextension::ListToString<T>::getString();
 
 			options.push_back( option );
 		}

@@ -14,7 +14,7 @@
 
 namespace culgt
 {
-namespace mpl
+namespace mplextension
 {
 	template<typename UniqueID> struct StringContainer
 	{
