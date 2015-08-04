@@ -31,23 +31,25 @@ public:
 	typedef LocalLink<SUNRealFull<3,REAL> > LOCALLINK;
 
 	LatticeDimension<4> dim;
-	GaugeConfiguration<PATTERNTYPE> config;
-	GaugeConfiguration<PATTERNTYPE> config2;
+	GaugeConfiguration<PATTERNTYPE>* config;
+	GaugeConfiguration<PATTERNTYPE>* config2;
 	PlaquetteAverage<PATTERNTYPE,LOCALLINK>* plaquetteCalculator;
 
 	const double plaquetteValue = 5.948501558951e-01;
 
 	void SetUp()
 	{
-		config.allocateMemory();
-		DeviceMemoryManager::clear( config.getDevicePointer() );
-		config2.allocateMemory();
-		plaquetteCalculator = new PlaquetteAverage<PATTERNTYPE,LOCALLINK>( config.getDevicePointer(), dim );
+		config = new GaugeConfiguration<PATTERNTYPE>(dim);
+		config2 = new GaugeConfiguration<PATTERNTYPE>(dim);
+		config->allocateMemory();
+		DeviceMemoryManager::clear( config->getDevicePointer() );
+		config2->allocateMemory();
+		plaquetteCalculator = new PlaquetteAverage<PATTERNTYPE,LOCALLINK>( config->getDevicePointer(), dim );
 	}
 	void TearDown()
 	{
-		config.freeMemory();
-		config2.freeMemory();
+		delete config;
+		delete config2;
 		delete plaquetteCalculator;
 	}
 
@@ -56,7 +58,7 @@ public:
 		return plaquetteCalculator->getPlaquette();
 	}
 
-	LinkFileCompatibilitySU3Template(): dim(N,N,N,N), config( dim ), config2( dim )
+	LinkFileCompatibilitySU3Template(): dim(N,N,N,N)
 	{
 	}
 };
@@ -69,8 +71,8 @@ TEST_F( LinkFileCompatibilitySU3, CheckILDGPlaquette )
 	LinkFileILDG<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "lat.sample.l4444.ildg" );
 
-	config.loadFile( linkfile );
-	config.copyToDevice();
+	config->loadFile( linkfile );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -81,8 +83,8 @@ TEST_F( LinkFileCompatibilitySU3, CheckVogtPlaquette )
 	LinkFileVogt<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "lat.sample.l4444.vogt" );
 
-	config.loadFile( linkfile );
-	config.copyToDevice();
+	config->loadFile( linkfile );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -92,8 +94,8 @@ TEST_F( LinkFileCompatibilitySU3, CheckNERSCPlaquette )
 	LinkFileNERSC<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "lat.sample.l4444.nersc" );
 
-	config.loadFile( linkfile );
-	config.copyToDevice();
+	config->loadFile( linkfile );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -102,16 +104,16 @@ TEST_F( LinkFileCompatibilitySU3, VogtWriteReadFromNERSC )
 {
 	LinkFileNERSC<PATTERNTYPE> linkfileIn( dim );
 	linkfileIn.setFilename( "lat.sample.l4444.nersc" );
-	config2.loadFile( linkfileIn );
+	config2->loadFile( linkfileIn );
 
 	LinkFileVogt<PATTERNTYPE> linkfileOut( dim );
 	linkfileOut.setFilename( "tempILDG2Vogt.vogt" );
-	config2.saveFile( linkfileOut );
+	config2->saveFile( linkfileOut );
 
 	LinkFileVogt<PATTERNTYPE> linkfileCheck( dim );
 	linkfileCheck.setFilename( "tempILDG2Vogt.vogt" );
-	config.loadFile( linkfileCheck );
-	config.copyToDevice();
+	config->loadFile( linkfileCheck );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -120,17 +122,17 @@ TEST_F( LinkFileCompatibilitySU3, NERSCWriteReadFromVogt )
 {
 	LinkFileVogt<PATTERNTYPE> linkfileIn( dim );
 	linkfileIn.setFilename( "lat.sample.l4444.vogt" );
-	config2.loadFile( linkfileIn );
+	config2->loadFile( linkfileIn );
 
 
 	LinkFileNERSC<PATTERNTYPE> linkfileOut( dim );
 	linkfileOut.setFilename( "tempVogt2NERSC.nersc" );
-	config2.saveFile( linkfileOut );
+	config2->saveFile( linkfileOut );
 
 	LinkFileNERSC<PATTERNTYPE> linkfileCheck( dim );
 	linkfileCheck.setFilename( "tempVogt2NERSC.nersc" );
-	config.loadFile( linkfileCheck );
-	config.copyToDevice();
+	config->loadFile( linkfileCheck );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -139,16 +141,16 @@ TEST_F( LinkFileCompatibilitySU3, MDPWriteReadFromVogt )
 {
 	LinkFileVogt<PATTERNTYPE> linkfileIn( dim );
 	linkfileIn.setFilename( "lat.sample.l4444.vogt" );
-	config2.loadFile( linkfileIn );
+	config2->loadFile( linkfileIn );
 
 	LinkFileMDP<PATTERNTYPE> linkfileOut( dim );
 	linkfileOut.setFilename( "tempVogt2MDP.mdp" );
-	config2.saveFile( linkfileOut );
+	config2->saveFile( linkfileOut );
 
 	LinkFileMDP<PATTERNTYPE> linkfileCheck( dim );
 	linkfileCheck.setFilename( "tempVogt2MDP.mdp" );
-	config.loadFile( linkfileCheck );
-	config.copyToDevice();
+	config->loadFile( linkfileCheck );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -159,15 +161,15 @@ TEST_F( LinkFileCompatibilitySU3, ILDGReadWriteReadWithSameLinkFileWorks )
 {
 	LinkFileILDG<PATTERNTYPE> linkfileInOut( dim );
 	linkfileInOut.setFilename( "lat.sample.l4444.ildg" );
-	config2.loadFile( linkfileInOut );
+	config2->loadFile( linkfileInOut );
 
 	linkfileInOut.setFilename( "tempILDG2ILDG.ildg" );
-	config2.saveFile( linkfileInOut );
+	config2->saveFile( linkfileInOut );
 
 	LinkFileILDG<PATTERNTYPE> linkfileCheck( dim );
 	linkfileCheck.setFilename( "tempILDG2ILDG.ildg" );
-	config.loadFile( linkfileCheck );
-	config.copyToDevice();
+	config->loadFile( linkfileCheck );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -176,12 +178,12 @@ TEST_F( LinkFileCompatibilitySU3, ILDGReadWriteReadWithDifferentLinkFileThrowsEx
 {
 	LinkFileILDG<PATTERNTYPE> linkfileIn( dim );
 	linkfileIn.setFilename( "lat.sample.l4444.ildg" );
-	config2.loadFile( linkfileIn );
+	config2->loadFile( linkfileIn );
 
 	LinkFileILDG<PATTERNTYPE> linkfileOut( dim );
 	linkfileOut.setFilename( "tempILDG2ILDG2.ildg" );
 
-	ASSERT_THROW( config2.saveFile( linkfileOut ), LinkFileException );
+	ASSERT_THROW( config2->saveFile( linkfileOut ), LinkFileException );
 }
 #endif
 
@@ -193,7 +195,7 @@ TEST_F( LinkFileCompatibilitySU3WrongSize, ILDGThrowsException )
 	LinkFileILDG<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "lat.sample.l4444.ildg" );
 
-	ASSERT_THROW( config.loadFile( linkfile ), LinkFileException );
+	ASSERT_THROW( config->loadFile( linkfile ), LinkFileException );
 }
 #endif
 
@@ -202,7 +204,7 @@ TEST_F( LinkFileCompatibilitySU3WrongSize, VogtThrowsException )
 	LinkFileVogt<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "lat.sample.l4444.vogt" );
 
-	ASSERT_THROW( config.loadFile( linkfile ), LinkFileException );
+	ASSERT_THROW( config->loadFile( linkfile ), LinkFileException );
 }
 
 TEST_F( LinkFileCompatibilitySU3WrongSize, NERSCThrowsException )
@@ -210,7 +212,7 @@ TEST_F( LinkFileCompatibilitySU3WrongSize, NERSCThrowsException )
 	LinkFileNERSC<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "lat.sample.l4444.nersc" );
 
-	ASSERT_THROW( config.loadFile( linkfile ), LinkFileException );
+	ASSERT_THROW( config->loadFile( linkfile ), LinkFileException );
 }
 
 
@@ -224,23 +226,25 @@ public:
 	typedef LocalLink<SUNRealFull<2,REAL> > LOCALLINK;
 
 	LatticeDimension<4> dim;
-	GaugeConfiguration<PATTERNTYPE> config;
-	GaugeConfiguration<PATTERNTYPE> config2;
+	GaugeConfiguration<PATTERNTYPE>* config;
+	GaugeConfiguration<PATTERNTYPE>* config2;
 	PlaquetteAverage<PATTERNTYPE,LOCALLINK>* plaquetteCalculator;
 
 	const double plaquetteValue = 0.588338405663378;
 
 	void SetUp()
 	{
-		config.allocateMemory();
-		DeviceMemoryManager::clear( config.getDevicePointer() );
-		config2.allocateMemory();
-		plaquetteCalculator = new PlaquetteAverage<PATTERNTYPE,LOCALLINK>( config.getDevicePointer(), dim );
+		config = new GaugeConfiguration<PATTERNTYPE>(dim);
+		config2 = new GaugeConfiguration<PATTERNTYPE>(dim);
+		config->allocateMemory();
+		DeviceMemoryManager::clear( config->getDevicePointer() );
+		config2->allocateMemory();
+		plaquetteCalculator = new PlaquetteAverage<PATTERNTYPE,LOCALLINK>( config->getDevicePointer(), dim );
 	}
 	void TearDown()
 	{
-		config.freeMemory();
-		config2.freeMemory();
+		delete config;
+		delete config2;
 		delete plaquetteCalculator;
 	}
 
@@ -249,7 +253,7 @@ public:
 		return plaquetteCalculator->getPlaquette();
 	}
 
-	LinkFileCompatibilitySU2Template(): dim(Nt,Nx,Nx,Nx), config( dim ), config2( dim )
+	LinkFileCompatibilitySU2Template(): dim(Nt,Nx,Nx,Nx)
 	{
 	}
 };
@@ -261,8 +265,8 @@ TEST_F( LinkFileCompatibilitySU2, CheckHirepPlaquette )
 	LinkFileHirep<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "sample_16x8x8x8_su2.orig.hirep" );
 
-	config.loadFile( linkfile );
-	config.copyToDevice();
+	config->loadFile( linkfile );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -272,8 +276,8 @@ TEST_F( LinkFileCompatibilitySU2, CheckVogtPlaquette )
 	LinkFileVogt<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "sample_16x8x8x8_su2.vogt" );
 
-	config.loadFile( linkfile );
-	config.copyToDevice();
+	config->loadFile( linkfile );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -282,16 +286,16 @@ TEST_F( LinkFileCompatibilitySU2, HirepWriteReadFromVogt )
 {
 	LinkFileVogt<PATTERNTYPE> linkfileIn( dim );
 	linkfileIn.setFilename( "sample_16x8x8x8_su2.vogt" );
-	config2.loadFile( linkfileIn );
+	config2->loadFile( linkfileIn );
 
 	LinkFileHirep<PATTERNTYPE> linkfileOut( dim );
 	linkfileOut.setFilename( "tempVogt2Hirep.hirep" );
-	config2.saveFile( linkfileOut );
+	config2->saveFile( linkfileOut );
 
 	LinkFileHirep<PATTERNTYPE> linkfileCheck( dim );
 	linkfileCheck.setFilename( "tempVogt2Hirep.hirep" );
-	config.loadFile( linkfileCheck );
-	config.copyToDevice();
+	config->loadFile( linkfileCheck );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -300,17 +304,17 @@ TEST_F( LinkFileCompatibilitySU2, VogtWriteReadFromHirep )
 {
 	LinkFileHirep<PATTERNTYPE> linkfileIn( dim );
 	linkfileIn.setFilename( "sample_16x8x8x8_su2.orig.hirep" );
-	config2.loadFile( linkfileIn );
+	config2->loadFile( linkfileIn );
 
 
 	LinkFileVogt<PATTERNTYPE> linkfileOut( dim );
 	linkfileOut.setFilename( "tempHirep2Vogt.vogt" );
-	config2.saveFile( linkfileOut );
+	config2->saveFile( linkfileOut );
 
 	LinkFileVogt<PATTERNTYPE> linkfileCheck( dim );
 	linkfileCheck.setFilename( "tempHirep2Vogt.vogt" );
-	config.loadFile( linkfileCheck );
-	config.copyToDevice();
+	config->loadFile( linkfileCheck );
+	config->copyToDevice();
 
 	ASSERT_FLOAT_EQ( plaquetteValue, calcPlaquetteOnConfig() );
 }
@@ -323,7 +327,7 @@ TEST_F( LinkFileCompatibilitySU2WrongSize, HirepThrowsException )
 	LinkFileHirep<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "sample_16x8x8x8_su2.orig.hirep" );
 
-	ASSERT_THROW( config.loadFile( linkfile ), LinkFileException );
+	ASSERT_THROW( config->loadFile( linkfile ), LinkFileException );
 }
 
 TEST_F( LinkFileCompatibilitySU2WrongSize, VogtThrowsException )
@@ -331,5 +335,5 @@ TEST_F( LinkFileCompatibilitySU2WrongSize, VogtThrowsException )
 	LinkFileVogt<PATTERNTYPE> linkfile( dim );
 	linkfile.setFilename( "sample_16x8x8x8_su2.vogt" );
 
-	ASSERT_THROW( config.loadFile( linkfile ), LinkFileException );
+	ASSERT_THROW( config->loadFile( linkfile ), LinkFileException );
 }
