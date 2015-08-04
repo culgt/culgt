@@ -13,7 +13,8 @@
 #include "../template_instantiation/RuntimeChooser.h"
 #include "AutotuneManager.h"
 
-#include "../../cudacommon/DeviceProperties.h"
+#include "cudacommon/cuda_error.h"
+#include "cudacommon/DeviceProperties.h"
 
 namespace culgt
 {
@@ -46,14 +47,18 @@ public:
 		timer.reset();
 		timer.start();
 		CUDA_LAST_ERROR("TunableObject::reset()/start()" );
+#ifdef __CUDACC__
 		cudaDeviceSynchronize();
+#endif
 
 		for( int i = 0; i < iter; i++ )
 		{
 			run( id );
 		}
 
+#ifdef __CUDACC__
 		cudaDeviceSynchronize();
+#endif
 		timer.stop();
 		CUDA_LAST_ERROR("TunableObject::stop()" );
 		return timer.getTime();
@@ -63,18 +68,24 @@ public:
 	{
 		timer.reset();
 		timer.start();
+#ifdef __CUDACC__
 		cudaDeviceSynchronize();
+#endif
 	}
 
 	void stopTime()
 	{
+#ifdef __CUDACC__
 		cudaDeviceSynchronize();
+#endif
 		timer.stop();
 	}
 
 	double getTime()
 	{
+#ifdef __CUDACC__
 		cudaDeviceSynchronize();
+#endif
 		return timer.getTime();
 	}
 

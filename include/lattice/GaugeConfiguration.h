@@ -1,15 +1,16 @@
 #ifndef GAUGECONFIGURATION_CC
 #define GAUGECONFIGURATION_CC
 
-#include <cuda.h>
-#include <cuda_runtime.h>
 #include <exception>
 #include <string>
-#include "GaugeConfigurationCudaHelper.h"
 #include "LocalLink.h"
 #include "GlobalLink.h"
 #include "filetypes/LinkFile.h"
 #include "LatticeDimension.h"
+
+#ifdef __CUDACC__
+#include "GaugeConfigurationCudaHelper.h"
+#endif
 
 namespace culgt {
 

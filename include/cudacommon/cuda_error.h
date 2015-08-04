@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 
+#ifdef __CUDACC__
 #ifdef NO_CUDA_SAFE_CALL
 #define CUDA_SAFE_CALL( call, msg ) call;
 #else
@@ -41,6 +42,12 @@
 		fprintf(stderr,"ERROR: %s: %s (%d)\n", msg, cudaGetErrorString(error), error );\
 		exit(-1);\
 	}}
+#endif
+
+#else
+#define CUDA_SAFE_CALL( call, msg ) call;
+#define CUDA_LAST_ERROR( msg )
+#define CUDA_ERROR( error, msg )
 #endif
 
 #endif /* CUDA_ERROR_H_ */
