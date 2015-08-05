@@ -105,7 +105,7 @@ template<typename T> __device__ PhiloxWrapper<T>::~PhiloxWrapper()
 {
 }
 
-template<> __device__ double PhiloxWrapper<double>::rand()
+template<> __device__ inline double PhiloxWrapper<double>::rand()
 {
 	if( localCounter == 0 )// we have to calculate two new doubles
 	{
@@ -121,7 +121,7 @@ template<> __device__ double PhiloxWrapper<double>::rand()
 	}
 }
 
-template<> __device__ float PhiloxWrapper<float>::rand()
+template<> __device__ inline float PhiloxWrapper<float>::rand()
 {
 	if( localCounter == 0 ) // we have to calculate 4 new floats
 	{
@@ -144,7 +144,7 @@ template<> __device__ float PhiloxWrapper<float>::rand()
  * I also tried a variant which generates a new set after every 2 random numbers (instead of 4 for float). As expect, this is also slightly slower. The idea was inspired by the (comparably) very fast double precision rngs!
  * TODO: check the philox2x32
  */
-template<> __device__ float PhiloxWrapper<float>::rand2()
+template<> __device__ inline float PhiloxWrapper<float>::rand2()
 {
 	switch( localCounter )
 	{
@@ -165,7 +165,7 @@ template<> __device__ float PhiloxWrapper<float>::rand2()
 	}
 }
 
-template<> __device__ double PhiloxWrapper<double>::rand2()
+template<> __device__ inline double PhiloxWrapper<double>::rand2()
 {
 	switch( localCounter )
 	{
@@ -180,7 +180,7 @@ template<> __device__ double PhiloxWrapper<double>::rand2()
 	}
 }
 
-template<> __device__ double PhiloxWrapper<double>::randExp( double lambda)
+template<> __device__ inline double PhiloxWrapper<double>::randExp( double lambda)
 {
 	if( localCounter == 0 )// we have to calculate two new doubles
 	{
@@ -196,7 +196,7 @@ template<> __device__ double PhiloxWrapper<double>::randExp( double lambda)
 	}
 }
 
-template<> __device__ float PhiloxWrapper<float>::randExp( float lambda )
+template<> __device__ inline float PhiloxWrapper<float>::randExp( float lambda )
 {
 	if( localCounter == 0 ) // we have to calculate 4 new floats
 	{
@@ -219,7 +219,7 @@ template<> __device__ float PhiloxWrapper<float>::randExp( float lambda )
  *
  * @return
  */
-template<> __device__ double2 PhiloxWrapper<double>::randNormal()
+template<> __device__ inline double2 PhiloxWrapper<double>::randNormal()
 {
 	// we calculate 2 new random numbers
 	localCounter = 0; // ensure that the next call uses new random numbers
@@ -236,7 +236,7 @@ template<> __device__ double2 PhiloxWrapper<double>::randNormal()
 	return normal;
 }
 
-template<> __device__ float2 PhiloxWrapper<float>::randNormal()
+template<> __device__ inline float2 PhiloxWrapper<float>::randNormal()
 {
 	// if only one number is still available: discard and generate 4 new
 
