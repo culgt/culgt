@@ -32,13 +32,13 @@ namespace culgt
 template<lat_dim_t Nd, ParityType par> class SiteIndex
 {
 private:
-	lat_index_t index;
 	lat_index_t latticeSize;
+	lat_index_t index;
 public:
 	static const lat_dim_t NDIM = Nd;
 	static const ParityType PARITYTYPE = par;
-	lat_index_t* nn;
 	lat_coord_t size[Nd];
+	lat_index_t* nn;
 
 
 	CUDA_HOST_DEVICE inline SiteIndex( const lat_coord_t size[Nd], lat_index_t* nn ) :nn(nn)
@@ -96,7 +96,7 @@ public:
 		this->nn = s.nn;
 	}
 
-	CUDA_HOST_DEVICE inline SiteIndex( const lat_index_t latticeSize, lat_index_t* nn ) :latticeSize(latticeSize), nn(nn), index(0)
+	CUDA_HOST_DEVICE inline SiteIndex( const lat_index_t latticeSize, lat_index_t* nn ) :latticeSize(latticeSize), index(0), nn(nn)
 	{
 		for( lat_dim_t i = 0; i < Nd; i++ )
 		{
