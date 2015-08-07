@@ -9,9 +9,6 @@
 
 #include "DeviceMemoryManager.h"
 
-
-using std::ios;
-
 namespace culgt
 {
 
@@ -52,40 +49,68 @@ void DeviceMemoryManager::registerMalloc( void* pointer, size_t size, std::strin
 	info.insert( std::pair<void*, MemoryStruct>( pointer, MemoryStruct( size, description) ) );
 	if( verbose )
 	{
-		ios init(NULL);
+		std::ios init(NULL);
 		init.copyfmt(std::cout);
 		std::cout << "-----------------------------------------------------\n";
 		std::cout << "Allocating memory for " << description << "\n";
 		std::cout << "Allocating:         " << std::fixed << std::setw( 15 ) <<  std::setprecision(3)
-				<< (double)size/1024./1024. << " MB\n";
+				<< getFormattedBytes( size ) << "\n";
 		std::cout << "Total allocated:    " <<  std::setw( 15 ) <<  std::setprecision(3)
-				<< getMemoryUsageMB() << " MB\n";
+				<< getFormattedBytes( getMemoryUsage() ) << "\n";
 		std::cout << "Unregistered memory " <<  std::setw( 15 ) <<  std::setprecision(3)
-				<< getUnregisteredMemoryMB() << "MB\n";
+				<< getFormattedBytes( getUnregisteredMemory() ) << "\n";
 		std::cout << "Available memory:     " <<  std::setw( 15 ) <<  std::setprecision(3)
-				<< getFreeMemoryMB() << " MB\n";
+				<< getFormattedBytes( getFreeMemory() ) << "\n";
 		std::cout.copyfmt(init);
 	}
 }
 
+std::string DeviceMemoryManager::makeFormattedBytesString(double size, std::string unit)
+{
+	std::ostringstream out;
+	out << size << " " << unit;
+	return out.str();
+}
+
+std::string DeviceMemoryManager::getFormattedBytes( size_t size )
+{
+	if( size > 10*GIGABYTE )
+	{
+		return makeFormattedBytesString( (double)size/(double)GIGABYTE, "GB" );
+	}
+	else if( size > 10*MEGABYTE )
+	{
+		return makeFormattedBytesString( (double)size/(double)MEGABYTE, "MB" );
+	}
+	else if( size > 10*KILOBYTE )
+	{
+		return makeFormattedBytesString( (double)size/(double)KILOBYTE, "KB" );
+	}
+	else
+	{
+		return makeFormattedBytesString( (double)size, "Bytes" );
+	}
+
+}
+
 void DeviceMemoryManager::registerFree( void* pointer )
 {
-	ios init(NULL);
+	std::ios init(NULL);
 	init.copyfmt(std::cout);
 	if( verbose )
 	{
 		std::cout << "-----------------------------------------------------\n";
 		std::cout << "Freeing memory allocated for " << info.at(pointer).getInfo() << "\n";
 		std::cout << "Freeing:          " << std::fixed << std::setw( 15 ) <<  std::setprecision(3)
-				<< (double)info.at(pointer).getSize()/1024./1024. << " MB\n";
+				<< getFormattedBytes( info.at(pointer).getSize() ) << "\n";
 	}
 	info.erase( pointer );
 	if(verbose)
 	{
 		std::cout << "Total allocated:  " <<  std::setw( 15 ) <<  std::setprecision(3)
-				<< getMemoryUsageMB() << " MB\n";
+				<< getFormattedBytes( getMemoryUsage() ) << "\n";
 		std::cout << "Available memory: " <<  std::setw( 15 ) <<  std::setprecision(3)
-				<< getFreeMemoryMB() << " MB\n";
+				<< getFormattedBytes( getFreeMemory() ) << " \n";
 	}
 	std::cout.copyfmt(init);
 }
@@ -100,14 +125,9 @@ size_t DeviceMemoryManager::getMemoryUsage()
    return allocatedMemory;
 }
 
-double DeviceMemoryManager::getMemoryUsageMB()
+size_t DeviceMemoryManager::getUnregisteredMemory()
 {
-	return (double)getMemoryUsage()/1024./1024.;
-}
-
-double DeviceMemoryManager::getUnregisteredMemoryMB()
-{
-	return (double)(getTotalAllocatedMemory()-getMemoryUsage())/1024/1024;
+	return getTotalAllocatedMemory()-getMemoryUsage();
 }
 
 size_t DeviceMemoryManager::getFreeMemory()
@@ -116,11 +136,6 @@ size_t DeviceMemoryManager::getFreeMemory()
 	size_t total;
 	cudaMemGetInfo( &freeMem, &total );
 	return freeMem;
-}
-
-double DeviceMemoryManager::getFreeMemoryMB()
-{
-	return (double)getFreeMemory()/1024./1024.;
 }
 
 void DeviceMemoryManager::setVerbose()
@@ -146,3 +161,4 @@ bool DeviceMemoryManager::verbose = false;
 std::map<void*, MemoryStruct> DeviceMemoryManager::info;
 
 }
+

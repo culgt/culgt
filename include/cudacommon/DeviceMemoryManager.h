@@ -12,6 +12,7 @@
 #define DEVICEMEMORYMANAGER_H_
 #include <iomanip>
 #include <string>
+#include <sstream>
 #include <map>
 #include <iostream>
 #include <iosfwd>
@@ -73,19 +74,23 @@ public:
 	static void registerMalloc( void* pointer, size_t size, std::string description );
 	static void registerFree( void* pointer );
 	static size_t getMemoryUsage();
-	static double getMemoryUsageMB();
-	static double getUnregisteredMemoryMB();
+	static size_t getUnregisteredMemory();
 	static void setVerbose();
 	static void unsetVerbose();
 
 
 	static bool verbose;
 private:
+	static const long GIGABYTE = 1024*1024*1024;
+	static const long MEGABYTE = 1024*1024;
+	static const long KILOBYTE = 1024;
+
 	static size_t allocatedMemory;
 	static std::map<void*, MemoryStruct> info;
 	static size_t getFreeMemory();
-	static double getFreeMemoryMB();
 	static size_t getTotalAllocatedMemory();
+	static std::string getFormattedBytes( size_t );
+	static std::string makeFormattedBytesString( double, std::string );
 };
 
 }
