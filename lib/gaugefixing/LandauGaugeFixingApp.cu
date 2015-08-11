@@ -17,6 +17,7 @@
 #include "gaugefixing/LandauGaugeFixing.h"
 #include "util/rng/PhiloxWrapper.h"
 #include "version.h"
+#include "common/compiler.h"
 
 namespace culgt
 {
@@ -133,5 +134,6 @@ int main( const int argc, const char* argv[] )
 #endif
 {
 	std::cout << "cuLGT Version " << CULGT_VERSION << std::endl;
+	std::cout << "Compiled with " << CULGT_NVCC_COMPILER << " (" << CULGT_HOST_COMPILER << ") using boost version " << BOOST_VERSION << std::endl;
 	LandauGaugeFixingApp::main<LandauGaugeFixingApp>( argc, argv );
 }

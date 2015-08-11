@@ -1,0 +1,6 @@
+if( NOT ${CUDA_FOUND} )
+    message( WARNING "FIND_CUDA needs to be called before including nvcc_version.cmake" )
+else()
+    set( CULGT_CUDA_VERSION ${CUDA_VERSION} )
+    configure_file( $ENV{CULGT_HOME}/include/common/nvcc_version.h.in $ENV{CULGT_HOME}/include/common/nvcc_version.h )
+endif()
