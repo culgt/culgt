@@ -8,8 +8,6 @@
 #ifndef FILETYPE_TYPEDEFS_H_
 #define FILETYPE_TYPEDEFS_H_
 
-#include <boost/algorithm/string.hpp>
-
 namespace culgt
 {
 
@@ -19,11 +17,11 @@ inline std::istream& operator>>(std::istream& in, ReinterpretReal& t)
 {
     std::string token;
     in >> token;
-    if ( boost::iequals(token, "STANDARD" ) )
+    if ( token.compare( "STANDARD" ) == 0 )
         t = STANDARD;
-    else if (boost::iequals(token, "DOUBLE" ))
+    else if ( token.compare(  "DOUBLE" ) == 0 )
         t = DOUBLE;
-    else if (boost::iequals(token, "FLOAT" ) )
+    else if ( token.compare(  "FLOAT" ) == 0 )
     	t = FLOAT;
     return in;
 }
