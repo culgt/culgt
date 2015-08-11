@@ -19,11 +19,11 @@ link_directories( /usr/local/cuda/lib64)
 add_definitions(-std=c++11)
 set(CMAKE_CXX_FLAGS "-Wall -O3")
 
-
 find_package(CUDA)
 include( nvcc_version )
 
 find_package( Boost COMPONENTS program_options REQUIRED )
+include_directories( ${Boost_INCLUDE_DIRS} )
 
 include( CheckHaveILDG )
 
