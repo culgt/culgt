@@ -22,7 +22,6 @@ set(sources
 	configuration_patterns/test_GPUPatternTimeslice.cc
 	configuration_patterns/test_GPUPatternTimesliceParityPriority.cc
 	configuration_patterns/test_GPUPatternParityPriority.cc
-	filetypes/test_limereader.cc
 	filetypes/test_LinkFileVogt.cc
 	filetypes/test_LinkFileVogtWithPattern.cc
 	filetypes/test_LinkFile.cc
