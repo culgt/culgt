@@ -22,16 +22,16 @@ public:
 
 TEST_F( ASiteNeighbourTableManager, IsNotAvailableIfNotCreated )
 {
-	bool result = SiteNeighbourTableManager<MySite>::isAvailable( dim );
+	bool result = SiteNeighbourTableManager<MySite>::isAvailableOnHost( dim );
 
 	ASSERT_FALSE( result );
 }
 
 TEST_F( ASiteNeighbourTableManager, IsAvailableIfCreated )
 {
-	SiteNeighbourTableManager<MySite>::generate( dim );
+	SiteNeighbourTableManager<MySite>::generateOnHost( dim );
 
-	bool result = SiteNeighbourTableManager<MySite>::isAvailable( dim );
+	bool result = SiteNeighbourTableManager<MySite>::isAvailableOnHost( dim );
 
 	ASSERT_TRUE( result );
 }

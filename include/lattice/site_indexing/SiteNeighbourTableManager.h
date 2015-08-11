@@ -10,8 +10,8 @@
 
 #include <cstddef>
 #include <map>
-#include "lattice/LatticeDimension.h"
 #include <iostream>
+#include "lattice/LatticeDimension.h"
 
 #ifdef __CUDACC__
 #include "cudacommon/cuda_error.h"
@@ -28,46 +28,61 @@ public:
 
 	static lat_index_t* getHostPointer( LatticeDimension<SiteType::NDIM> dim )
 	{
-		if( !isAvailable( dim ) )
-			generate(dim);
+		if( !isAvailableOnHost( dim ) )
+			generateOnHost(dim);
 
 		return storeHost[dim];
 	}
 
+#ifdef __CUDACC__
 	static lat_index_t* getDevicePointer( LatticeDimension<SiteType::NDIM> dim )
 	{
-		if( !isAvailable( dim ) )
-			generate(dim);
+		if( !isAvailableOnDevice( dim ) )
+		{
+			if( !isAvailableOnHost( dim ) )
+			{
+				generateOnHost( dim );
+			}
+			copyToDevice( dim );
+		}
 
 		return storeDevice[dim];
 	}
+#endif
 
-	static bool isAvailable( const LatticeDimension<SiteType::NDIM> dim )
+	static bool isAvailableOnHost( const LatticeDimension<SiteType::NDIM> dim )
 	{
 		return (storeHost.count( dim )==1);
 	}
 
-	static void generate( const LatticeDimension<SiteType::NDIM> dim )
+	static bool isAvailableOnDevice( const LatticeDimension<SiteType::NDIM> dim )
 	{
-		lat_index_t* nn = (lat_index_t*) malloc( dim.getSize()*SiteType::NDIM*2*sizeof( lat_index_t ) );
+		return (storeDevice.count( dim )==1);
+	}
+
+	static void generateOnHost( const LatticeDimension<SiteType::NDIM> dim )
+	{
+		lat_index_t* nn = new lat_index_t[dim.getSize()*SiteType::NDIM*2];
 
 		SiteType site( dim, nn );
 		site.calculateNeighbourTable( nn );
 		storeHost[dim] = nn;
+	}
+
 #ifdef __CUDACC__
+	static void copyToDevice( const LatticeDimension<SiteType::NDIM> dim )
+	{
 		lat_index_t* nnd;
 		DeviceMemoryManager::malloc( &nnd, dim.getSize()*SiteType::NDIM*2*sizeof( lat_index_t ), "Neighbour table" );
-//		CUDA_SAFE_CALL( cudaMalloc( &nnd, dim.getSize()*SiteType::NDIM*2*sizeof( lat_index_t ) ), "malloc neighbour table" );
-		CUDA_SAFE_CALL( cudaMemcpy( nnd, nn, dim.getSize()*SiteType::NDIM*2*sizeof( lat_index_t ), cudaMemcpyHostToDevice ), "memcpy neighbour table" );
+		CUDA_SAFE_CALL( cudaMemcpy( nnd, storeHost[dim], dim.getSize()*SiteType::NDIM*2*sizeof( lat_index_t ), cudaMemcpyHostToDevice ), "memcpy neighbour table" );
 		storeDevice[dim] = nnd;
-#endif
 	}
+#endif
 
 private:
 	typedef std::map<LatticeDimension<SiteType::NDIM>,lat_index_t*,LatticeDimensionCompare> mymap;
 	static mymap storeHost;
 	static mymap storeDevice;
-//	static SiteNeighbourTableManager<SiteType> manager;
 };
 
 template<typename SiteType> std::map<LatticeDimension<SiteType::NDIM>,lat_index_t*,LatticeDimensionCompare> SiteNeighbourTableManager<SiteType>::storeHost;
