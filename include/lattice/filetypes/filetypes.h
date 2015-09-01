@@ -7,9 +7,6 @@
 
 #ifndef FILETYPES_H_
 #define FILETYPES_H_
-#include <boost/algorithm/string.hpp>
-
-using boost::algorithm::iequals;
 
 namespace culgt
 {
@@ -23,19 +20,19 @@ inline std::istream& operator>>(std::istream& in, FileType& t)
 {
     std::string token;
     in >> token;
-    if ( boost::iequals(token, "HEADERONLY" ) )
+    if ( token.compare( "HEADERONLY" ) == 0 )
         t = HEADERONLY;
-    else if (boost::iequals(token, "VOGT" ))
+    else if ( token.compare( "VOGT" ) == 0 )
         t = VOGT;
-    else if (boost::iequals(token, "HIREP" ) )
+    else if ( token.compare( "HIREP" ) == 0 )
     	t = HIREP;
-    else if (boost::iequals(token, "ILDG" ) )
+    else if ( token.compare( "ILDG" ) == 0 )
     	t = ILDG;
-    else if (boost::iequals(token, "NERSC" ) )
+    else if ( token.compare( "NERSC" ) == 0 )
     	t = NERSC;
-    else if (boost::iequals(token, "MDP" ) )
+    else if ( token.compare( "MDP" ) == 0 )
     	t = MDP;
-    else if (boost::iequals(token, "DEFAULT" ) )
+    else if ( token.compare( "DEFAULT" ) == 0 )
     	t = DEFAULT;
     return in;
 }

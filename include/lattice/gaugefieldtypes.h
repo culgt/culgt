@@ -12,9 +12,9 @@ namespace gaugefieldtype
 	{
 	    std::string token;
 	    in >> token;
-	    if ( boost::iequals(token, "LINEAR" ) )
+	    if ( token.compare( "LINEAR" ) == 0 )
 	        t = LINEAR;
-	    else if (boost::iequals(token, "LOGARITHMIC" ))
+	    else if ( token.compare( "LOGARITHMIC" ) == 0 )
 	        t = LOGARITHMIC;
 	    return in;
 	}

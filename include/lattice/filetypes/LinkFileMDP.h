@@ -13,9 +13,7 @@
 #include "lattice/parameterization_types/SUNRealFull.h"
 #include "common/culgt_typedefs.h"
 #include "common/culgt_compat.h"
-#include <boost/algorithm/string.hpp>
-
-using boost::algorithm::trim;
+#include "util/string/trim.h"
 
 namespace culgt
 {

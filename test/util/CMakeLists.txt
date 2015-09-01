@@ -5,6 +5,7 @@ include( ../commonsettings.cmake )
 
 set(sources 
 	performance/test_AutotuneManager.cc
+	string/test_trim.cc
 	)
 add_library(lib_util_host ${sources})
 target_link_libraries(lib_util_host pthread)

@@ -21,7 +21,7 @@
 #include "common/culgt_compat.h"
 #include <string>
 #include <sstream>
-#include <boost/algorithm/string.hpp>
+#include "util/string/trim.h"
 
 using std::string;
 using std::istringstream;
@@ -152,13 +152,13 @@ public:
 			istringstream stream( *it );
 			string key;
 			std::getline( stream, key, '=' );
-			boost::trim( key );
+			trim( key );
 
 			if( isNotBeginOrEnd( key ) )
 			{
 				string value;
 				std::getline( stream, value );
-				boost::trim( value );
+				trim( value );
 
 				headerData[key] = value;
 			}

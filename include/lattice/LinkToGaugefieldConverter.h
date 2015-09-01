@@ -17,10 +17,7 @@
 #include "math/GellMannMatrices.h"
 #include "eigensolver/Matrix.h"
 #include "eigensolver/Cardano3x3.h"
-#include <boost/algorithm/string.hpp>
 #include "gaugefieldtypes.h"
-
-using boost::algorithm::iequals;
 
 namespace culgt
 {
