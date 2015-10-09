@@ -67,6 +67,22 @@ TEST_F( ASU2Vector4, MultAssignScalar )
 	ASSERT_FLOAT_EQ( someValue*someFactor, store[0].z );
 }
 
+TEST_F( ASU2Vector4, MultAssignScalarComplex )
+{
+	store[0].x = 1.;
+	store[0].y = 1.;
+	store[0].z = 2.;
+	store[0].w = 1.;
+	const Complex<float> someFactor( 0.5, 0.5 );
+
+	SU2Vector4<float>::multAssignScalarComplex( store, someFactor );
+
+	ASSERT_FLOAT_EQ( 0, store[0].x );
+	ASSERT_FLOAT_EQ( 1, store[0].y );
+	ASSERT_FLOAT_EQ( 0.5, store[0].z );
+	ASSERT_FLOAT_EQ( 1.5, store[0].w );
+}
+
 TEST_F( ASU2Vector4, AddAssign )
 {
 	SU2Vector4<float>::identity( store );

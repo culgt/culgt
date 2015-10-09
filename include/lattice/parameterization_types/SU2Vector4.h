@@ -66,6 +66,22 @@ public:
 		dest[0].w *= scalar;
 	}
 
+	static CUDA_HOST_DEVICE void inline multAssignScalarComplex( TYPE dest[SIZE], const Complex<REALTYPE> scalar )
+	{
+		{
+			Complex<T> tmp( dest[0].x, dest[0].y);
+			tmp *= scalar;
+			dest[0].x = tmp.x;
+			dest[0].y = tmp.y;
+		}
+		{
+			Complex<T> tmp( dest[0].z, dest[0].w);
+			tmp *= scalar;
+			dest[0].z = tmp.x;
+			dest[0].w = tmp.y;
+		}
+	}
+
 	static CUDA_HOST_DEVICE void inline multAssign( TYPE dest[SIZE], const TYPE b[SIZE] )
 	{
 		TYPE a[SIZE];
