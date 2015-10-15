@@ -18,8 +18,11 @@ public:
 	static const int LinksInvolved = (gaugetype==LANDAU)?(8):(6);
 	static const int SharedArraySize = 4;
 
-	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& q, const int id, const int mu, const bool updown, const int NSB )
+	template<typename T, typename LocalLinkType> __device__ static inline void gatherInfo( T* shA, LocalLinkType& link, lat_group_index_t iSub, lat_group_index_t jSub, const int id, const int mu, const bool updown, const int NSB )
 	{
+		LocalLink<SU2Vector4<T> > quaternion = link.getSU2Subgroup( iSub, jSub );
+		typename Real4<T>::VECTORTYPE& q = quaternion[0];
+
 		if( gaugetype==LANDAU || mu > 0 )
 		{
 			if( updown == 0 )
@@ -39,8 +42,14 @@ public:
 			}
 		}
 	}
-	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& qUp, typename Real4<T>::VECTORTYPE& qDown, const int id, const int mu, const int NSB )
+	template<typename T, typename LocalLinkType> __device__ static inline void gatherInfo( T* shA, LocalLinkType& linkUp, LocalLinkType& linkDown, lat_group_index_t iSub, lat_group_index_t jSub, const int id, const int mu, const int NSB )
 	{
+		LocalLink<SU2Vector4<T> > quaternionUp = linkUp.getSU2Subgroup( iSub, jSub );
+		LocalLink<SU2Vector4<T> > quaternionDown = linkDown.getSU2Subgroup( iSub, jSub );
+
+		typename Real4<T>::VECTORTYPE& qUp = quaternionUp[0];
+		typename Real4<T>::VECTORTYPE& qDown = quaternionDown[0];
+
 		if( gaugetype==LANDAU || mu > 0 )
 		{
 			atomicAdd( &shA[id], qDown.x+qUp.x );
@@ -50,8 +59,11 @@ public:
 		}
 	}
 
-	__device__ static inline void gatherInfo( double* shA, typename Real4<double>::VECTORTYPE& q, const int id, const int mu, const bool updown, const int NSB )
+	template<typename LocalLinkType> __device__ static inline void gatherInfo( double* shA, LocalLinkType& link, lat_group_index_t iSub, lat_group_index_t jSub, const int id, const int mu, const bool updown, const int NSB )
 	{
+		LocalLink<SU2Vector4<double> > quaternion = link.getSU2Subgroup( iSub, jSub );
+		typename Real4<double>::VECTORTYPE& q = quaternion[0];
+
 		if( updown == 0 && mu == 0)
 		{
 			if( gaugetype== LANDAU)
@@ -95,8 +107,14 @@ public:
 		}
 	}
 
-	__device__ static inline void gatherInfo( double* shA, typename Real4<double>::VECTORTYPE& qUp, typename Real4<double>::VECTORTYPE& qDown, const int id, const int mu, const int NSB )
+	template<typename LocalLinkType> __device__ static inline void gatherInfo( double* shA, LocalLinkType& linkUp, LocalLinkType& linkDown, lat_group_index_t iSub, lat_group_index_t jSub, const int id, const int mu, const int NSB )
 	{
+		LocalLink<SU2Vector4<double> > quaternionUp = linkUp.getSU2Subgroup( iSub, jSub );
+		LocalLink<SU2Vector4<double> > quaternionDown = linkDown.getSU2Subgroup( iSub, jSub );
+
+		typename Real4<double>::VECTORTYPE& qUp = quaternionUp[0];
+		typename Real4<double>::VECTORTYPE& qDown = quaternionDown[0];
+
 		if( mu == 0)
 		{
 			if( gaugetype== LANDAU)

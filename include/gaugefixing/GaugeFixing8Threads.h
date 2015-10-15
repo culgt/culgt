@@ -94,10 +94,7 @@ public:
 		extern __shared__ typename LocalLinkType::PARAMTYPE::REALTYPE shA[]; // define size in kernel call (size needs to be 4*SitesPerBlock)!
 		initializeSharedMemory( shA, GaugeType::SharedArraySize );
 
-		LocalLink<SU2Vector4<typename LocalLinkType::PARAMTYPE::REALTYPE> > quaternion = localLink.getSU2Subgroup( iSub, jSub );
-		typename Real4<typename LocalLinkType::PARAMTYPE::REALTYPE>::VECTORTYPE& q = quaternion[0];
-
-		GaugeType::gatherInfo( shA, q, id, mu, updown, SitesPerBlock );
+		GaugeType::gatherInfo( shA, localLink, iSub, jSub, id, mu, updown, SitesPerBlock );
 
 		// calc update
 		__syncthreads();
@@ -111,19 +108,21 @@ public:
 		}
 		__syncthreads();
 
-		GaugeType::collectUpdate( shA, q, id, mu, updown, SitesPerBlock );
+		LocalLink<SU2Vector4<typename LocalLinkType::PARAMTYPE::REALTYPE> > g;
+
+		GaugeType::collectUpdate( shA, g[0], id, mu, updown, SitesPerBlock );
 		__syncthreads(); // this is necessary otherwise the next subgroup already overwrites shA!
-		quaternion.set( 0, q );
+		g.set( 0, g[0] );
 
 		// update links
 		if( updown == 0 )
 		{
-			localLink.leftSubgroupMult( quaternion, iSub, jSub );
+			localLink.leftSubgroupMult( g, iSub, jSub );
 		}
 		else
 		{
-			quaternion.hermitian();
-			localLink.rightSubgroupMult( quaternion, iSub, jSub );
+			g.hermitian();
+			localLink.rightSubgroupMult( g, iSub, jSub );
 		}
 	}
 private:

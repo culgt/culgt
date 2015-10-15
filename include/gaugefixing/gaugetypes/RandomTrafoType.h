@@ -13,10 +13,10 @@ public:
 	static const int LinksInvolved = -1;
 	static const int SharedArraySize = 4;
 
-	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& q, const short id, const short mu, const bool updown, const int NSB )
+	template<typename T, typename LocalLinkType> __device__ static inline void gatherInfo( T* shA, LocalLinkType& q, lat_group_index_t iSub, lat_group_index_t jSub, const short id, const short mu, const bool updown, const int NSB )
 	{
 	}
-	template<typename T> __device__ static inline void gatherInfo( T* shA, typename Real4<T>::VECTORTYPE& qUp, typename Real4<T>::VECTORTYPE& qDown, const short id, const short mu, const int NSB )
+	template<typename T, typename LocalLinkType> __device__ static inline void gatherInfo( T* shA, LocalLinkType& qUp, LocalLinkType& qDown, lat_group_index_t iSub, lat_group_index_t jSub, const short id, const short mu, const int NSB )
 	{
 	}
 
