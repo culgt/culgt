@@ -13,6 +13,7 @@
 #include <cmath>
 #include "parameterization_types/ParameterizationMediator.h"
 #include "parameterization_types/SU2Vector4.h"
+#include "parameterization_types/SUNRealFull.h"
 #include "math/Complex.h"
 
 namespace culgt
@@ -263,6 +264,7 @@ public:
 
 	/**
 	 * This introduces a hardcoding to a Parameterization. Should be avoided if possible.
+	 * Returns a quaternion, i.e. the elements of the first and second line are averaged (see implementation in SUNRealFull<3,X>)
 	 */
 	CUDA_HOST_DEVICE inline LocalLink<SU2Vector4<typename ParamType::REALTYPE> > getSU2Subgroup( lat_group_index_t iSub, lat_group_index_t jSub )
 	{
@@ -270,6 +272,27 @@ public:
 		subgroup.set( 0, ParamType::getSU2Subgroup( store, iSub, jSub) );
 		return subgroup;
 	}
+
+	/**
+	 * Returns the full 2x2 complex matrix defined by (a_ii a_ij;a_ji a_jj). In general it is not proportional to an SU(2) element!
+	 */
+	CUDA_HOST_DEVICE inline Array<Complex<typename ParamType::REALTYPE>, 4> get2x2Submatrix( lat_group_index_t iSub, lat_group_index_t jSub )
+	{
+		LocalLink<SUNRealFull<2, typename ParamType::REALTYPE> > subgroup;
+
+//		Array<typename ParamType::REALTYPE, 8> data = ParamType::get2x2Submatrix( store, iSub, jSub);
+//		subgroup.set( 0, data[0] );
+//		subgroup.set( 1, data[1] );
+//		subgroup.set( 2, data[2] );
+//		subgroup.set( 3, data[3] );
+//		subgroup.set( 4, data[4] );
+//		subgroup.set( 5, data[5] );
+//		subgroup.set( 6, data[6] );
+//		subgroup.set( 7, data[7] );
+		return ParamType::get2x2Submatrix( store, iSub, jSub);
+	}
+
+
 
 	CUDA_HOST_DEVICE inline void leftSubgroupMult( LocalLink<SU2Vector4<typename ParamType::REALTYPE> >& mat, lat_group_index_t iSub, lat_group_index_t jSub )
 	{

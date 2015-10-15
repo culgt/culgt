@@ -9,6 +9,7 @@
 
 #include "common/culgt_typedefs.h"
 #include "cudacommon/cuda_host_device.h"
+#include "util/Array.h"
 #include "math/Complex.h"
 
 namespace culgt
@@ -479,6 +480,16 @@ public:
 		result.w = store[getImagIndex(i,i)]-store[getImagIndex(j,j)];
 		result.z = store[getRealIndex(i,j)]-store[getRealIndex(j,i)];
 		result.y = store[getImagIndex(i,j)]+store[getImagIndex(j,i)];
+		return result;
+	}
+
+	static CUDA_HOST_DEVICE Array<Complex<REALTYPE>,4> inline get2x2Submatrix( TYPE store[SIZE], lat_group_index_t i, lat_group_index_t j )
+	{
+		Array<Complex<REALTYPE>,4> result;
+		result[0] = Complex<REALTYPE>( store[getRealIndex(i,i)], store[getImagIndex(i,i)] );
+		result[1] = Complex<REALTYPE>( store[getRealIndex(i,j)], store[getImagIndex(i,j)] );
+		result[2] = Complex<REALTYPE>( store[getRealIndex(j,i)], store[getImagIndex(j,i)] );
+		result[3] = Complex<REALTYPE>( store[getRealIndex(j,j)], store[getImagIndex(j,j)] );
 		return result;
 	}
 
