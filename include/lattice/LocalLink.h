@@ -278,21 +278,8 @@ public:
 	 */
 	CUDA_HOST_DEVICE inline Array<Complex<typename ParamType::REALTYPE>, 4> get2x2Submatrix( lat_group_index_t iSub, lat_group_index_t jSub )
 	{
-		LocalLink<SUNRealFull<2, typename ParamType::REALTYPE> > subgroup;
-
-//		Array<typename ParamType::REALTYPE, 8> data = ParamType::get2x2Submatrix( store, iSub, jSub);
-//		subgroup.set( 0, data[0] );
-//		subgroup.set( 1, data[1] );
-//		subgroup.set( 2, data[2] );
-//		subgroup.set( 3, data[3] );
-//		subgroup.set( 4, data[4] );
-//		subgroup.set( 5, data[5] );
-//		subgroup.set( 6, data[6] );
-//		subgroup.set( 7, data[7] );
 		return ParamType::get2x2Submatrix( store, iSub, jSub);
 	}
-
-
 
 	CUDA_HOST_DEVICE inline void leftSubgroupMult( LocalLink<SU2Vector4<typename ParamType::REALTYPE> >& mat, lat_group_index_t iSub, lat_group_index_t jSub )
 	{
