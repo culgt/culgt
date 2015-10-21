@@ -168,6 +168,7 @@ public:
 					("samax", boost::program_options::value<float>(&saMax)->default_value(1.4), "Simulated Annealing start temperature")
 					("samin", boost::program_options::value<float>(&saMin)->default_value(0.1), "Simulated Annealing end temperature")
 					("sasteps", boost::program_options::value<int>(&saSteps)->default_value(0), "number of Simulated Annealing steps")
+					("salog", boost::program_options::value<bool>(&saLog)->default_value(false), "decrease the temperature logarithmically")
 
 					("microiter", boost::program_options::value<int>(&microiter)->default_value(3), "number of microcanonical updates per heatbath in Simulated Annealing")
 
@@ -176,6 +177,15 @@ public:
 		return gaugeOptions;
 	}
 
+	bool isSaLog() const
+	{
+		return saLog;
+	}
+
+	void setSaLog(bool saLog)
+	{
+		this->saLog = saLog;
+	}
 
 private:
 
@@ -184,6 +194,7 @@ private:
 	int saSteps;
 	float saMax;
 	float saMin;
+	bool saLog;
 
 	int microiter;
 

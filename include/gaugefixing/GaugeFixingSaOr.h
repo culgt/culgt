@@ -141,7 +141,7 @@ protected:
 
 
 
-	bool check( int iteration )
+	bool check( int iteration, double temperature = -1. )
 	{
 		if( (iteration) % settings.getReproject() == 0 )
 		{
@@ -150,16 +150,24 @@ protected:
 
 		if( (iteration) % settings.getCheckPrecision() == 0 )
 		{
-			return checkPrecision( iteration );
+			return checkPrecision( iteration, temperature );
 		}
 
 		return false;
 	}
 
-	bool checkPrecision( int iteration )
+	bool checkPrecision( int iteration, double temperature = -1. )
 	{
 		GaugeStats stats = getGaugeStats();
-		if( settings.isPrintStats() ) std::cout << std::setw(14) << iteration << std::fixed << std::setprecision( 14) << std::setw(24) << stats.getGff() << std::setprecision( 10 ) << std::setw(20) << std::scientific << stats.getPrecision() << std::endl;
+		if( settings.isPrintStats() )
+		{
+			std::cout << std::setw(14) << iteration;
+			if( temperature > 0. )
+			{
+				std::cout << std::setprecision( 10 ) << std::setw(20) << std::scientific << temperature;
+			}
+			std::cout << std::fixed << std::setprecision( 14) << std::setw(24) << stats.getGff() << std::setprecision( 10 ) << std::setw(20) << std::scientific << stats.getPrecision() << std::endl;
+		}
 		return stats.getPrecision() < settings.getPrecision();
 	}
 
@@ -167,25 +175,34 @@ protected:
 	{
 		if( settings.getSaSteps() > 0 )
 		{
-			if( settings.isPrintStats() )std::cout << "Simulated Annealing" << std::endl;
+			if( settings.isPrintStats() ) std::cout << "Simulated Annealing" << std::endl;
 
-			float tStep = ( settings.getSaMax()-settings.getSaMin() )/(float)settings.getSaSteps();
-			float temperature = settings.getSaMax();
 			cudaDeviceSynchronize();
 			timerSa.reset();
 			timerSa.start();
 			for( int i = 0; i < settings.getSaSteps(); i++ )
 			{
+				float temperature;
+				if( settings.isSaLog() )
+				{
+					float delta = settings.getSaMax()/settings.getSaMin();
+					temperature = settings.getSaMin()*pow(delta,(double)(settings.getSaSteps()-1-i)/(double)(settings.getSaSteps()-1));
+				}
+				else
+				{
+					float tStep = ( settings.getSaMax()-settings.getSaMin() )/(float)settings.getSaSteps();
+					temperature = settings.getSaMax() - (float)i*tStep;
+				}
+
 				runSimulatedAnnealing( temperature );
 				iterSa++;
-				temperature -= tStep;
 
 				for( int j = 0; j < settings.getMicroiter(); j++ )
 				{
 					runMicrocanonical();
 					iterMicro++;
 				}
-				check( i+1 );
+				check( i+1, temperature );
 			}
 			cudaDeviceSynchronize();
 			timerSa.stop();
