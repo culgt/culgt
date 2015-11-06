@@ -35,11 +35,18 @@ public:
 
 	virtual void randomTrafo() = 0;
 	virtual void reproject() = 0;
+
 	virtual void runOverrelaxation( float orParameter ) = 0;
-	virtual RunInfo getRunInfoOverrelaxation( double time, long iter ) = 0;
+	virtual void tuneOverrelaxation( float orParameter, int iter ) = 0;
+	virtual RunInfo computeRunInfoOverrelaxation( double time, long iter ) = 0;
+
 	virtual void runSimulatedAnnealing( float temperature ) = 0;
-	virtual RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro ) = 0;
+	virtual void tuneSimulatedAnnealing( float temperature, int iter ) = 0;
+	virtual RunInfo computeRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro ) = 0;
+
 	virtual void runMicrocanonical() = 0;
+	virtual void tuneMicrocanonical( int iter ) = 0;
+	
 	virtual GaugeStats getGaugeStats( GaugeFieldDefinition definition = GAUGEFIELD_STANDARD ) = 0;
 
 	virtual void allocateCopyMemory() = 0;
@@ -48,6 +55,24 @@ public:
 	virtual void writeBackCopy() = 0;
 	virtual void storeCleanCopy() = 0;
 	virtual void takeCleanCopy() = 0;
+
+
+	void tune( int tuneFactor )
+	{
+		tuneOverrelaxation( 1.5, 10*tuneFactor );
+		tuneMicrocanonical( 10 * tuneFactor );
+		tuneSimulatedAnnealing( 1.0, 5*tuneFactor );
+	}
+
+	RunInfo getRunInfoOverrelaxation()
+	{
+		return computeRunInfoOverrelaxation( fullTimeOr, iterOr );
+	}
+
+	RunInfo getRunInfoSimulatedAnnealing()
+	{
+		return computeRunInfoSimulatedAnnealing( fullTimeSa, iterSa, iterMicro );
+	}
 
 	void fix( GaugeSettings settings )
 	{
@@ -210,7 +235,7 @@ protected:
 			fullTimeSa += timerSa.getTime();
 
 			if( settings.isPrintStats() ) std::cout << std::fixed << std::setprecision( 2 ) << "Time for Simulated Annealing: " << timerSa.getTime() << " s" << std::endl;
-			if( settings.isPrintStats() ) getRunInfoSimulatedAnnealing( fullTimeSa, iterSa, iterMicro ).print();
+			if( settings.isPrintStats() ) computeRunInfoSimulatedAnnealing( fullTimeSa, iterSa, iterMicro ).print();
 		}
 	}
 
@@ -237,7 +262,7 @@ protected:
 			fullTimeOr += timerOr.getTime();
 
 			if( settings.isPrintStats() ) std::cout << std::fixed << std::setprecision( 2 ) << "Time for Overrelaxation: " << timerOr.getTime() << " s" << std::endl;
-			if( settings.isPrintStats() ) getRunInfoOverrelaxation( fullTimeOr, iterOr ).print();
+			if( settings.isPrintStats() ) computeRunInfoOverrelaxation( fullTimeOr, iterOr ).print();
 		}
 	}
 

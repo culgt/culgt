@@ -136,25 +136,45 @@ public:
 		this->microiter = microiter;
 	}
 
-//	long getSeed() const
-//	{
-//		return seed;
-//	}
-//
-//	void setSeed(long seed)
-//	{
-//		this->seed = seed;
-//	}
+	bool isSaLog() const
+	{
+		return saLog;
+	}
 
-//	void setGaugeOptions( boost::program_options::options_description* po )
+	void setSaLog(bool saLog)
+	{
+		this->saLog = saLog;
+	}
+
+	const string& getFileAppendix() const {
+		return fileAppendix;
+	}
+
+	void setFileAppendix(const string& fileAppendix) {
+		this->fileAppendix = fileAppendix;
+	}
+
+	bool isSethot() const {
+		return sethot;
+	}
+
+	void setSethot(bool sethot) {
+		this->sethot = sethot;
+	}
+
+	int getTuneFactor() const {
+		return tuneFactor;
+	}
+
+	void setTuneFactor(int tuneFactor) {
+		this->tuneFactor = tuneFactor;
+	}
+
 	boost::program_options::options_description getGaugeOptions()
 	{
 		boost::program_options::options_description gaugeOptions("Gaugefixing options");
 
-//		po->add_options()
 		gaugeOptions.add_options()
-//					("seed", boost::program_options::value<long>(&seed)->default_value(1), "RNG seed")
-
 					("gaugecopies", boost::program_options::value<int>(&gaugeCopies)->default_value(1), "calculate <arg> gauge copies and save the one with best functional value")
 					("randomtrafo", boost::program_options::value<bool>(&randomTrafo)->default_value(true), "apply a random gauge transformation before gauge fixing")
 
@@ -172,19 +192,15 @@ public:
 
 					("microiter", boost::program_options::value<int>(&microiter)->default_value(3), "number of microcanonical updates per heatbath in Simulated Annealing")
 
-					("printstats", boost::program_options::value<bool>(&printStats)->default_value(true), "print progress on command line");
+					("printstats", boost::program_options::value<bool>(&printStats)->default_value(true), "print progress on command line")
+
+					("sethot", boost::program_options::value<bool>(&sethot)->default_value(false), "start from a random gauge field")
+					("tunefactor", boost::program_options::value<int>(&tuneFactor)->default_value(5), "factor to influence the number of tuning steps")
+					("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)")
+					;
+
 
 		return gaugeOptions;
-	}
-
-	bool isSaLog() const
-	{
-		return saLog;
-	}
-
-	void setSaLog(bool saLog)
-	{
-		this->saLog = saLog;
 	}
 
 private:
@@ -206,11 +222,13 @@ private:
 
 	int gaugeCopies;
 
-//	long seed;
-
 	bool randomTrafo;
 
 	bool printStats;
+
+	bool sethot;
+	int tuneFactor;
+	string fileAppendix;
 };
 
 }

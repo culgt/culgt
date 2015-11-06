@@ -51,7 +51,6 @@ typedef GPUPatternTimesliceParityPriority<SITE,PARAMTYPE> PATTERNTYPE;
 typedef GlobalLink<PATTERNTYPE,true> GLOBALLINK;
 typedef PhiloxWrapper<REAL> RNG;
 
-
 /*
  *
  */
@@ -62,16 +61,10 @@ public:
 		: GaugeConfigurationIteratingApplication<PATTERNTYPE>(  dim, fileiterator, programOptions ),
 		  plaquette( configuration.getDevicePointer(), dimension )
 	{
-		programOptions->addOption( settings.getGaugeOptions() );
-
-		boost::program_options::options_description gaugeOptions;
+		boost::program_options::options_description gaugeOptions = settings.getGaugeOptions();
 		gaugeOptions.add_options()
-				("sethot", boost::program_options::value<bool>(&sethot)->default_value(false), "start from a random gauge field")
-				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)")
 				("timeslice", boost::program_options::value<int>(&fixSlice)->default_value(-1), "fix only specific timeslice (-1 = fix all)");
-
 		programOptions->addOption( gaugeOptions );
-
 
 		coulomb = new CoulombGaugefixing<PATTERNTYPE::TIMESLICE_PATTERNTYPE,LOCALLINK>( configuration.getDevicePointer( 0 ), configuration.getDevicePointer( dim.getDimension(0)-1 ), dim.getDimensionTimeslice(), programOptions->getSeed() );
 	}
@@ -80,9 +73,7 @@ private:
 
 	void setup()
 	{
-		coulomb->orstepsAutoTune<RNG>(1.5, 200);
-		coulomb->sastepsAutoTune<RNG>(.5, 200);
-		coulomb->microcanonicalAutoTune<RNG>( 200 );
+		coulomb->tune( settings.getTuneFactor() );
 	}
 
 	void teardown()
@@ -91,7 +82,7 @@ private:
 
 	void iterate()
 	{
-		if( sethot )
+		if( settings.isSethot() )
 		{
 			std::cout << "Using a hot (random) lattice" << std::endl;
 			configuration.setHotOnDevice<RNG>( programOptions->getSeed(), RNG::getNextCounter());
@@ -109,7 +100,7 @@ private:
 					fix();
 				else
 					fix( fixSlice );
-				saveFromDevice( fileAppendix );
+				saveFromDevice( settings.getFileAppendix() );
 			}
 		}
 	};
@@ -138,9 +129,7 @@ private:
 
 	CoulombGaugefixing<PATTERNTYPE::TIMESLICE_PATTERNTYPE,LOCALLINK>* coulomb;
 	PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette;
-	string fileAppendix;
 	int fixSlice;
-	bool sethot;
 };
 
 } /* namespace culgt */

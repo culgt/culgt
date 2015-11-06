@@ -185,7 +185,7 @@ public:
 		overrelaxation.run();
 	}
 
-	RunInfo getRunInfoOverrelaxation( double time, long iter )
+	RunInfo computeRunInfoOverrelaxation( double time, long iter )
 	{
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iter, OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
@@ -207,12 +207,12 @@ public:
 		simulatedAnnealing.run();
 	}
 
-	RunInfo getRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
+	RunInfo computeRunInfoSimulatedAnnealing( double time, long iterSa, long iterMicro )
 	{
 		return RunInfo::makeRunInfo<GlobalLinkType,LocalLinkType,LandauCoulombGaugeType<COULOMB> >( dimTimeslice.getSize(), time, iterSa, SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops, iterMicro, MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE>::Flops );
 	}
 
-	template<typename RNG> void orstepsAutoTune( float orParameter = 1.5, int iter = 1000 )
+	void tuneOverrelaxation( float orParameter = 1.5, int iter = 1000 )
 	{
 		overrelaxation.setOrParameter( orParameter );
 		overrelaxation.tune( iter );
@@ -224,13 +224,13 @@ public:
 //		cornell.tune( iter );
 //	}
 
-	template<typename RNG> void sastepsAutoTune( float temperature = 1.0, int iter = 1000 )
+	void tuneSimulatedAnnealing( float temperature = 1.0, int iter = 1000 )
 	{
 		simulatedAnnealing.setTemperature( temperature );
 		simulatedAnnealing.tune( iter );
 	}
 
-	template<typename RNG> void microcanonicalAutoTune( int iter = 1000 )
+	void tuneMicrocanonical( int iter = 1000 )
 	{
 		microcanonical.tune( iter );
 	}

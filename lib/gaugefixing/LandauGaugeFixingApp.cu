@@ -67,23 +67,15 @@ public:
 	LandauGaugeFixingApp( const LatticeDimension<PATTERNTYPE::SITETYPE::NDIM> dim, FileIterator fileiterator, ProgramOptions* programOptions ) : GaugeConfigurationIteratingApplication<PATTERNTYPE>(  dim, fileiterator, programOptions ), plaquette( configuration.getDevicePointer(), dimension )
 	{
 		programOptions->addOption( settings.getGaugeOptions() );
-
-		boost::program_options::options_description gaugeOptions("Gaugefixing options");
-		gaugeOptions.add_options()
-				("sethot", boost::program_options::value<bool>(&sethot)->default_value(false), "start from a random gauge field")
-				("fappendix", boost::program_options::value<string>(&fileAppendix)->default_value("gaugefixed_"), "file appendix (append after basename when writing)");
-
-		programOptions->addOption( gaugeOptions );
 		landau = new LandauGaugefixing<PATTERNTYPE,LOCALLINK>( configuration.getDevicePointer(), dimension, programOptions->getSeed() );
 	}
 private:
 	GaugeSettings settings;
+	ofstream perfout;
 
 	void setup()
 	{
-		landau->orstepsAutoTune<RNG>(1.5, 50);
-		landau->microcanonicalAutoTune<RNG>( 50 );
-		landau->sastepsAutoTune<RNG>(1., 20);
+		landau->tune( settings.getTuneFactor() );
 	}
 
 	void teardown()
@@ -92,11 +84,12 @@ private:
 
 	void iterate()
 	{
-		if( sethot )
+		if( settings.isSethot() )
 		{
 			std::cout << "Using a hot (random) lattice" << std::endl;
 			configuration.setHotOnDevice<RNG>( programOptions->getSeed(), RNG::getNextCounter());
 			CUDA_LAST_ERROR( "setHotOnDevice ");
+
 			fix();
 		}
 		else
@@ -104,7 +97,7 @@ private:
 			if( loadToDevice() )
 			{
 				fix();
-				saveFromDevice( fileAppendix );
+				saveFromDevice( settings.getFileAppendix() );
 			}
 		}
 	};
@@ -118,8 +111,6 @@ private:
 
 	PlaquetteAverage<PATTERNTYPE,LOCALLINK> plaquette;
 	LandauGaugefixing<PATTERNTYPE,LOCALLINK>* landau;
-	string fileAppendix;
-	bool sethot;
 };
 
 } /* namespace culgt */
