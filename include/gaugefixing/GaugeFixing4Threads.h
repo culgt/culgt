@@ -30,8 +30,7 @@ public:
 		typename GlobalLinkType::PATTERNTYPE::SITETYPE site(latticeSize, nn );
 
 		lat_index_t index = blockIdx.x * blockDim.x/threadsPerSite + id;
-
-		if( index >= latticeSize ) return;
+		if( index >= latticeSize/2 ) return;
 
 		if( parity == 1 ) index += site.getSize()/2;
 
@@ -53,10 +52,10 @@ public:
 	template<typename GlobalLinkType2> __device__ inline void applyAlgorithmTimeslice( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Uup, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Udown , lat_index_t* nn, lat_index_t latticeSize, bool parity )
 	{
 		// we do not need the lattice extents in all directions in this kernel: we can save registers by only giving the total size
-
 		typename GlobalLinkType::PATTERNTYPE::SITETYPE site(latticeSize, nn );
-		lat_index_t index = blockIdx.x * blockDim.x/threadsPerSite + id;
 
+		lat_index_t index = blockIdx.x * blockDim.x/threadsPerSite + id;
+		if( index >= latticeSize/2 ) return;
 
 		if( parity == 1 ) index += site.getSize()/2;
 

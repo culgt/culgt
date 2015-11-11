@@ -29,6 +29,7 @@ public:
 		typename GlobalLinkType::PATTERNTYPE::SITETYPE site( latticeSize, nn );
 
 		lat_index_t index = blockIdx.x * blockDim.x/threadsPerSite + id;
+		if( index >= latticeSize/2 ) return;
 
 		if( parity == 1 ) index += site.getSize()/2;
 
@@ -54,6 +55,7 @@ public:
 		typename GlobalLinkType::PATTERNTYPE::SITETYPE site( latticeSize, nn );
 
 		lat_index_t index = blockIdx.x * blockDim.x/threadsPerSite + id;
+		if( index >= latticeSize/2 ) return;
 
 		if( parity == 1 ) index += site.getSize()/2;
 
