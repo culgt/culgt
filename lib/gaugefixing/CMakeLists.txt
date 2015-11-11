@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 2.8.3)
 
 set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
 set( SUN "3" CACHE STRING "Gauge group, 2 = SU(2) or 3 = SU(3) (default)" )
-option( MIXED_PRECISION "switch on mixed precision (in the SP application)" OFF )
 option( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
 option( PRINT_KERNEL_INFO "print kernel infos" OFF )
 option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
@@ -29,10 +28,6 @@ include( CheckHaveILDG )
 
 if( ${PRINT_KERNEL_INFO} )
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xptxas -v" )
-endif()
-
-if( ${MIXED_PRECISION} )
-    set( CULGT_OPTIONS "${CULGT_OPTIONS} -DDPUPDATE" )
 endif()
 
 if( ${USE_TIMESLICEPATTERN} )
@@ -73,17 +68,32 @@ cuda_add_executable(CoulombGaugeSP
 add_dependencies( CoulombGaugeSP MakeGitVersion )
 target_link_libraries(CoulombGaugeSP GaugeFixingLibrary )
 
+cuda_add_executable(CoulombGaugeMP
+    CoulombGaugeFixingApp.cu
+    OPTIONS -DDPUPDATE ${CULGT_OPTIONS})
+add_dependencies( CoulombGaugeMP MakeGitVersion )
+target_link_libraries(CoulombGaugeMP GaugeFixingLibrary )
+
+
 cuda_add_executable(CoulombGaugeDP
     CoulombGaugeFixingApp.cu
     OPTIONS -DDOUBLEPRECISION ${CULGT_OPTIONS})
 add_dependencies( CoulombGaugeDP MakeGitVersion )
 target_link_libraries(CoulombGaugeDP GaugeFixingLibrary)
 
+
+
 cuda_add_executable(LandauGaugeSP
     LandauGaugeFixingApp.cu
     OPTIONS ${CULGT_OPTIONS} )
 add_dependencies( LandauGaugeSP MakeGitVersion )
 target_link_libraries(LandauGaugeSP GaugeFixingLibrary)
+
+cuda_add_executable(LandauGaugeMP
+    LandauGaugeFixingApp.cu
+    OPTIONS -DDPUPDATE ${CULGT_OPTIONS} )
+add_dependencies( LandauGaugeMP MakeGitVersion )
+target_link_libraries(LandauGaugeMP GaugeFixingLibrary)
 
 cuda_add_executable(LandauGaugeDP
     LandauGaugeFixingApp.cu

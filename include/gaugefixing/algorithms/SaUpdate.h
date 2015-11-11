@@ -1,6 +1,8 @@
 /**
  *
  * This is the Kennedy-Pendleton heatbath update for the SA algorithm
+ *
+ * In mixed precision (T = float, InternalT = double) the random number are generated as float.
  */
 
 #ifndef SAUPDATE_H_
@@ -16,12 +18,12 @@ namespace culgt
 template<typename T, typename InternalT=T> class SaUpdate
 {
 public:
-	__device__ inline SaUpdate( float temperature, PhiloxWrapper<InternalT>& rng ) : temperature(temperature), rng(rng){};
+	__device__ inline SaUpdate( float temperature, PhiloxWrapper<T>& rng ) : temperature(temperature), rng(rng){};
 	__device__ inline void calculateUpdate( T* shA, const short& id, const int NSB );
 	const static int Flops = 86;
 private:
 	float temperature;
-	PhiloxWrapper<InternalT> rng;
+	PhiloxWrapper<T> rng;
 };
 
 template<typename T, typename InternalT> __device__ void SaUpdate<T,InternalT>::calculateUpdate( T* shA, const short& id, const int NSB )
@@ -41,21 +43,21 @@ template<typename T, typename InternalT> __device__ void SaUpdate<T,InternalT>::
 
 	do
 	{
-	  do; while ((r1 = rng.rand2()) < 0.0001);
+	  do; while ((r1 = (InternalT)rng.rand2()) < 0.0001);
 	  r1 = -::log(r1)*p0;
-	  do; while ((r2 = rng.rand2()) < 0.0001);
+	  do; while ((r2 = (InternalT)rng.rand2()) < 0.0001);
 	  r2 = -::log(r2)*p0;
-	  r3 = cospi(2.0*rng.rand2());
+	  r3 = cospi(2.0*(InternalT)rng.rand2());
 	  r3 = r3*r3;
 	  delta = r2+r1*r3;
-	  r4=rng.rand2();
+	  r4=(InternalT)rng.rand2();
 	} while(r4*r4 > (1.0-0.5*delta));
 //	17 flop (if no loops, counting rand() as 1 operation, cospi and sinpi as 2)
 	a0=1.0-delta;
-	cos_theta=2.0*rng.rand2()-1.0;
+	cos_theta=2.0*(InternalT)rng.rand2()-1.0;
 	sin_theta=::sqrt(1.0-cos_theta*cos_theta);
 	sin_alpha=::sqrt(1-a0*a0);
-	phi=2.0*rng.rand2();
+	phi=2.0*(InternalT)rng.rand2();
 	a1=sin_alpha*sin_theta*cospi(phi);
 	a2=sin_alpha*sin_theta*sinpi(phi);
 	a3=sin_alpha*cos_theta;

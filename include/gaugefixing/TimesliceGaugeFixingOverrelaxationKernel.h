@@ -18,7 +18,11 @@ namespace TimesliceGaugeFixingOverrelaxationKernel
 {
 	template<typename GlobalLinkType,typename GlobalLinkType2, typename LocalLinkType, typename GaugeType, int ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(ThreadsPerSite*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelOrStep( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE orParameter)
 	{
+#ifdef DPUPDATE
+		typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE, double> Algorithm;
+#else
 		typedef OrUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+#endif
 		Algorithm orupdate( orParameter );
 
 		if( ThreadsPerSite == 8 )
@@ -39,7 +43,11 @@ namespace TimesliceGaugeFixingOverrelaxationKernel
 
 	template<typename GlobalLinkType,typename GlobalLinkType2, typename LocalLinkType, typename GaugeType, int ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(ThreadsPerSite*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelMicroStep( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity )
 	{
+#ifdef DPUPDATE
+		typedef MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE, double> Algorithm;
+#else
 		typedef MicroUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+#endif
 		Algorithm microupdate;
 
 		if( ThreadsPerSite == 8 )

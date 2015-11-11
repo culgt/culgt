@@ -16,8 +16,13 @@ namespace TimesliceGaugeFixingSimulatedAnnealingKernel
 {
 	template<typename GlobalLinkType,typename GlobalLinkType2, typename LocalLinkType, typename GaugeType, int ThreadsPerSite, int SitesPerBlock, int MinBlocksPerMultiprocessor> __global__ __launch_bounds__(ThreadsPerSite*SitesPerBlock,MinBlocksPerMultiprocessor) void kernelSaStep( typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* Ut, typename GlobalLinkType::PATTERNTYPE::PARAMTYPE::TYPE* UtDown, lat_index_t latticeSize, lat_index_t* nn, bool parity, typename LocalLinkType::PARAMTYPE::REALTYPE temperature, int rngSeed, int rngCounter )
 	{
-		PhiloxWrapper<typename LocalLinkType::PARAMTYPE::REALTYPE> rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
+#ifdef DPUPDATE
+		typedef SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE, double> Algorithm;
+#else
 		typedef SaUpdate<typename LocalLinkType::PARAMTYPE::REALTYPE> Algorithm;
+#endif
+
+		PhiloxWrapper<typename LocalLinkType::PARAMTYPE::REALTYPE> rng( blockIdx.x * blockDim.x + threadIdx.x, rngSeed, rngCounter );
 		Algorithm saupdate( temperature, rng );
 
 		if( ThreadsPerSite == 8 )
