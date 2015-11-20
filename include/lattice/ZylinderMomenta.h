@@ -20,6 +20,8 @@
 #include <boost/array.hpp>
 #include <math.h>
 
+namespace culgt
+{
 
 template<int Ndim, typename T> class ZylinderMomenta
 {
@@ -99,7 +101,7 @@ template<int Ndim, typename T> T ZylinderMomenta<Ndim,T>::abs( int i )
 	{
 		temp += (T)momenta[i][j]*(T)momenta[i][j];
 	}
-	return sqrt( temp );
+	return ::sqrt( temp );
 }
 
 template<int Ndim, typename T> T ZylinderMomenta<Ndim,T>::absLattice( int i )
@@ -107,10 +109,10 @@ template<int Ndim, typename T> T ZylinderMomenta<Ndim,T>::absLattice( int i )
 	T temp = 0;
 	for( int j = 0; j < Ndim; j++ )
 	{
-		T temp2 = 2.*sin( (T)momenta[i][j] * acos(-1.) / (T)Ns );
+		T temp2 = 2.*::sin( (T)momenta[i][j] * ::acos(-1.) / (T)Ns );
 		temp += temp2*temp2;
 	}
-	return sqrt( temp );
+	return ::sqrt( temp );
 }
 
 template<int Ndim, typename T> void ZylinderMomenta<Ndim,T>::addMomentum( int (&newmom)[Ndim] )
@@ -118,6 +120,8 @@ template<int Ndim, typename T> void ZylinderMomenta<Ndim,T>::addMomentum( int (&
 	for( int i = 0; i < Ndim; i++ )
 		momenta[size][i] = newmom[i];
 	size++;
+}
+
 }
 
 #endif /* ZYLINDERMOMENTA_HXX_ */
