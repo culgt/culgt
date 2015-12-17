@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <iterator>
 
 namespace culgt
 {
@@ -82,6 +83,44 @@ public:
 	void setFileExtension(const std::string& fileExtension)
 	{
 		this->fileExtension = fileExtension;
+	}
+
+	class Iterator: public std::iterator<std::forward_iterator_tag,std::string>
+	{
+	private:
+		int currentFileNumber;
+		FileIterator& super;
+	public:
+		Iterator( int start, FileIterator& super ) :currentFileNumber( start ), super(super)
+		{
+		}
+		std::string operator*()
+		{
+			super.currentFileNumber = currentFileNumber;
+			return super.getFilename();
+		}
+		const Iterator* operator++()
+		{
+			currentFileNumber += super.fileNumberStep;
+			return this;
+		}
+		bool operator==( const Iterator& rhs )
+		{
+			return currentFileNumber == rhs.currentFileNumber;
+		}
+		bool operator!=( const Iterator& rhs )
+		{
+			return currentFileNumber != rhs.currentFileNumber;
+		}
+	};
+
+	Iterator begin()
+	{
+		return Iterator( Iterator( fileNumberStart, *this ) );
+	}
+	Iterator end()
+	{
+		return Iterator( Iterator( fileNumberEnd, *this ) );
 	}
 
 private:
