@@ -27,4 +27,4 @@ else()
     set( CULGT_HAVE_LINKFILE_ILDG OFF )
 endif()
 
-configure_file( $ENV{CULGT_HOME}/include/lattice/filetypes/filetype_config.h.in $ENV{CULGT_HOME}/include/lattice/filetypes/filetype_config.h)
+configure_file( ${CULGT_HOME}/include/lattice/filetypes/filetype_config.h.in ${CULGT_HOME}/include/lattice/filetypes/filetype_config.h)

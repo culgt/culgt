@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
 set( SUN "3" CACHE STRING "Gauge group, 2 = SU(2) or 3 = SU(3) (default)" )
+set( CULGT_HOME $ENV{CULGT_HOME} CACHE FILEPATH "path to cuLGT root directory" )
 option( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
 option( PRINT_KERNEL_INFO "print kernel infos" OFF )
 option( CULGT_ALLOW_C++11 "allows C++11 compilation for cuLGT" ON )
@@ -11,9 +12,13 @@ option( DISABLE_AUTOTUNE "disables the autotuner (for debugging purpose)" OFF )
 
 #========================================================
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} $ENV{CULGT_HOME}/cmake/ )
+if( CULGT_HOME STREQUAL "" )
+    message( WARNING "Did you set the CULGT_HOME variable?" )
+endif()
 
-include_directories( $ENV{CULGT_HOME}/include )
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CULGT_HOME}/cmake/ )
+
+include_directories( ${CULGT_HOME}/include )
 link_directories( /usr/local/cuda/lib64)
 add_definitions(-std=c++11)
 set(CMAKE_CXX_FLAGS "-Wall -O3")
@@ -49,12 +54,12 @@ else()
 endif()
 
 add_custom_target( MakeGitVersion 
-    COMMAND ${CMAKE_COMMAND} -DPATH_TO_CURRENT_PROJECT=${CMAKE_CURRENT_LIST_DIR} -P $ENV{CULGT_HOME}/cmake/versioning.cmake )
+    COMMAND ${CMAKE_COMMAND} -DPATH_TO_CURRENT_PROJECT=${CMAKE_CURRENT_LIST_DIR} -P ${CULGT_HOME}/cmake/versioning.cmake )
 
 cuda_add_library( GaugeFixingLibrary 
-    $ENV{CULGT_HOME}/include/cudacommon/DeviceProperties.cu
-    $ENV{CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu
-    $ENV{CULGT_HOME}/include/util/timer/Chronotimer.cc
+    ${CULGT_HOME}/include/cudacommon/DeviceProperties.cu
+    ${CULGT_HOME}/include/cudacommon/DeviceMemoryManager.cu
+    ${CULGT_HOME}/include/util/timer/Chronotimer.cc
     )
 target_link_libraries(GaugeFixingLibrary pthread)
 target_link_libraries(GaugeFixingLibrary ${Boost_LIBRARIES} )
