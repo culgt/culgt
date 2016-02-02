@@ -1,6 +1,10 @@
 import subprocess
 import sys
 
+if len(sys.argv[1:]) == 0:
+    print "Usage: python %s '<configuration file (without .py)>'" % sys.argv[0]
+    exit(1)
+
 importfromfile = __import__(sys.argv[1],  fromlist=['boost_versions',  'nvcc_versions',  'gcc_versions',  'cuda_arch'])
 boost_versions = getattr(importfromfile,  'boost_versions')
 nvcc_versions = getattr(importfromfile,  'nvcc_versions')
