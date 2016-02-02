@@ -38,9 +38,7 @@ void cuLGTinitLandau( int nx, int ny, int nz, int nt  )
 	config = new GaugeConfiguration<PATTERNTYPE>(dim);
 	config->allocateMemory();
 	landau = new LandauGaugefixing<PATTERNTYPE,LOCALLINK>( config->getDevicePointer(), dim, 1235 );
-	landau->orstepsAutoTune<RNG>(1.5, 200);
-	landau->microcanonicalAutoTune<RNG>( 200 );
-	landau->sastepsAutoTune<RNG>(1., 20);
+	landau->tune( 5 );
 }
 
 void cuLGTfixLandau( int nx, int ny, int nz, int nt )
