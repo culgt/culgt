@@ -62,8 +62,6 @@ If you are not familiar with cmake, just run the following commands from `lib/ga
 
 
 ```
-#!bash
-
 mkdir -p build
 cd build
 cmake .. -DCUDA_ARCHITECTURE=<your arch> -DSUN=<2 or 3> -DCULGT_HOME=<path to cuLGT root>
@@ -76,8 +74,6 @@ make
 To test the application on a random lattice run
 
 ```
-#!bash
-
 ./LandauGaugeSP --sethot 1
 ```
 
@@ -97,16 +93,12 @@ Example:
 The configurations are called `/myconfigs/config_n16t16_000.dat`, filetype is MDP in DP (fermiqcd.net)
 
 ```
-#!bash
-
 ./LandauGaugeSP --nx 16 --nt 16 --fbasename /myconfigs/config_n16t16_ --fnumberformat 3 --filetype MDP --fextension .dat --reinterpret DOUBLE
 ```
 
 or
 
 ```
-#!bash
-
 ./LandauGaugeDP --nx 16 --nt 16 --fbasename /myconfigs/config_n16t16_ --fnumberformat 3 --filetype MDP --fextension .dat
 ```
 
