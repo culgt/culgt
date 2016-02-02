@@ -2,7 +2,7 @@ project(gaugefixing)
 
 cmake_minimum_required(VERSION 2.8.3)
 
-set( CUDA_ARCHITECTURE "sm_35" CACHE STRING "CUDA architecture to compile for" )
+set( CUDA_ARCH "sm_35" CACHE STRING "CUDA architecture to compile for" )
 set( SUN "3" CACHE STRING "Gauge group, 2 = SU(2) or 3 = SU(3) (default)" )
 set( CULGT_HOME $ENV{CULGT_HOME} CACHE FILEPATH "path to cuLGT root directory" )
 option( USE_TIMESLICEPATTERN "uses a timeslice ordered pattern in LandauGauge" OFF )
@@ -46,10 +46,10 @@ if( ${DISABLE_AUTOTUNE} )
 endif()
 
 if( ${CUDA_VERSION} VERSION_LESS 6.5 OR NOT CULGT_ALLOW_C++11 )
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=${CUDA_ARCHITECTURE} -Xptxas -dlcm=cg --use_fast_math")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=${CUDA_ARCH} -Xptxas -dlcm=cg --use_fast_math")
     message(STATUS "Cannot use -std=c++11 (CUDA version ${CUDA_VERSION})")
 else()
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -arch=${CUDA_ARCHITECTURE} -Xptxas -dlcm=cg --use_fast_math")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -arch=${CUDA_ARCH} -Xptxas -dlcm=cg --use_fast_math")
     message(STATUS "Using -std=c++11 (CUDA version ${CUDA_VERSION})")
 endif()
 
