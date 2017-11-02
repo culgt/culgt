@@ -239,8 +239,12 @@ public:
 			typename LocalLinkParamType::TYPE value;
 			if( super::reinterpretReal == STANDARD )
 			{
-				value = (typename LocalLinkParamType::TYPE) super::readFloat();
-			}
+                                if( sizeof( typename LocalLinkParamType::TYPE ) == 8 )
+                                    value = (typename LocalLinkParamType::TYPE) super::readDouble();
+                                else
+                                    value = (typename LocalLinkParamType::TYPE) super::readFloat();
+
+                        }
 			else if( super::reinterpretReal == FLOAT )
 			{
 				value = (typename LocalLinkParamType::TYPE) super::readFloat();
